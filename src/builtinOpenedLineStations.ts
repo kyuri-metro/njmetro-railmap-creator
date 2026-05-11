@@ -370,6 +370,21 @@ const collectTransferIdsByStationName = () => {
 
 const transferIdsByStationName = collectTransferIdsByStationName();
 
+const builtinRailwayStationChNames = new Set(['南京站', '南京南站', '句容', '姑孰', '滁州高铁站']);
+const builtinAirportStationChNames = new Set(['禄口机场']);
+
+const builtinStationTypeFromChName = (chName: string): StationItem['type'] => {
+  if (builtinAirportStationChNames.has(chName)) {
+    return 'airport';
+  }
+
+  if (builtinRailwayStationChNames.has(chName)) {
+    return 'railway';
+  }
+
+  return 'none';
+};
+
 export const getBuiltinOpenedStationsByLineId = (lineIdRaw: string): StationItem[] | null => {
   const lineId = lineIdRaw.trim().toUpperCase();
   if (!supportedLineIds.has(lineId as SupportedLineId)) {
@@ -382,7 +397,7 @@ export const getBuiltinOpenedStationsByLineId = (lineIdRaw: string): StationItem
       id: toBuiltinStationId(normalizedLineId, index),
       chName: seedItem.chName,
       enName: seedItem.enName,
-      type: /站$/.test(seedItem.chName) ? 'railway' : /机场/.test(seedItem.chName) ? 'airport' : 'none',
+      type: builtinStationTypeFromChName(seedItem.chName),
       transfer: transferIds.map((id) => ({ id, color: getNjmetroLineBackgroundColor(id) ?? '#8c989f' })),
     };
   });
