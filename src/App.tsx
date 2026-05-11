@@ -67,6 +67,8 @@ const themeStorageKey = 'site-theme';
 const themeTransitionLockClassName = 'theme-transition-lock';
 const svgExportComment = '<!-- created by njmetro-railmap-creator, (https://github.com/kyuri-metro/njmetro-railmap-creator) -->';
 const docsReferenceUrl = 'https://github.com/kyuri-metro/njmetro-railmap-creator/tree/main/docs';
+const builtinLineUnavailableMessage =
+  '当前线路编号未内置已开通站点列表。支持：1、2、3、4、5、6、7、10、S1、S2、S3、S4、S6、S7、S8、S9。';
 const fallbackFontDetectionResults: FontDetectionResult[] = Object.entries(targetFontSignatures).map(([fontFamily, expectedWidths]) => ({
   fontFamily: fontFamily as FontDetectionResult['fontFamily'],
   widths: null,
@@ -244,6 +246,8 @@ function App() {
   const idColorDebounceRef = useRef(0);
   const [themeMode, setThemeMode] = useState<ThemeMode>('light');
   const [isExampleModalOpen, setIsExampleModalOpen] = useState(false);
+  const [isOverwriteStationsConfirmOpen, setIsOverwriteStationsConfirmOpen] = useState(false);
+  const [builtinUnavailableNotice, setBuiltinUnavailableNotice] = useState<string | null>(null);
   const [fontDetectionResults, setFontDetectionResults] = useState<FontDetectionResult[]>(fallbackFontDetectionResults);
   const [fontDetectionState, setFontDetectionState] = useState<'idle' | 'checking' | 'done'>('idle');
 
@@ -273,6 +277,29 @@ function App() {
       cancelled = true;
     };
   }, []);
+
+  useEffect(() => {
+    if (!isOverwriteStationsConfirmOpen && !builtinUnavailableNotice) {
+      return;
+    }
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') {
+        return;
+      }
+
+      if (isOverwriteStationsConfirmOpen) {
+        setIsOverwriteStationsConfirmOpen(false);
+      }
+
+      if (builtinUnavailableNotice) {
+        setBuiltinUnavailableNotice(null);
+      }
+    };
+
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [isOverwriteStationsConfirmOpen, builtinUnavailableNotice]);
 
   totalLengthDraftRef.current = totalLengthDraft;
   lineIdDraftRef.current = lineIdDraft;
@@ -443,17 +470,23 @@ function App() {
   };
 
   const handleFillStationsByLineId = () => {
-    const confirmed = window.confirm('此操作将会覆盖站点列表，这一操作不可撤销');
+    const targetLineId = normalizeLineIdDraft(lineIdDraftRef.current);
 
-    if (!confirmed) {
+    if (!getBuiltinOpenedStationsByLineId(targetLineId)) {
+      setBuiltinUnavailableNotice(builtinLineUnavailableMessage);
       return;
     }
 
+    setIsOverwriteStationsConfirmOpen(true);
+  };
+
+  const confirmBuiltinStationOverwrite = () => {
+    setIsOverwriteStationsConfirmOpen(false);
     const targetLineId = normalizeLineIdDraft(lineIdDraftRef.current);
     const builtinStations = getBuiltinOpenedStationsByLineId(targetLineId);
 
     if (!builtinStations) {
-      window.alert('当前线路编号未内置已开通站点列表。支持：1、2、3、4、5、6、7、10、S1、S2、S3、S4、S6、S7、S8、S9。');
+      setBuiltinUnavailableNotice(builtinLineUnavailableMessage);
       return;
     }
 
@@ -704,6 +737,67 @@ function App() {
           }
           onSubmit={handleModalSubmit}
         />
+      ) : null}
+
+      {isOverwriteStationsConfirmOpen ? (
+        <div
+          className="confirm-dialog-backdrop"
+          role="presentation"
+          onClick={() => setIsOverwriteStationsConfirmOpen(false)}
+        >
+          <div
+            className="confirm-dialog"
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="overwrite-stations-confirm-title"
+            aria-describedby="overwrite-stations-confirm-desc"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <h2 id="overwrite-stations-confirm-title" className="confirm-dialog-title">
+              确认覆盖站点列表
+            </h2>
+            <p id="overwrite-stations-confirm-desc" className="confirm-dialog-body">
+              此操作将会覆盖站点列表，这一操作不可撤销
+            </p>
+            <div className="confirm-dialog-actions">
+              <button type="button" className="secondary-button" onClick={() => setIsOverwriteStationsConfirmOpen(false)}>
+                取消
+              </button>
+              <button type="button" className="primary-button" onClick={confirmBuiltinStationOverwrite}>
+                继续
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {builtinUnavailableNotice ? (
+        <div
+          className="confirm-dialog-backdrop"
+          role="presentation"
+          onClick={() => setBuiltinUnavailableNotice(null)}
+        >
+          <div
+            className="confirm-dialog"
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="builtin-unavailable-title"
+            aria-describedby="builtin-unavailable-desc"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <h2 id="builtin-unavailable-title" className="confirm-dialog-title">
+              暂无内置站点列表
+            </h2>
+            <p id="builtin-unavailable-desc" className="confirm-dialog-body">
+              {builtinUnavailableNotice}
+            </p>
+            <div className="confirm-dialog-actions">
+              <button type="button" className="primary-button" onClick={() => setBuiltinUnavailableNotice(null)}>
+                知道了
+              </button>
+            </div>
+          </div>
+        </div>
       ) : null}
 
       {isExampleModalOpen ? (

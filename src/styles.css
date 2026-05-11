@@ -233,6 +233,51 @@ h3 {
   color: var(--site-muted-fg);
 }
 
+.confirm-dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  box-sizing: border-box;
+  background: rgba(0, 0, 0, 0.48);
+}
+
+.confirm-dialog {
+  width: 100%;
+  max-width: 400px;
+  padding: 20px 22px 18px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--site-border);
+  background: var(--site-surface);
+  color: var(--site-fg);
+  box-sizing: border-box;
+}
+
+.confirm-dialog-title {
+  margin: 0 0 10px;
+  font-size: 1.05rem;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.confirm-dialog-body {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.55;
+  color: var(--site-content-fg);
+}
+
+.confirm-dialog-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+}
+
 .example-modal-header {
   display: flex;
   align-items: flex-start;
