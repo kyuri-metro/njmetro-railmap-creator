@@ -36,6 +36,10 @@ type InsertStationPayload = {
   station: StationItem;
 };
 
+type ReplaceStationsPayload = {
+  stations: StationItem[];
+};
+
 const initialStations: StationItem[] = [
   {
     id: 'linchang',
@@ -334,6 +338,11 @@ const generatorSlice = createSlice({
       state.stnList = state.stnList.filter((item) => item.id !== action.payload);
       state.currentStnId = fallbackCurrentId(state.stnList, state.currentStnId);
     },
+    replaceStations(state, action: PayloadAction<ReplaceStationsPayload>) {
+      const { stations } = action.payload;
+      state.stnList = stations;
+      state.currentStnId = stations[0]?.id ?? '';
+    },
   },
 });
 
@@ -346,6 +355,7 @@ export const {
   setLineId,
   setShowStationTypeIcons,
   setTotalLength,
+  replaceStations,
   updateStation,
 } = generatorSlice.actions;
 export default generatorSlice.reducer;

@@ -5,9 +5,11 @@ import { DirectionBadge } from './components/DirectionBadge';
 import { RouteBadge } from './components/RouteBadge';
 import { StationFormModal, stationToDraft, type StationFormDraft } from './components/StationFormModal';
 import { StationTable } from './components/StationTable';
+import { getBuiltinOpenedStationsByLineId } from './builtinOpenedLineStations';
 import {
   deleteStation,
   insertStation,
+  replaceStations,
   setCurrentStation,
   setDirection,
   setIdColor,
@@ -440,6 +442,31 @@ function App() {
     applyThemeMode(nextThemeMode, true);
   };
 
+  const handleFillStationsByLineId = () => {
+    const confirmed = window.confirm('此操作将会覆盖站点列表，这一操作不可撤销');
+
+    if (!confirmed) {
+      return;
+    }
+
+    const targetLineId = normalizeLineIdDraft(lineIdDraftRef.current);
+    const builtinStations = getBuiltinOpenedStationsByLineId(targetLineId);
+
+    if (!builtinStations) {
+      window.alert('当前线路编号未内置已开通站点列表。支持：1、2、3、4、5、6、7、10、S1、S2、S3、S4、S6、S7、S8、S9。');
+      return;
+    }
+
+    startTransition(() => {
+      if (targetLineId !== generator.lineId) {
+        dispatch(setLineId(targetLineId));
+      }
+
+      dispatch(replaceStations({ stations: builtinStations }));
+      dispatch(setCurrentStation(builtinStations[0]?.id ?? ''));
+    });
+  };
+
   const currentStation = generator.stnList.find((station) => station.id === generator.currentStnId);
   const missingTargetFonts = fontDetectionResults.filter((result) => !result.detected);
 
@@ -580,6 +607,9 @@ function App() {
                     onBlur={flushLineIdDraft}
                   />
                   <span className="field-hint">若该编号在南京地铁线路调色板中有定义，将自动填入下方的线路标识色。</span>
+                  <button type="button" className="secondary-button" onClick={handleFillStationsByLineId}>
+                    按线路填充已开通站点
+                  </button>
                 </label>
                 <label className="field-label">
                   <span>idColor（线路标识色）</span>
