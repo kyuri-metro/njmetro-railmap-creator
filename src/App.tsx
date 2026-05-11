@@ -1,4 +1,5 @@
-import { startTransition, useDeferredValue, useEffect, useRef, useState, type ReactNode } from 'react';
+import { startTransition, useDeferredValue, useEffect, useId, useRef, useState, type ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 import { usePreviewLoadingOverlay } from './hooks/usePreviewLoadingOverlay';
 import { CurrentStationBadge } from './components/CurrentStationBadge';
 import { DirectionBadge } from './components/DirectionBadge';
@@ -182,6 +183,13 @@ const MoonIcon = () => (
   </svg>
 );
 
+const MagnifyPreviewIcon = () => (
+  <svg className="result-svg-zoom-icon" viewBox="0 0 24 24" width="20" height="20" aria-hidden>
+    <circle cx="10" cy="10" r="6.5" fill="none" stroke="currentColor" strokeWidth="2" />
+    <path fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" d="M15 15l6 6" />
+  </svg>
+);
+
 type DownloadableBadgeCardProps = {
   title: string;
   fileName: string;
@@ -190,6 +198,25 @@ type DownloadableBadgeCardProps = {
 
 const DownloadableBadgeCard = ({ title, fileName, children }: DownloadableBadgeCardProps) => {
   const badgeContainerRef = useRef<HTMLDivElement | null>(null);
+  const svgZoomTitleId = useId();
+  const [isSvgZoomOpen, setIsSvgZoomOpen] = useState(false);
+  const [svgZoomMarkup, setSvgZoomMarkup] = useState('');
+  const [svgZoomPercent, setSvgZoomPercent] = useState(100);
+
+  useEffect(() => {
+    if (!isSvgZoomOpen) {
+      return;
+    }
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setIsSvgZoomOpen(false);
+      }
+    };
+
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [isSvgZoomOpen]);
 
   const handleDownload = () => {
     const svgElement = badgeContainerRef.current?.querySelector('svg');
@@ -212,18 +239,89 @@ const DownloadableBadgeCard = ({ title, fileName, children }: DownloadableBadgeC
     window.URL.revokeObjectURL(objectUrl);
   };
 
+  const openSvgZoom = () => {
+    const svgElement = badgeContainerRef.current?.querySelector('svg');
+
+    if (!svgElement) {
+      return;
+    }
+
+    const serializer = new XMLSerializer();
+    setSvgZoomMarkup(serializer.serializeToString(svgElement));
+    setSvgZoomPercent(100);
+    setIsSvgZoomOpen(true);
+  };
+
+  const closeSvgZoom = () => {
+    setIsSvgZoomOpen(false);
+  };
+
   return (
-    <div className="result-block">
-      <h3>{title}</h3>
-      <div ref={badgeContainerRef} className="badge-preview">
-        {children}
+    <>
+      <div className="result-block">
+        <h3>{title}</h3>
+        <div ref={badgeContainerRef} className="badge-preview">
+          {children}
+        </div>
+        <div className="result-actions">
+          <button type="button" className="secondary-button" onClick={handleDownload}>
+            下载 SVG
+          </button>
+          <button
+            type="button"
+            className="icon-button result-svg-zoom-trigger"
+            aria-label={`查看 ${title} 大图`}
+            onClick={openSvgZoom}
+          >
+            <MagnifyPreviewIcon />
+          </button>
+        </div>
       </div>
-      <div className="result-actions">
-        <button type="button" className="secondary-button" onClick={handleDownload}>
-          下载 SVG
-        </button>
-      </div>
-    </div>
+
+      {isSvgZoomOpen
+        ? createPortal(
+            <div className="svg-preview-zoom-backdrop" role="presentation" onClick={closeSvgZoom}>
+              <section
+                className="svg-preview-zoom-dialog"
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby={svgZoomTitleId}
+                onClick={(event) => event.stopPropagation()}
+              >
+                <header className="svg-preview-zoom-header">
+                  <h2 id={svgZoomTitleId} className="svg-preview-zoom-title">
+                    {title}
+                  </h2>
+                  <button type="button" className="icon-button" aria-label="关闭预览" onClick={closeSvgZoom}>
+                    ×
+                  </button>
+                </header>
+                <div className="svg-preview-zoom-toolbar">
+                  <label className="svg-preview-zoom-scale-label">
+                    <span>缩放</span>
+                    <input
+                      type="range"
+                      className="svg-preview-zoom-range"
+                      min={100}
+                      max={500}
+                      step={1}
+                      value={svgZoomPercent}
+                      onChange={(event) => setSvgZoomPercent(Number(event.target.value))}
+                    />
+                    <span className="svg-preview-zoom-scale-value">{svgZoomPercent}%</span>
+                  </label>
+                </div>
+                <div className="svg-preview-zoom-body">
+                  <div className="svg-preview-zoom-scaled" style={{ width: `${svgZoomPercent}%` }}>
+                    <div dangerouslySetInnerHTML={{ __html: svgZoomMarkup }} />
+                  </div>
+                </div>
+              </section>
+            </div>,
+            document.body,
+          )
+        : null}
+    </>
   );
 };
 
