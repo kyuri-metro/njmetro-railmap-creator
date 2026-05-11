@@ -86,6 +86,14 @@ h3 {
   flex: 0 0 auto;
 }
 
+.field-hint {
+  display: block;
+  margin-top: 6px;
+  font-size: 0.85rem;
+  line-height: 1.45;
+  color: var(--site-muted-fg);
+}
+
 .example-modal-header {
   display: flex;
   align-items: flex-start;

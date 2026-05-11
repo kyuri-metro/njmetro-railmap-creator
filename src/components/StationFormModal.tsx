@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import type { StationItem, StationType, TransferLine } from '../features/generatorSlice';
+import { getNjmetroLineBackgroundColor } from '../njmetroLinePalette';
 
 export type StationFormDraft = {
   chName: string;
@@ -41,7 +42,23 @@ export function StationFormModal({
   const updateTransferLine = (index: number, field: keyof TransferLine, value: string) => {
     setDraft((current) => ({
       ...current,
-      transfer: current.transfer.map((line, lineIndex) => (lineIndex === index ? { ...line, [field]: value } : line)),
+      transfer: current.transfer.map((line, lineIndex) => {
+        if (lineIndex !== index) {
+          return line;
+        }
+
+        const next = { ...line, [field]: value };
+
+        if (field === 'id') {
+          const paletteColor = getNjmetroLineBackgroundColor(value.trim().toUpperCase());
+
+          if (paletteColor) {
+            next.color = paletteColor;
+          }
+        }
+
+        return next;
+      }),
     }));
   };
 

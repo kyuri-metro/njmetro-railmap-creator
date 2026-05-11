@@ -1,4 +1,5 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
+import { getNjmetroLineBackgroundColor } from '../njmetroLinePalette';
 
 export type TransferLine = {
   id: string;
@@ -289,7 +290,13 @@ const generatorSlice = createSlice({
       state.direction = action.payload;
     },
     setLineId(state, action: PayloadAction<string>) {
-      state.lineId = action.payload;
+      const lineId = action.payload;
+      state.lineId = lineId;
+      const paletteColor = getNjmetroLineBackgroundColor(lineId);
+
+      if (paletteColor) {
+        state.idColor = paletteColor;
+      }
     },
     setIdColor(state, action: PayloadAction<string>) {
       state.idColor = action.payload;

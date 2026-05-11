@@ -362,6 +362,7 @@ function App() {
               value={generator.lineId}
               onChange={(event) => dispatch(setLineId(event.target.value.trim().toUpperCase()))}
             />
+            <span className="field-hint">若该编号在南京地铁线路调色板中有定义，将自动填入下方的线路标识色。</span>
           </label>
           <label className="field-label">
             <span>idColor（线路标识色）</span>
