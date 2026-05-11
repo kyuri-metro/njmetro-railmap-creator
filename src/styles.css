@@ -215,10 +215,11 @@ h3 {
 }
 
 .field-label-checkbox {
+  display: flex;
   flex-direction: row;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
+  justify-content: flex-start;
+  gap: 10px;
 }
 
 .field-label-checkbox input {
@@ -231,6 +232,35 @@ h3 {
   font-size: 0.85rem;
   line-height: 1.45;
   color: var(--site-muted-fg);
+}
+
+.field-label-inline-action {
+  justify-self: start;
+  width: fit-content;
+  max-width: 100%;
+}
+
+.form-grid.single-column {
+  max-width: none;
+  width: 100%;
+}
+
+.form-grid.single-column .field-label .text-input,
+.form-grid.single-column .field-label .solver-select,
+.form-grid.single-column .field-label input[type='color'] {
+  max-width: 280px;
+  width: 100%;
+}
+
+.form-grid.single-column > .field-hint,
+.form-grid.single-column > .field-label.field-label-checkbox {
+  grid-column: 1 / -1;
+  max-width: none;
+}
+
+.form-grid.single-column > .field-label.field-label-checkbox span {
+  flex: 1;
+  min-width: 0;
 }
 
 .confirm-dialog-backdrop {

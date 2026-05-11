@@ -738,11 +738,15 @@ function App() {
                     }}
                     onBlur={flushLineIdDraft}
                   />
-                  <span className="field-hint">若该编号在南京地铁线路调色板中有定义，将自动填入下方的线路标识色。</span>
-                  <button type="button" className="secondary-button" onClick={handleFillStationsByLineId}>
+                  <button
+                    type="button"
+                    className="primary-button field-label-inline-action"
+                    onClick={handleFillStationsByLineId}
+                  >
                     按线路填充已开通站点
                   </button>
                 </label>
+                <span className="field-hint">若该编号在南京地铁线路调色板中有定义，将自动填入下方的线路标识色。</span>
                 <label className="field-label">
                   <span>idColor（线路标识色）</span>
                   <input
