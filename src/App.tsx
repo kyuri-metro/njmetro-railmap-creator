@@ -125,6 +125,32 @@ const toStationItem = (draft: StationFormDraft, id: string): StationItem => ({
   transfer: sanitizeTransfer(draft.transfer),
 });
 
+const SunIcon = () => (
+  <svg className="app-theme-icon" viewBox="0 0 24 24" aria-hidden>
+    <circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" strokeWidth="2" />
+    <path
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      d="M12 2v2m0 14v2M4.93 4.93l1.41 1.41m11.32 11.32l1.41 1.41M2 12h2m14 0h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"
+    />
+  </svg>
+);
+
+const MoonIcon = () => (
+  <svg className="app-theme-icon" viewBox="0 0 24 24" aria-hidden>
+    <path
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"
+    />
+  </svg>
+);
+
 type DownloadableBadgeCardProps = {
   title: string;
   fileName: string;
@@ -245,177 +271,187 @@ function App() {
   const missingTargetFonts = fontDetectionResults.filter((result) => !result.detected);
 
   return (
-    <main className="page-shell">
-      <header className="page-header">
-        <div className="page-meta-row">
-          <p className="eyebrow">Nanjing Metro Prototype</p>
+    <main className="app-layout">
+      <header className="app-topbar">
+        <div className="app-topbar-inner">
+          <h1 className="app-topbar-title">南京地铁屏蔽门上方贴纸生成器（Alpha）</h1>
           <button
-            className="theme-toggle"
+            className="theme-toggle app-topbar-theme-toggle"
             type="button"
             onClick={handleThemeToggle}
             aria-label={themeMode === 'dark' ? '切换到浅色模式' : '切换到深色模式'}
           >
-            {themeMode === 'dark' ? '切换到浅色模式' : '切换到深色模式'}
-          </button>
-        </div>
-        <h1>南京地铁屏蔽门上方贴纸生成器（Alpha）</h1>
-        <p className="lead">用于演示 SVG 输出骨架</p>
-        <p>
-          本项目受到
-          {' '}
-          <a href="https://github.com/railmapgen/rmg" target="_blank" rel="noreferrer">
-            RMG
-          </a>
-          {' '}
-          项目的启发，在此表示感谢。
-        </p>
-        <div className="docs-callout">
-          <strong>参考资料与推导过程</strong>
-          <p>
-            参考资料、尺寸记录与推导过程见
-            {' '}
-            <a href={docsReferenceUrl} target="_blank" rel="noreferrer">
-              docs/
-            </a>
-            。
-          </p>
-        </div>
-        <div className="inline-links" aria-label="外部链接">
-          <a href="https://github.com/kyuri-metro/njmetro-railmap-creator" target="_blank" rel="noreferrer">
-            GitHub 仓库
-          </a>
-          <a href={docsReferenceUrl} target="_blank" rel="noreferrer">
-            参考资料（docs/）
-          </a>
-          <a href="https://umamichi.moe/" target="_blank" rel="noreferrer">
-            个人网站
-          </a>
-          <button type="button" className="ghost-button example-trigger" onClick={() => setIsExampleModalOpen(true)}>
-            查看示例
+            {themeMode === 'dark' ? <SunIcon /> : <MoonIcon />}
           </button>
         </div>
       </header>
 
-      <section className="panel">
-        <h2>待办事项</h2>
-        <ul>
-          <li>在火车站或机场是当前站时添加火车站或机场标识</li>
-        </ul>
-      </section>
-
-      <section className="panel">
-        <h2>字体检测</h2>
-        <p className="panel-subtitle">
-          使用与旧项目相同的 Canvas 字形宽度签名检查目标字体是否存在，避免预览与导出在不同设备上静默回退。
-        </p>
-        <p className="font-detection-summary">
-          {fontDetectionState === 'checking'
-            ? '正在测量 Microsoft YaHei、FZHei-B01、Helvetica。'
-            : missingTargetFonts.length === 0
-              ? '三种目标字体均已检测到。'
-              : `以下字体未通过签名校验：${missingTargetFonts.map((result) => result.fontFamily).join('、')}。`}
-        </p>
-        <div className="font-detection-list" role="list" aria-label="字体检测结果">
-          {fontDetectionResults.map((result) => (
-            <article key={result.fontFamily} className="font-detection-card" role="listitem">
-              <div className="font-detection-header">
-                <strong>{result.fontFamily}</strong>
-                <span className={`status-pill ${result.detected ? 'success' : fontDetectionState === 'checking' ? 'pending' : 'warning'}`}>
-                  {fontDetectionState === 'checking' ? '检测中' : result.detected ? '已检测到' : '未检测到'}
-                </span>
+      <div className="app-main">
+        <div className="app-columns">
+          <div className="app-column app-column-main">
+            <section className="app-content-intro" aria-label="项目说明">
+              <p>用于演示 SVG 输出骨架</p>
+              <p>
+                本项目受到
+                {' '}
+                <a href="https://github.com/railmapgen/rmg" target="_blank" rel="noreferrer">
+                  RMG
+                </a>
+                {' '}
+                项目的启发，在此表示感谢。
+              </p>
+              <div className="docs-callout">
+                <strong>参考资料与推导过程</strong>
+                <p>
+                  参考资料、尺寸记录与推导过程见
+                  {' '}
+                  <a href={docsReferenceUrl} target="_blank" rel="noreferrer">
+                    docs/
+                  </a>
+                  。
+                </p>
               </div>
-            </article>
-          ))}
-        </div>
-      </section>
+              <div className="inline-links" aria-label="外部链接">
+                <a href="https://github.com/kyuri-metro/njmetro-railmap-creator" target="_blank" rel="noreferrer">
+                  GitHub 仓库
+                </a>
+                <a href={docsReferenceUrl} target="_blank" rel="noreferrer">
+                  参考资料（docs/）
+                </a>
+                <a href="https://umamichi.moe/" target="_blank" rel="noreferrer">
+                  个人网站
+                </a>
+                <button type="button" className="ghost-button example-trigger" onClick={() => setIsExampleModalOpen(true)}>
+                  查看示例
+                </button>
+              </div>
+            </section>
 
-      <section className="panel">
-        <h2>生成设置</h2>
-        <div className="form-grid single-column">
-          <label className="field-label">
-            <span>totalLength（总长（px））</span>
-            <input
-              className="text-input"
-              type="number"
-              min={0}
-              step={1}
-              value={generator.totalLength}
-              onChange={(event) => dispatch(setTotalLength(Number(event.target.value) || 0))}
-            />
-          </label>
-          <label className="field-label">
-            <span>direction（列车行进方向）</span>
-            <select
-              className="solver-select"
-              value={generator.direction}
-              onChange={(event) => dispatch(setDirection(event.target.value as 'l' | 'r'))}
-            >
-              <option value="l">l</option>
-              <option value="r">r</option>
-            </select>
-          </label>
-          <label className="field-label">
-            <span>lineId（线路编号）</span>
-            <input
-              className="text-input"
-              type="text"
-              value={generator.lineId}
-              onChange={(event) => dispatch(setLineId(event.target.value.trim().toUpperCase()))}
-            />
-            <span className="field-hint">若该编号在南京地铁线路调色板中有定义，将自动填入下方的线路标识色。</span>
-          </label>
-          <label className="field-label">
-            <span>idColor（线路标识色）</span>
-            <input type="color" value={generator.idColor} onChange={(event) => dispatch(setIdColor(event.target.value))} />
-          </label>
-          <label className="field-label field-label-checkbox">
-            <input
-              type="checkbox"
-              checked={generator.showStationTypeIcons}
-              onChange={(event) => dispatch(setShowStationTypeIcons(event.target.checked))}
-            />
-            <span>在火车站或机场站名前添加图标（测试）</span>
-          </label>
-        </div>
-      </section>
+            <section className="panel">
+              <h2>待办事项</h2>
+              <ul>
+                <li>在火车站或机场是当前站时添加火车站或机场标识</li>
+              </ul>
+            </section>
 
-      <section className="panel">
-        <div className="panel-heading">
-          <div>
-            <h2>站点列表</h2>
+            <section className="panel">
+              <h2>字体检测</h2>
+              <p className="panel-subtitle">
+                使用与旧项目相同的 Canvas 字形宽度签名检查目标字体是否存在，避免预览与导出在不同设备上静默回退。
+              </p>
+              <p className="font-detection-summary">
+                {fontDetectionState === 'checking'
+                  ? '正在测量 Microsoft YaHei、FZHei-B01、Helvetica。'
+                  : missingTargetFonts.length === 0
+                    ? '三种目标字体均已检测到。'
+                    : `以下字体未通过签名校验：${missingTargetFonts.map((result) => result.fontFamily).join('、')}。`}
+              </p>
+              <div className="font-detection-list" role="list" aria-label="字体检测结果">
+                {fontDetectionResults.map((result) => (
+                  <article key={result.fontFamily} className="font-detection-card" role="listitem">
+                    <div className="font-detection-header">
+                      <strong>{result.fontFamily}</strong>
+                      <span className={`status-pill ${result.detected ? 'success' : fontDetectionState === 'checking' ? 'pending' : 'warning'}`}>
+                        {fontDetectionState === 'checking' ? '检测中' : result.detected ? '已检测到' : '未检测到'}
+                      </span>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            </section>
+
+            <section className="panel">
+              <h2>生成设置</h2>
+              <div className="form-grid single-column">
+                <label className="field-label">
+                  <span>totalLength（总长（px））</span>
+                  <input
+                    className="text-input"
+                    type="number"
+                    min={0}
+                    step={1}
+                    value={generator.totalLength}
+                    onChange={(event) => dispatch(setTotalLength(Number(event.target.value) || 0))}
+                  />
+                </label>
+                <label className="field-label">
+                  <span>direction（列车行进方向）</span>
+                  <select
+                    className="solver-select"
+                    value={generator.direction}
+                    onChange={(event) => dispatch(setDirection(event.target.value as 'l' | 'r'))}
+                  >
+                    <option value="l">l</option>
+                    <option value="r">r</option>
+                  </select>
+                </label>
+                <label className="field-label">
+                  <span>lineId（线路编号）</span>
+                  <input
+                    className="text-input"
+                    type="text"
+                    value={generator.lineId}
+                    onChange={(event) => dispatch(setLineId(event.target.value.trim().toUpperCase()))}
+                  />
+                  <span className="field-hint">若该编号在南京地铁线路调色板中有定义，将自动填入下方的线路标识色。</span>
+                </label>
+                <label className="field-label">
+                  <span>idColor（线路标识色）</span>
+                  <input type="color" value={generator.idColor} onChange={(event) => dispatch(setIdColor(event.target.value))} />
+                </label>
+                <label className="field-label field-label-checkbox">
+                  <input
+                    type="checkbox"
+                    checked={generator.showStationTypeIcons}
+                    onChange={(event) => dispatch(setShowStationTypeIcons(event.target.checked))}
+                  />
+                  <span>在火车站或机场站名前添加图标（测试）</span>
+                </label>
+              </div>
+            </section>
+
+            <section className="panel">
+              <div className="panel-heading">
+                <div>
+                  <h2>站点列表</h2>
+                </div>
+              </div>
+
+              <StationTable
+                currentStnId={generator.currentStnId}
+                stations={generator.stnList}
+                onEdit={(station) => setModalState({ kind: 'edit', station })}
+                onInsert={openInsertModal}
+                onSelect={(stationId) => dispatch(setCurrentStation(stationId))}
+              />
+
+              <br />
+
+              <button type="button" className="primary-button submit-button" onClick={() => setSubmittedData(generator)}>
+                提交
+              </button>
+            </section>
           </div>
+
+          <aside className="app-column app-column-preview" aria-label="结果预览">
+            <section className="panel result-panel">
+              <h2>结果</h2>
+
+              <DownloadableBadgeCard title="CurrentStationBadge" fileName="current-station-badge.svg">
+                <CurrentStationBadge data={submittedData} />
+              </DownloadableBadgeCard>
+
+              <DownloadableBadgeCard title="DirectionBadge" fileName="direction-badge.svg">
+                <DirectionBadge data={submittedData} />
+              </DownloadableBadgeCard>
+
+              <DownloadableBadgeCard title="RouteBadge" fileName="route-badge.svg">
+                <RouteBadge data={submittedData} />
+              </DownloadableBadgeCard>
+            </section>
+          </aside>
         </div>
-
-        <StationTable
-          currentStnId={generator.currentStnId}
-          stations={generator.stnList}
-          onEdit={(station) => setModalState({ kind: 'edit', station })}
-          onInsert={openInsertModal}
-          onSelect={(stationId) => dispatch(setCurrentStation(stationId))}
-        />
-
-        <br />
-
-        <button type="button" className="primary-button submit-button" onClick={() => setSubmittedData(generator)}>
-          提交
-        </button>
-      </section>
-
-      <section className="panel result-panel">
-        <h2>结果</h2>
-
-        <DownloadableBadgeCard title="CurrentStationBadge" fileName="current-station-badge.svg">
-          <CurrentStationBadge data={submittedData} />
-        </DownloadableBadgeCard>
-
-        <DownloadableBadgeCard title="DirectionBadge" fileName="direction-badge.svg">
-          <DirectionBadge data={submittedData} />
-        </DownloadableBadgeCard>
-
-        <DownloadableBadgeCard title="RouteBadge" fileName="route-badge.svg">
-          <RouteBadge data={submittedData} />
-        </DownloadableBadgeCard>
-      </section>
+      </div>
 
       {modalState ? (
         <StationFormModal
