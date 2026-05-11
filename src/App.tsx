@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { startTransition, useDeferredValue, useEffect, useRef, useState, type ReactNode } from 'react';
+import { usePreviewLoadingOverlay } from './hooks/usePreviewLoadingOverlay';
 import { CurrentStationBadge } from './components/CurrentStationBadge';
 import { DirectionBadge } from './components/DirectionBadge';
 import { RouteBadge } from './components/RouteBadge';
@@ -14,7 +15,6 @@ import {
   setShowStationTypeIcons,
   setTotalLength,
   updateStation,
-  type GeneratorState,
   type StationItem,
   type TransferLine,
 } from './features/generatorSlice';
@@ -34,6 +34,32 @@ type ModalState =
   | null;
 
 type ThemeMode = 'light' | 'dark';
+
+const controlDebounceMs = 160;
+
+const parseTotalLengthDraft = (raw: string) => {
+  const trimmed = raw.trim();
+
+  if (trimmed === '') {
+    return 0;
+  }
+
+  const n = Math.trunc(Number(trimmed));
+
+  return Number.isFinite(n) && n >= 0 ? n : 0;
+};
+
+const normalizeLineIdDraft = (raw: string) => raw.trim().toUpperCase();
+
+const normalizeIdColorDraft = (raw: string) => {
+  const v = raw.trim();
+
+  if (/^#[0-9a-fA-F]{6}$/.test(v)) {
+    return v.toLowerCase();
+  }
+
+  return null;
+};
 
 const themeStorageKey = 'site-theme';
 const themeTransitionLockClassName = 'theme-transition-lock';
@@ -199,8 +225,21 @@ const DownloadableBadgeCard = ({ title, fileName, children }: DownloadableBadgeC
 function App() {
   const dispatch = useAppDispatch();
   const generator = useAppSelector((state) => state.generator);
+  const previewGenerator = useDeferredValue(generator);
   const [modalState, setModalState] = useState<ModalState>(null);
-  const [submittedData, setSubmittedData] = useState<GeneratorState>(generator);
+  const previewLoading = usePreviewLoadingOverlay(generator, 16);
+  const [totalLengthDraft, setTotalLengthDraft] = useState(() => String(generator.totalLength));
+  const totalLengthDraftRef = useRef(totalLengthDraft);
+  const totalLengthDirtyRef = useRef(false);
+  const totalLengthDebounceRef = useRef(0);
+  const [lineIdDraft, setLineIdDraft] = useState(() => generator.lineId);
+  const lineIdDraftRef = useRef(lineIdDraft);
+  const lineIdDirtyRef = useRef(false);
+  const lineIdDebounceRef = useRef(0);
+  const [idColorDraft, setIdColorDraft] = useState(() => generator.idColor);
+  const idColorDraftRef = useRef(idColorDraft);
+  const idColorDirtyRef = useRef(false);
+  const idColorDebounceRef = useRef(0);
   const [themeMode, setThemeMode] = useState<ThemeMode>('light');
   const [isExampleModalOpen, setIsExampleModalOpen] = useState(false);
   const [fontDetectionResults, setFontDetectionResults] = useState<FontDetectionResult[]>(fallbackFontDetectionResults);
@@ -232,6 +271,140 @@ function App() {
       cancelled = true;
     };
   }, []);
+
+  totalLengthDraftRef.current = totalLengthDraft;
+  lineIdDraftRef.current = lineIdDraft;
+  idColorDraftRef.current = idColorDraft;
+
+  useEffect(() => {
+    if (!totalLengthDirtyRef.current) {
+      setTotalLengthDraft(String(generator.totalLength));
+    }
+  }, [generator.totalLength]);
+
+  useEffect(() => {
+    if (!lineIdDirtyRef.current) {
+      setLineIdDraft(generator.lineId);
+    }
+  }, [generator.lineId]);
+
+  useEffect(() => {
+    if (!idColorDirtyRef.current) {
+      setIdColorDraft(generator.idColor);
+    }
+  }, [generator.idColor]);
+
+  useEffect(() => {
+    window.clearTimeout(totalLengthDebounceRef.current);
+    totalLengthDebounceRef.current = window.setTimeout(() => {
+      const parsed = parseTotalLengthDraft(totalLengthDraftRef.current);
+
+      if (parsed !== generator.totalLength) {
+        startTransition(() => {
+          dispatch(setTotalLength(parsed));
+        });
+      }
+
+      totalLengthDirtyRef.current = false;
+      setTotalLengthDraft(String(parsed));
+    }, controlDebounceMs);
+
+    return () => {
+      window.clearTimeout(totalLengthDebounceRef.current);
+    };
+  }, [totalLengthDraft, generator.totalLength, dispatch]);
+
+  useEffect(() => {
+    window.clearTimeout(lineIdDebounceRef.current);
+    lineIdDebounceRef.current = window.setTimeout(() => {
+      const next = normalizeLineIdDraft(lineIdDraftRef.current);
+
+      if (next !== generator.lineId) {
+        startTransition(() => {
+          dispatch(setLineId(next));
+        });
+      }
+
+      lineIdDirtyRef.current = false;
+      setLineIdDraft(next);
+    }, controlDebounceMs);
+
+    return () => {
+      window.clearTimeout(lineIdDebounceRef.current);
+    };
+  }, [lineIdDraft, generator.lineId, dispatch]);
+
+  useEffect(() => {
+    window.clearTimeout(idColorDebounceRef.current);
+    idColorDebounceRef.current = window.setTimeout(() => {
+      const next = normalizeIdColorDraft(idColorDraftRef.current);
+
+      if (next !== null && next !== generator.idColor) {
+        startTransition(() => {
+          dispatch(setIdColor(next));
+        });
+      }
+
+      idColorDirtyRef.current = false;
+
+      if (next !== null) {
+        setIdColorDraft(next);
+      } else {
+        setIdColorDraft(generator.idColor);
+      }
+    }, controlDebounceMs);
+
+    return () => {
+      window.clearTimeout(idColorDebounceRef.current);
+    };
+  }, [idColorDraft, generator.idColor, dispatch]);
+
+  const flushTotalLengthDraft = () => {
+    window.clearTimeout(totalLengthDebounceRef.current);
+    const parsed = parseTotalLengthDraft(totalLengthDraftRef.current);
+
+    if (parsed !== generator.totalLength) {
+      startTransition(() => {
+        dispatch(setTotalLength(parsed));
+      });
+    }
+
+    totalLengthDirtyRef.current = false;
+    setTotalLengthDraft(String(parsed));
+  };
+
+  const flushLineIdDraft = () => {
+    window.clearTimeout(lineIdDebounceRef.current);
+    const next = normalizeLineIdDraft(lineIdDraftRef.current);
+
+    if (next !== generator.lineId) {
+      startTransition(() => {
+        dispatch(setLineId(next));
+      });
+    }
+
+    lineIdDirtyRef.current = false;
+    setLineIdDraft(next);
+  };
+
+  const flushIdColorDraft = () => {
+    window.clearTimeout(idColorDebounceRef.current);
+    const next = normalizeIdColorDraft(idColorDraftRef.current);
+
+    if (next !== null && next !== generator.idColor) {
+      startTransition(() => {
+        dispatch(setIdColor(next));
+      });
+    }
+
+    idColorDirtyRef.current = false;
+
+    if (next !== null) {
+      setIdColorDraft(next);
+    } else {
+      setIdColorDraft(generator.idColor);
+    }
+  };
 
   const openInsertModal = (position: 'before' | 'after' | 'start' | 'end') => {
     setModalState({
@@ -367,11 +540,16 @@ function App() {
                   <span>totalLength（总长（px））</span>
                   <input
                     className="text-input"
-                    type="number"
-                    min={0}
-                    step={1}
-                    value={generator.totalLength}
-                    onChange={(event) => dispatch(setTotalLength(Number(event.target.value) || 0))}
+                    type="text"
+                    inputMode="numeric"
+                    autoComplete="off"
+                    spellCheck={false}
+                    value={totalLengthDraft}
+                    onChange={(event) => {
+                      totalLengthDirtyRef.current = true;
+                      setTotalLengthDraft(event.target.value.replace(/\D/g, ''));
+                    }}
+                    onBlur={flushTotalLengthDraft}
                   />
                 </label>
                 <label className="field-label">
@@ -379,7 +557,11 @@ function App() {
                   <select
                     className="solver-select"
                     value={generator.direction}
-                    onChange={(event) => dispatch(setDirection(event.target.value as 'l' | 'r'))}
+                    onChange={(event) => {
+                      startTransition(() => {
+                        dispatch(setDirection(event.target.value as 'l' | 'r'));
+                      });
+                    }}
                   >
                     <option value="l">l</option>
                     <option value="r">r</option>
@@ -390,20 +572,36 @@ function App() {
                   <input
                     className="text-input"
                     type="text"
-                    value={generator.lineId}
-                    onChange={(event) => dispatch(setLineId(event.target.value.trim().toUpperCase()))}
+                    value={lineIdDraft}
+                    onChange={(event) => {
+                      lineIdDirtyRef.current = true;
+                      setLineIdDraft(event.target.value.trim().toUpperCase());
+                    }}
+                    onBlur={flushLineIdDraft}
                   />
                   <span className="field-hint">若该编号在南京地铁线路调色板中有定义，将自动填入下方的线路标识色。</span>
                 </label>
                 <label className="field-label">
                   <span>idColor（线路标识色）</span>
-                  <input type="color" value={generator.idColor} onChange={(event) => dispatch(setIdColor(event.target.value))} />
+                  <input
+                    type="color"
+                    value={idColorDraft}
+                    onChange={(event) => {
+                      idColorDirtyRef.current = true;
+                      setIdColorDraft(event.target.value);
+                    }}
+                    onBlur={flushIdColorDraft}
+                  />
                 </label>
                 <label className="field-label field-label-checkbox">
                   <input
                     type="checkbox"
                     checked={generator.showStationTypeIcons}
-                    onChange={(event) => dispatch(setShowStationTypeIcons(event.target.checked))}
+                    onChange={(event) => {
+                      startTransition(() => {
+                        dispatch(setShowStationTypeIcons(event.target.checked));
+                      });
+                    }}
                   />
                   <span>在火车站或机场站名前添加图标（测试）</span>
                 </label>
@@ -422,33 +620,40 @@ function App() {
                 stations={generator.stnList}
                 onEdit={(station) => setModalState({ kind: 'edit', station })}
                 onInsert={openInsertModal}
-                onSelect={(stationId) => dispatch(setCurrentStation(stationId))}
+                onSelect={(stationId) => {
+                  startTransition(() => {
+                    dispatch(setCurrentStation(stationId));
+                  });
+                }}
               />
 
-              <br />
-
-              <button type="button" className="primary-button submit-button" onClick={() => setSubmittedData(generator)}>
-                提交
-              </button>
+              <p className="panel-subtitle preview-live-hint">右侧预览随表单与站点列表实时更新。</p>
             </section>
           </div>
 
           <aside className="app-column app-column-preview" aria-label="结果预览">
-            <section className="panel result-panel">
-              <h2>结果</h2>
+            <div className="preview-column-root">
+              {previewLoading ? (
+                <div className="preview-loading-overlay" aria-live="polite" aria-busy="true">
+                  <span className="preview-loading-label">加载中</span>
+                </div>
+              ) : null}
+              <section className="panel result-panel">
+                <h2>结果</h2>
 
-              <DownloadableBadgeCard title="CurrentStationBadge" fileName="current-station-badge.svg">
-                <CurrentStationBadge data={submittedData} />
-              </DownloadableBadgeCard>
+                <DownloadableBadgeCard title="CurrentStationBadge" fileName="current-station-badge.svg">
+                  <CurrentStationBadge data={previewGenerator} />
+                </DownloadableBadgeCard>
 
-              <DownloadableBadgeCard title="DirectionBadge" fileName="direction-badge.svg">
-                <DirectionBadge data={submittedData} />
-              </DownloadableBadgeCard>
+                <DownloadableBadgeCard title="DirectionBadge" fileName="direction-badge.svg">
+                  <DirectionBadge data={previewGenerator} />
+                </DownloadableBadgeCard>
 
-              <DownloadableBadgeCard title="RouteBadge" fileName="route-badge.svg">
-                <RouteBadge data={submittedData} />
-              </DownloadableBadgeCard>
-            </section>
+                <DownloadableBadgeCard title="RouteBadge" fileName="route-badge.svg">
+                  <RouteBadge data={previewGenerator} />
+                </DownloadableBadgeCard>
+              </section>
+            </div>
           </aside>
         </div>
       </div>
