@@ -10,6 +10,7 @@ import {
   deleteStation,
   insertStation,
   replaceStations,
+  reverseStnList,
   setCurrentStation,
   setDirection,
   setIdColor,
@@ -683,6 +684,11 @@ function App() {
                 stations={generator.stnList}
                 onEdit={(station) => setModalState({ kind: 'edit', station })}
                 onInsert={openInsertModal}
+                onReverseList={() => {
+                  startTransition(() => {
+                    dispatch(reverseStnList());
+                  });
+                }}
                 onSelect={(stationId) => {
                   startTransition(() => {
                     dispatch(setCurrentStation(stationId));

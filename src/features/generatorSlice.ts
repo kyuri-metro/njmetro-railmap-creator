@@ -343,12 +343,16 @@ const generatorSlice = createSlice({
       state.stnList = stations;
       state.currentStnId = stations[0]?.id ?? '';
     },
+    reverseStnList(state) {
+      state.stnList.reverse();
+    },
   },
 });
 
 export const {
   deleteStation,
   insertStation,
+  reverseStnList,
   setCurrentStation,
   setDirection,
   setIdColor,

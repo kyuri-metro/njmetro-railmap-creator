@@ -14,28 +14,34 @@ type StationTableProps = {
   stations: StationItem[];
   onEdit: (station: StationItem) => void;
   onInsert: (position: 'before' | 'after' | 'start' | 'end') => void;
+  onReverseList: () => void;
   onSelect: (stationId: string) => void;
 };
 
-export function StationTable({ currentStnId, stations, onEdit, onInsert, onSelect }: StationTableProps) {
+export function StationTable({ currentStnId, stations, onEdit, onInsert, onReverseList, onSelect }: StationTableProps) {
   return (
     <section className="panel-section">
-      <div className="section-toolbar">
-        <div className="toolbar-buttons">
-          <button type="button" className="secondary-button" onClick={() => onInsert('after')}>
-            之后插入
-          </button>
-          <button type="button" className="secondary-button" onClick={() => onInsert('before')}>
-            之前插入
-          </button>
-          <button type="button" className="secondary-button" onClick={() => onInsert('start')}>
-            最前插入
-          </button>
-          <button type="button" className="secondary-button" onClick={() => onInsert('end')}>
-            最后插入
-          </button>
+      <div className="section-toolbar station-section-toolbar">
+        <div className="station-toolbar-cluster">
+          <div className="toolbar-buttons">
+            <button type="button" className="secondary-button" onClick={() => onInsert('after')}>
+              之后插入
+            </button>
+            <button type="button" className="secondary-button" onClick={() => onInsert('before')}>
+              之前插入
+            </button>
+            <button type="button" className="secondary-button" onClick={() => onInsert('start')}>
+              最前插入
+            </button>
+            <button type="button" className="secondary-button" onClick={() => onInsert('end')}>
+              最后插入
+            </button>
+          </div>
+          <p className="toolbar-hint">点击表格行可切换当前站点，之前/之后插入会基于当前站点执行。</p>
         </div>
-        <p className="toolbar-hint">点击表格行可切换当前站点，之前/之后插入会基于当前站点执行。</p>
+        <button type="button" className="secondary-button station-reverse-list-button" onClick={onReverseList}>
+          反转列表
+        </button>
       </div>
 
       <div className="table-wrap">
