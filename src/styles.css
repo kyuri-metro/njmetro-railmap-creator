@@ -242,6 +242,41 @@ h3 {
   color: var(--site-muted-fg);
 }
 
+.form-grid.generator-settings-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  max-width: none;
+  width: 100%;
+}
+
+.form-grid.generator-settings-grid .field-label .text-input,
+.form-grid.generator-settings-grid .field-label .solver-select,
+.form-grid.generator-settings-grid .field-label input[type='color'] {
+  max-width: none;
+  width: 100%;
+}
+
+.form-grid.generator-settings-grid > .field-label.field-label-checkbox {
+  grid-column: 1 / -1;
+  max-width: none;
+}
+
+.form-grid.generator-settings-grid > .field-label.field-label-checkbox span {
+  flex: 1;
+  min-width: 0;
+}
+
+@media (max-width: 720px) {
+  .form-grid.generator-settings-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .form-grid.generator-settings-grid > .field-label.field-label-checkbox {
+    grid-column: auto;
+  }
+}
+
 .form-grid.single-column {
   max-width: none;
   width: 100%;

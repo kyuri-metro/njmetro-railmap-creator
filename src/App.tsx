@@ -680,7 +680,7 @@ function App() {
 
             <section className="panel">
               <h2>生成设置</h2>
-              <div className="form-grid single-column">
+              <div className="form-grid generator-settings-grid">
                 <label className="field-label">
                   <span>totalLength（总长（px））</span>
                   <input
