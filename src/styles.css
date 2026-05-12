@@ -522,6 +522,14 @@ h3 {
   margin-left: auto;
 }
 
+/* 避免在 grid/flex 列内被内容撑破视口 */
+.table-wrap {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
 .station-table {
   width: 100%;
   border-collapse: separate;
@@ -551,6 +559,11 @@ h3 {
   text-align: left;
   vertical-align: middle;
   font-size: 0.92rem;
+}
+
+.station-table td {
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .station-table th {
@@ -605,7 +618,10 @@ html.dark .station-table th {
 }
 
 .station-en-name {
+  display: inline-block;
+  max-width: 100%;
   color: var(--site-muted-fg);
+  overflow-wrap: anywhere;
 }
 
 .transfer-list {
@@ -896,7 +912,9 @@ html.dark .station-table th {
 }
 
 .modal-transfer-table input {
+  width: 100%;
   min-width: 0;
+  box-sizing: border-box;
 }
 
 .modal-transfer-table input[type='color'] {
@@ -914,8 +932,14 @@ html.dark .station-table th {
     align-items: flex-start;
   }
 
-  .station-table {
-    min-width: 620px;
+  .station-table th,
+  .station-table td {
+    padding: 8px 8px;
+  }
+
+  .station-table th {
+    white-space: normal;
+    line-height: 1.3;
   }
 }
 
