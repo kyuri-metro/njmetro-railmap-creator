@@ -104,7 +104,7 @@ h1 {
 
 .app-columns {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(260px, 36%);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 28px;
   align-items: start;
   flex: 1;
