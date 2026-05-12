@@ -475,8 +475,32 @@ h3 {
   white-space: nowrap;
 }
 
-.station-list-heading .primary-button {
+.station-list-heading-end {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 14px;
   flex-shrink: 0;
+  min-width: 0;
+}
+
+.station-list-heading-end .primary-button {
+  flex-shrink: 0;
+}
+
+.station-list-yaml-tools {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-inline-end: 2px;
+}
+
+.station-list-yaml-tools .icon-button {
+  flex-shrink: 0;
+}
+
+.station-yaml-tool-icon {
+  display: block;
 }
 
 .station-section-toolbar {

@@ -1,4 +1,13 @@
-import { startTransition, useDeferredValue, useEffect, useId, useRef, useState, type ReactNode } from 'react';
+import {
+  startTransition,
+  useDeferredValue,
+  useEffect,
+  useId,
+  useRef,
+  useState,
+  type ChangeEvent,
+  type ReactNode,
+} from 'react';
 import { createPortal } from 'react-dom';
 import { usePreviewLoadingOverlay } from './hooks/usePreviewLoadingOverlay';
 import { CurrentStationBadge } from './components/CurrentStationBadge';
@@ -23,6 +32,7 @@ import {
   type TransferLine,
 } from './features/generatorSlice';
 import { detectTargetFonts, targetFontSignatures, type FontDetectionResult } from './fontSignature';
+import { parseRailmapYaml, serializeRailmapYaml, type RailmapYamlImport } from './stationListYaml';
 import { useAppDispatch, useAppSelector } from './hooks';
 
 type ModalState =
@@ -191,6 +201,34 @@ const MagnifyPreviewIcon = () => (
   </svg>
 );
 
+/** 导出：箭头向下落入托盘（保存到本地文件的常见隐喻） */
+const ExportYamlIcon = () => (
+  <svg className="station-yaml-tool-icon" viewBox="0 0 24 24" width="20" height="20" aria-hidden>
+    <path
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"
+    />
+  </svg>
+);
+
+/** 导入：文件夹（从本地选取文件） */
+const ImportYamlIcon = () => (
+  <svg className="station-yaml-tool-icon" viewBox="0 0 24 24" width="20" height="20" aria-hidden>
+    <path
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      d="M4 19h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-6.5a2 2 0 0 1-1.7-1L9.2 4.3A2 2 0 0 0 7.3 3H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2Z"
+    />
+  </svg>
+);
+
 type DownloadableBadgeCardProps = {
   title: string;
   fileName: string;
@@ -352,6 +390,10 @@ function App() {
   const [themeMode, setThemeMode] = useState<ThemeMode>('light');
   const [isExampleModalOpen, setIsExampleModalOpen] = useState(false);
   const [isOverwriteStationsConfirmOpen, setIsOverwriteStationsConfirmOpen] = useState(false);
+  const [isYamlImportConfirmOpen, setIsYamlImportConfirmOpen] = useState(false);
+  const [pendingRailmapImport, setPendingRailmapImport] = useState<RailmapYamlImport | null>(null);
+  const [yamlImportError, setYamlImportError] = useState<string | null>(null);
+  const yamlFileInputRef = useRef<HTMLInputElement>(null);
   const [builtinUnavailableNotice, setBuiltinUnavailableNotice] = useState<string | null>(null);
   const [fontDetectionResults, setFontDetectionResults] = useState<FontDetectionResult[]>(fallbackFontDetectionResults);
   const [fontDetectionState, setFontDetectionState] = useState<'idle' | 'checking' | 'done'>('idle');
@@ -384,7 +426,7 @@ function App() {
   }, []);
 
   useEffect(() => {
-    if (!isOverwriteStationsConfirmOpen && !builtinUnavailableNotice) {
+    if (!isOverwriteStationsConfirmOpen && !builtinUnavailableNotice && !yamlImportError && !isYamlImportConfirmOpen) {
       return;
     }
 
@@ -397,6 +439,15 @@ function App() {
         setIsOverwriteStationsConfirmOpen(false);
       }
 
+      if (isYamlImportConfirmOpen) {
+        setIsYamlImportConfirmOpen(false);
+        setPendingRailmapImport(null);
+      }
+
+      if (yamlImportError) {
+        setYamlImportError(null);
+      }
+
       if (builtinUnavailableNotice) {
         setBuiltinUnavailableNotice(null);
       }
@@ -404,7 +455,12 @@ function App() {
 
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [isOverwriteStationsConfirmOpen, builtinUnavailableNotice]);
+  }, [
+    isOverwriteStationsConfirmOpen,
+    isYamlImportConfirmOpen,
+    builtinUnavailableNotice,
+    yamlImportError,
+  ]);
 
   totalLengthDraftRef.current = totalLengthDraft;
   lineIdDraftRef.current = lineIdDraft;
@@ -583,6 +639,77 @@ function App() {
     }
 
     setIsOverwriteStationsConfirmOpen(true);
+  };
+
+  const handleExportStationYaml = () => {
+    const yml = serializeRailmapYaml(generator);
+    const blob = new Blob([yml], { type: 'text/yaml;charset=utf-8' });
+    const objectUrl = window.URL.createObjectURL(blob);
+    const downloadLink = document.createElement('a');
+
+    downloadLink.href = objectUrl;
+    downloadLink.download = 'railmap.yml';
+    document.body.append(downloadLink);
+    downloadLink.click();
+    downloadLink.remove();
+    window.URL.revokeObjectURL(objectUrl);
+  };
+
+  const handleYamlFileChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+
+    if (!file) {
+      return;
+    }
+
+    const reader = new FileReader();
+
+    reader.onload = () => {
+      const text = String(reader.result ?? '');
+      const result = parseRailmapYaml(text, generator);
+
+      if (!result.ok) {
+        setYamlImportError(result.message);
+        return;
+      }
+
+      setPendingRailmapImport(result.data);
+      setIsYamlImportConfirmOpen(true);
+    };
+
+    reader.onerror = () => {
+      setYamlImportError('读取文件失败。');
+    };
+
+    reader.readAsText(file, 'UTF-8');
+  };
+
+  const confirmYamlStationImport = () => {
+    if (!pendingRailmapImport) {
+      return;
+    }
+
+    const { stations, lineId, color, njMetroSettings } = pendingRailmapImport;
+    setIsYamlImportConfirmOpen(false);
+    setPendingRailmapImport(null);
+
+    totalLengthDirtyRef.current = false;
+    lineIdDirtyRef.current = false;
+    idColorDirtyRef.current = false;
+    setTotalLengthDraft(String(njMetroSettings.totalLength));
+    setLineIdDraft(lineId);
+    setIdColorDraft(color);
+
+    startTransition(() => {
+      dispatch(replaceStations({ stations }));
+      dispatch(setTotalLength(njMetroSettings.totalLength));
+      dispatch(setDirection(njMetroSettings.direction));
+      dispatch(setShowStationTypeIcons(njMetroSettings.showStationTypeIcons));
+      dispatch(setLineId(lineId));
+      dispatch(setIdColor(color));
+      dispatch(setCurrentStation(njMetroSettings.currentStnId));
+    });
   };
 
   const confirmBuiltinStationOverwrite = () => {
@@ -765,9 +892,31 @@ function App() {
             <section className="panel">
               <div className="station-list-heading">
                 <h2>站点列表</h2>
-                <button type="button" className="primary-button" onClick={handleFillStationsByLineId}>
-                  按线路填充已开通站点
-                </button>
+                <div className="station-list-heading-end">
+                  <div className="station-list-yaml-tools" role="group" aria-label="站点列表 YAML">
+                    <button type="button" className="icon-button" aria-label="导出线路与站点为 YAML" onClick={handleExportStationYaml}>
+                      <ExportYamlIcon />
+                    </button>
+                    <button
+                      type="button"
+                      className="icon-button"
+                      aria-label="从 YAML 导入线路与站点"
+                      onClick={() => yamlFileInputRef.current?.click()}
+                    >
+                      <ImportYamlIcon />
+                    </button>
+                    <input
+                      ref={yamlFileInputRef}
+                      type="file"
+                      accept=".yml,.yaml,text/yaml,application/yaml"
+                      className="visually-hidden"
+                      onChange={handleYamlFileChange}
+                    />
+                  </div>
+                  <button type="button" className="primary-button" onClick={handleFillStationsByLineId}>
+                    按线路填充已开通站点
+                  </button>
+                </div>
               </div>
 
               <StationTable
@@ -834,6 +983,73 @@ function App() {
           }
           onSubmit={handleModalSubmit}
         />
+      ) : null}
+
+      {isYamlImportConfirmOpen ? (
+        <div
+          className="confirm-dialog-backdrop"
+          role="presentation"
+          onClick={() => {
+            setIsYamlImportConfirmOpen(false);
+            setPendingRailmapImport(null);
+          }}
+        >
+          <div
+            className="confirm-dialog"
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="yaml-import-confirm-title"
+            aria-describedby="yaml-import-confirm-desc"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <h2 id="yaml-import-confirm-title" className="confirm-dialog-title">
+              确认导入 YAML
+            </h2>
+            <p id="yaml-import-confirm-desc" className="confirm-dialog-body">
+              导入将覆盖当前站点列表、线路编号、标识色与生成设置（总长、方向等），且不可撤销。
+            </p>
+            <div className="confirm-dialog-actions">
+              <button
+                type="button"
+                className="secondary-button"
+                onClick={() => {
+                  setIsYamlImportConfirmOpen(false);
+                  setPendingRailmapImport(null);
+                }}
+              >
+                取消
+              </button>
+              <button type="button" className="primary-button" onClick={confirmYamlStationImport}>
+                继续
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {yamlImportError ? (
+        <div className="confirm-dialog-backdrop" role="presentation" onClick={() => setYamlImportError(null)}>
+          <div
+            className="confirm-dialog"
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="yaml-import-error-title"
+            aria-describedby="yaml-import-error-desc"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <h2 id="yaml-import-error-title" className="confirm-dialog-title">
+              YAML 导入失败
+            </h2>
+            <p id="yaml-import-error-desc" className="confirm-dialog-body">
+              {yamlImportError}
+            </p>
+            <div className="confirm-dialog-actions">
+              <button type="button" className="primary-button" onClick={() => setYamlImportError(null)}>
+                知道了
+              </button>
+            </div>
+          </div>
+        </div>
       ) : null}
 
       {isOverwriteStationsConfirmOpen ? (
