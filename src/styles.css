@@ -517,6 +517,13 @@ h3 {
   color: var(--site-accent);
 }
 
+/* Current row already uses accent-soft; deepen action hover so it stays visible */
+.station-table tbody tr.is-current .station-action-cell .icon-button:hover {
+  border: none;
+  background: var(--site-button-active-bg);
+  color: var(--site-accent);
+}
+
 .current-badge {
   padding: 1px 8px;
   border: 1px solid var(--site-accent-border);
