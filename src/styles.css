@@ -215,6 +215,12 @@ h3 {
   margin-left: auto;
 }
 
+/* common-css sets label / .field-label to 600; use normal weight for app forms */
+.form-grid label.field-label,
+.modal-form label.field-label {
+  font-weight: 400;
+}
+
 .field-label-checkbox {
   display: flex;
   flex-direction: row;
@@ -233,12 +239,6 @@ h3 {
   font-size: 0.85rem;
   line-height: 1.45;
   color: var(--site-muted-fg);
-}
-
-.field-label-inline-action {
-  justify-self: start;
-  width: fit-content;
-  max-width: 100%;
 }
 
 .form-grid.single-column {
@@ -373,6 +373,10 @@ h3 {
 .toolbar-hint {
   margin: 0;
   font-size: 0.9rem;
+}
+
+.station-list-fill-row {
+  margin-bottom: 12px;
 }
 
 .station-section-toolbar {

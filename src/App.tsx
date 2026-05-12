@@ -721,13 +721,6 @@ function App() {
                     }}
                     onBlur={flushLineIdDraft}
                   />
-                  <button
-                    type="button"
-                    className="primary-button field-label-inline-action"
-                    onClick={handleFillStationsByLineId}
-                  >
-                    按线路填充已开通站点
-                  </button>
                 </label>
                 <label className="field-label">
                   <span>idColor（线路标识色）</span>
@@ -757,10 +750,11 @@ function App() {
             </section>
 
             <section className="panel">
-              <div className="panel-heading">
-                <div>
-                  <h2>站点列表</h2>
-                </div>
+              <h2>站点列表</h2>
+              <div className="station-list-fill-row">
+                <button type="button" className="primary-button" onClick={handleFillStationsByLineId}>
+                  按线路填充已开通站点
+                </button>
               </div>
 
               <StationTable
