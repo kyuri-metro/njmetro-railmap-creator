@@ -259,22 +259,24 @@ const DownloadableBadgeCard = ({ title, fileName, children }: DownloadableBadgeC
   return (
     <>
       <div className="result-block">
-        <h3>{title}</h3>
+        <div className="result-block-heading">
+          <h3>{title}</h3>
+          <div className="result-actions">
+            <button type="button" className="primary-button" onClick={handleDownload}>
+              下载 SVG
+            </button>
+            <button
+              type="button"
+              className="icon-button result-svg-zoom-trigger"
+              aria-label={`查看 ${title} 大图`}
+              onClick={openSvgZoom}
+            >
+              <MagnifyPreviewIcon />
+            </button>
+          </div>
+        </div>
         <div ref={badgeContainerRef} className="badge-preview">
           {children}
-        </div>
-        <div className="result-actions">
-          <button type="button" className="primary-button" onClick={handleDownload}>
-            下载 SVG
-          </button>
-          <button
-            type="button"
-            className="icon-button result-svg-zoom-trigger"
-            aria-label={`查看 ${title} 大图`}
-            onClick={openSvgZoom}
-          >
-            <MagnifyPreviewIcon />
-          </button>
         </div>
       </div>
 
