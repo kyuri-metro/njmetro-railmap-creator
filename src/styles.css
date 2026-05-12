@@ -643,6 +643,11 @@ h3 {
 }
 
 .svg-preview-zoom-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
   flex-shrink: 0;
   margin-bottom: 12px;
 }
@@ -653,8 +658,14 @@ h3 {
   align-items: center;
   gap: 10px 14px;
   margin: 0;
+  flex: 1 1 auto;
+  min-width: 0;
   font-size: 0.92rem;
   color: var(--site-content-fg);
+}
+
+.svg-preview-zoom-download {
+  flex: 0 0 auto;
 }
 
 .svg-preview-zoom-range {

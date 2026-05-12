@@ -264,7 +264,7 @@ const DownloadableBadgeCard = ({ title, fileName, children }: DownloadableBadgeC
           {children}
         </div>
         <div className="result-actions">
-          <button type="button" className="secondary-button" onClick={handleDownload}>
+          <button type="button" className="primary-button" onClick={handleDownload}>
             下载 SVG
           </button>
           <button
@@ -290,7 +290,7 @@ const DownloadableBadgeCard = ({ title, fileName, children }: DownloadableBadgeC
               >
                 <header className="svg-preview-zoom-header">
                   <h2 id={svgZoomTitleId} className="svg-preview-zoom-title">
-                    {title}
+                    预览：{title}
                   </h2>
                   <button type="button" className="icon-button" aria-label="关闭预览" onClick={closeSvgZoom}>
                     ×
@@ -310,6 +310,9 @@ const DownloadableBadgeCard = ({ title, fileName, children }: DownloadableBadgeC
                     />
                     <span className="svg-preview-zoom-scale-value">{svgZoomPercent}%</span>
                   </label>
+                  <button type="button" className="primary-button svg-preview-zoom-download" onClick={handleDownload}>
+                    下载 SVG
+                  </button>
                 </div>
                 <div className="svg-preview-zoom-body">
                   <div className="svg-preview-zoom-scaled" style={{ width: `${svgZoomPercent}%` }}>
