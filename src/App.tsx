@@ -185,7 +185,8 @@ const MoonIcon = () => (
 
 const MagnifyPreviewIcon = () => (
   <svg className="result-svg-zoom-icon" viewBox="0 0 24 24" width="20" height="20" aria-hidden>
-    <circle cx="10" cy="10" r="6.5" fill="none" stroke="currentColor" strokeWidth="2" />
+    <circle cx="10" cy="10" r="6" fill="none" stroke="currentColor" strokeWidth="2" />
+    <path fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" d="M10 7.75v4.5M7.75 10h4.5" />
     <path fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" d="M15 15l6 6" />
   </svg>
 );
