@@ -682,7 +682,7 @@ function App() {
               <h2>生成设置</h2>
               <div className="form-grid generator-settings-grid">
                 <label className="field-label">
-                  <span>totalLength（总长（px））</span>
+                  <span>总长（px）</span>
                   <input
                     className="text-input"
                     type="text"
@@ -698,7 +698,7 @@ function App() {
                   />
                 </label>
                 <label className="field-label">
-                  <span>direction（列车行进方向）</span>
+                  <span>列车行进方向</span>
                   <select
                     className="solver-select"
                     value={generator.direction}
@@ -713,7 +713,7 @@ function App() {
                   </select>
                 </label>
                 <label className="field-label">
-                  <span>lineId（线路编号）</span>
+                  <span>线路编号</span>
                   <input
                     className="text-input"
                     type="text"
@@ -726,7 +726,7 @@ function App() {
                   />
                 </label>
                 <label className="field-label">
-                  <span>idColor（线路标识色）</span>
+                  <span>线路标识色</span>
                   <input
                     type="color"
                     value={idColorDraft}
