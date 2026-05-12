@@ -24,6 +24,7 @@ import {
   setCurrentStation,
   setDirection,
   setIdColor,
+  setIdTextColor,
   setLineId,
   setShowStationTypeIcons,
   setTotalLength,
@@ -32,6 +33,7 @@ import {
   type TransferLine,
 } from './features/generatorSlice';
 import { detectTargetFonts, targetFontSignatures, type FontDetectionResult } from './fontSignature';
+import { getNjmetroLineForegroundColor } from './njmetroLinePalette';
 import { parseRailmapYaml, serializeRailmapYaml, type RailmapYamlImport } from './stationListYaml';
 import { useAppDispatch, useAppSelector } from './hooks';
 
@@ -153,10 +155,13 @@ const applyThemeMode = (themeMode: ThemeMode, disableTransitions = false) => {
 
 const sanitizeTransfer = (value: TransferLine[]): TransferLine[] =>
   value
-    .map((entry) => ({
-      id: entry.id.trim(),
-      color: /^#[0-9a-fA-F]{6}$/.test(entry.color) ? entry.color : '#8c989f',
-    }))
+    .map((entry) => {
+      const id = entry.id.trim();
+      const color = /^#[0-9a-fA-F]{6}$/.test(entry.color) ? entry.color.toLowerCase() : '#8c989f';
+      const textFromEntry = entry.textColor && /^#[0-9a-fA-F]{6}$/.test(entry.textColor) ? entry.textColor.toLowerCase() : null;
+      const textColor = textFromEntry ?? getNjmetroLineForegroundColor(id) ?? '#ffffff';
+      return { id, color, textColor };
+    })
     .filter((entry) => entry.id.length > 0);
 
 const toStationItem = (draft: StationFormDraft, id: string): StationItem => ({
@@ -387,6 +392,10 @@ function App() {
   const idColorDraftRef = useRef(idColorDraft);
   const idColorDirtyRef = useRef(false);
   const idColorDebounceRef = useRef(0);
+  const [idTextColorDraft, setIdTextColorDraft] = useState(() => generator.idTextColor);
+  const idTextColorDraftRef = useRef(idTextColorDraft);
+  const idTextColorDirtyRef = useRef(false);
+  const idTextColorDebounceRef = useRef(0);
   const [themeMode, setThemeMode] = useState<ThemeMode>('light');
   const [isExampleModalOpen, setIsExampleModalOpen] = useState(false);
   const [isOverwriteStationsConfirmOpen, setIsOverwriteStationsConfirmOpen] = useState(false);
@@ -465,6 +474,7 @@ function App() {
   totalLengthDraftRef.current = totalLengthDraft;
   lineIdDraftRef.current = lineIdDraft;
   idColorDraftRef.current = idColorDraft;
+  idTextColorDraftRef.current = idTextColorDraft;
 
   useEffect(() => {
     if (!totalLengthDirtyRef.current) {
@@ -483,6 +493,12 @@ function App() {
       setIdColorDraft(generator.idColor);
     }
   }, [generator.idColor]);
+
+  useEffect(() => {
+    if (!idTextColorDirtyRef.current) {
+      setIdTextColorDraft(generator.idTextColor);
+    }
+  }, [generator.idTextColor]);
 
   useEffect(() => {
     window.clearTimeout(totalLengthDebounceRef.current);
@@ -549,6 +565,31 @@ function App() {
     };
   }, [idColorDraft, generator.idColor, dispatch]);
 
+  useEffect(() => {
+    window.clearTimeout(idTextColorDebounceRef.current);
+    idTextColorDebounceRef.current = window.setTimeout(() => {
+      const next = normalizeIdColorDraft(idTextColorDraftRef.current);
+
+      if (next !== null && next !== generator.idTextColor) {
+        startTransition(() => {
+          dispatch(setIdTextColor(next));
+        });
+      }
+
+      idTextColorDirtyRef.current = false;
+
+      if (next !== null) {
+        setIdTextColorDraft(next);
+      } else {
+        setIdTextColorDraft(generator.idTextColor);
+      }
+    }, controlDebounceMs);
+
+    return () => {
+      window.clearTimeout(idTextColorDebounceRef.current);
+    };
+  }, [idTextColorDraft, generator.idTextColor, dispatch]);
+
   const flushTotalLengthDraft = () => {
     window.clearTimeout(totalLengthDebounceRef.current);
     const parsed = parseTotalLengthDraft(totalLengthDraftRef.current);
@@ -593,6 +634,25 @@ function App() {
       setIdColorDraft(next);
     } else {
       setIdColorDraft(generator.idColor);
+    }
+  };
+
+  const flushIdTextColorDraft = () => {
+    window.clearTimeout(idTextColorDebounceRef.current);
+    const next = normalizeIdColorDraft(idTextColorDraftRef.current);
+
+    if (next !== null && next !== generator.idTextColor) {
+      startTransition(() => {
+        dispatch(setIdTextColor(next));
+      });
+    }
+
+    idTextColorDirtyRef.current = false;
+
+    if (next !== null) {
+      setIdTextColorDraft(next);
+    } else {
+      setIdTextColorDraft(generator.idTextColor);
     }
   };
 
@@ -690,16 +750,18 @@ function App() {
       return;
     }
 
-    const { stations, lineId, color, njMetroSettings } = pendingRailmapImport;
+    const { stations, lineId, color, lineIdTextColor, njMetroSettings } = pendingRailmapImport;
     setIsYamlImportConfirmOpen(false);
     setPendingRailmapImport(null);
 
     totalLengthDirtyRef.current = false;
     lineIdDirtyRef.current = false;
     idColorDirtyRef.current = false;
+    idTextColorDirtyRef.current = false;
     setTotalLengthDraft(String(njMetroSettings.totalLength));
     setLineIdDraft(lineId);
     setIdColorDraft(color);
+    setIdTextColorDraft(lineIdTextColor);
 
     startTransition(() => {
       dispatch(replaceStations({ stations }));
@@ -708,6 +770,7 @@ function App() {
       dispatch(setShowStationTypeIcons(njMetroSettings.showStationTypeIcons));
       dispatch(setLineId(lineId));
       dispatch(setIdColor(color));
+      dispatch(setIdTextColor(lineIdTextColor));
       dispatch(setCurrentStation(njMetroSettings.currentStnId));
     });
   };
@@ -875,6 +938,18 @@ function App() {
                     onBlur={flushIdColorDraft}
                   />
                 </label>
+                <label className="field-label">
+                  <span>线路编号字体色</span>
+                  <input
+                    type="color"
+                    value={idTextColorDraft}
+                    onChange={(event) => {
+                      idTextColorDirtyRef.current = true;
+                      setIdTextColorDraft(event.target.value);
+                    }}
+                    onBlur={flushIdTextColorDraft}
+                  />
+                </label>
                 <label className="field-label field-label-checkbox">
                   <input
                     type="checkbox"
@@ -1007,7 +1082,7 @@ function App() {
               确认导入 YAML
             </h2>
             <p id="yaml-import-confirm-desc" className="confirm-dialog-body">
-              导入将覆盖当前站点列表、线路编号、标识色与生成设置（总长、方向等），且不可撤销。
+              导入将覆盖当前站点列表、线路编号、标识色、线路编号字体色与生成设置（总长、方向等），且不可撤销。
             </p>
             <div className="confirm-dialog-actions">
               <button

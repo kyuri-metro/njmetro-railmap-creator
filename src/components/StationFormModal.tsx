@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import type { StationItem, StationType, TransferLine } from '../features/generatorSlice';
-import { getNjmetroLineBackgroundColor } from '../njmetroLinePalette';
+import { getNjmetroLineBackgroundColor, getNjmetroLineForegroundColor } from '../njmetroLinePalette';
 
 export type StationFormDraft = {
   chName: string;
@@ -18,6 +18,7 @@ const stationTypeOptions: { label: string; value: StationType }[] = [
 const createEmptyTransferLine = (): TransferLine => ({
   id: '',
   color: '#8c989f',
+  textColor: '#ffffff',
 });
 
 type StationFormModalProps = {
@@ -50,10 +51,16 @@ export function StationFormModal({
         const next = { ...line, [field]: value };
 
         if (field === 'id') {
-          const paletteColor = getNjmetroLineBackgroundColor(value.trim().toUpperCase());
+          const upper = value.trim().toUpperCase();
+          const paletteColor = getNjmetroLineBackgroundColor(upper);
+          const paletteText = getNjmetroLineForegroundColor(upper);
 
           if (paletteColor) {
             next.color = paletteColor;
+          }
+
+          if (paletteText) {
+            next.textColor = paletteText;
           }
         }
 
@@ -160,12 +167,14 @@ export function StationFormModal({
                   <colgroup>
                     <col className="modal-transfer-col-id" />
                     <col className="modal-transfer-col-color" />
+                    <col className="modal-transfer-col-text" />
                     <col className="modal-transfer-col-action" />
                   </colgroup>
                   <thead>
                     <tr>
                       <th>线路编号</th>
-                      <th>颜色</th>
+                      <th>标识色</th>
+                      <th>字体色</th>
                       <th aria-label="删除换乘线路" />
                     </tr>
                   </thead>
@@ -186,7 +195,15 @@ export function StationFormModal({
                               type="color"
                               value={line.color}
                               onChange={(event) => updateTransferLine(index, 'color', event.target.value)}
-                              aria-label={`换乘线路 ${index + 1} 的颜色`}
+                              aria-label={`换乘线路 ${index + 1} 的标识色`}
+                            />
+                          </td>
+                          <td>
+                            <input
+                              type="color"
+                              value={line.textColor}
+                              onChange={(event) => updateTransferLine(index, 'textColor', event.target.value)}
+                              aria-label={`换乘线路 ${index + 1} 的字体色`}
                             />
                           </td>
                           <td className="station-action-cell">
@@ -203,7 +220,7 @@ export function StationFormModal({
                       ))
                     ) : (
                       <tr>
-                        <td colSpan={3} className="modal-transfer-empty">
+                        <td colSpan={4} className="modal-transfer-empty">
                           暂无换乘线路
                         </td>
                       </tr>

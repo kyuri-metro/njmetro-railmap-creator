@@ -156,9 +156,9 @@ const TransferBadgeGroup = ({ lines }: { lines: TransferLine[] }) => {
         cursorX += width + gap;
 
         return (
-          <g key={`${line.id}-${line.color}-${index}`}>
+          <g key={`${line.id}-${line.color}-${line.textColor}-${index}`}>
             <g transform={`translate(${x} 0)`}>
-              <LineIdBadge lineId={line.id} color={line.color} height={badgeHeight} />
+              <LineIdBadge lineId={line.id} color={line.color} textColor={line.textColor} height={badgeHeight} />
             </g>
           </g>
         );

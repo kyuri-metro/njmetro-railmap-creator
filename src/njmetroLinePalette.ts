@@ -1,13 +1,13 @@
 import { NJMETRO_LINE_COLORS } from '@kyuri-metro/njmetro-palette';
 
 const normalizePaletteHex = (value: string) => {
-  const trimmed = value.trim();
+  const cleaned = value.replace(/\s+/g, '').trim();
 
-  if (/^#[0-9a-fA-F]{6}$/.test(trimmed)) {
-    return trimmed.toLowerCase();
+  if (/^#[0-9a-fA-F]{6}$/.test(cleaned)) {
+    return cleaned.toLowerCase();
   }
 
-  return trimmed;
+  return cleaned;
 };
 
 const resolvePaletteKey = (lineId: string): keyof typeof NJMETRO_LINE_COLORS | null => {
@@ -40,4 +40,16 @@ export const getNjmetroLineBackgroundColor = (lineId: string): string | null => 
   }
 
   return normalizePaletteHex(entry.background);
+};
+
+export const getNjmetroLineForegroundColor = (lineId: string): string | null => {
+  const normalized = lineId.trim().toUpperCase();
+  const key = resolvePaletteKey(normalized);
+  const entry = key === null ? undefined : NJMETRO_LINE_COLORS[key];
+
+  if (!entry) {
+    return null;
+  }
+
+  return normalizePaletteHex(entry.foreground);
 };

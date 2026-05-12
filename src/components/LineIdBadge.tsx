@@ -5,6 +5,8 @@ import { lineIdFontStack } from '../fontStacks';
 type LineIdBadgeProps = {
   lineId: string;
   color: string;
+  /** 线路号数字颜色，对应 njmetro-palette 的 foreground */
+  textColor?: string;
   height: number;
 };
 
@@ -73,7 +75,7 @@ export const getLineIdBadgeWidth = (lineId: string, height: number) => {
   return (template.width / baseHeight) * height;
 };
 
-export function LineIdBadge({ lineId, color, height }: LineIdBadgeProps) {
+export function LineIdBadge({ lineId, color, textColor = '#ffffff', height }: LineIdBadgeProps) {
   const template = resolveBadgeTemplate(lineId);
   const lineNumber = resolveLineNumber(lineId);
 
@@ -85,7 +87,7 @@ export function LineIdBadge({ lineId, color, height }: LineIdBadgeProps) {
   const svg = generateLineIdBlockSvg({
     background: color,
     fontFamily: lineIdFontStack,
-    foreground: '#ffffff',
+    foreground: textColor,
     height: baseHeight,
     lineNumber,
   });

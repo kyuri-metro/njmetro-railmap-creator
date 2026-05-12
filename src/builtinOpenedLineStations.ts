@@ -1,4 +1,4 @@
-import { getNjmetroLineBackgroundColor } from './njmetroLinePalette';
+import { getNjmetroLineBackgroundColor, getNjmetroLineForegroundColor } from './njmetroLinePalette';
 import type { StationItem } from './features/generatorSlice';
 
 type SupportedLineId = '1' | '2' | '3' | '4' | '5' | '6' | '7' | '10' | 'S1' | 'S2' | 'S3' | 'S4' | 'S6' | 'S7' | 'S8' | 'S9';
@@ -398,7 +398,11 @@ export const getBuiltinOpenedStationsByLineId = (lineIdRaw: string): StationItem
       chName: seedItem.chName,
       enName: seedItem.enName,
       type: builtinStationTypeFromChName(seedItem.chName),
-      transfer: transferIds.map((id) => ({ id, color: getNjmetroLineBackgroundColor(id) ?? '#8c989f' })),
+      transfer: transferIds.map((id) => ({
+        id,
+        color: getNjmetroLineBackgroundColor(id) ?? '#8c989f',
+        textColor: getNjmetroLineForegroundColor(id) ?? '#ffffff',
+      })),
     };
   });
 };

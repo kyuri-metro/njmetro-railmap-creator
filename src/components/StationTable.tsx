@@ -1,3 +1,4 @@
+import type { CSSProperties } from 'react';
 import type { StationItem } from '../features/generatorSlice';
 
 const PencilIcon = () => (
@@ -83,9 +84,14 @@ export function StationTable({ currentStnId, stations, onEdit, onInsert, onRever
                       <div className="transfer-list">
                         {station.transfer.map((line) => (
                           <span
-                            key={`${station.id}-${line.id}-${line.color}`}
+                            key={`${station.id}-${line.id}-${line.color}-${line.textColor}`}
                             className="transfer-chip"
-                            style={{ ['--transfer-color' as string]: line.color }}
+                            style={
+                              {
+                                '--transfer-color': line.color,
+                                '--transfer-text': line.textColor,
+                              } as CSSProperties
+                            }
                           >
                             {line.id}
                           </span>

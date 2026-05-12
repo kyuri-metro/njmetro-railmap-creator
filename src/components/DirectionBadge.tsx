@@ -121,7 +121,7 @@ const NextStationNameBlock = ({ enName, stationName }: { enName: string; station
 };
 
 export function DirectionBadge({ data }: DirectionBadgeProps) {
-  const { stnList, currentStnId, direction, idColor, lineId } = data;
+  const { stnList, currentStnId, direction, idColor, idTextColor, lineId } = data;
   const { anchor, resolvedBoxes } = useSvgPositioner(width, height);
 
   const lineBadgeBox = resolvedBoxes['line-badge'];
@@ -160,7 +160,7 @@ export function DirectionBadge({ data }: DirectionBadgeProps) {
         <rect id="white-background" x="0" y="0" width={width} height={height} fill="white" />
         <rect id="button-line" x="0" y={height - 157.5} width={width} height="157.5" fill={idColor} />
 
-        {anchor('line-badge', <LineIdBadge lineId={lineId} color={idColor} height={lineBadgeHeight} />, {
+        {anchor('line-badge', <LineIdBadge lineId={lineId} color={idColor} textColor={idTextColor} height={lineBadgeHeight} />, {
           left: 539.5,
           top: 218,
         })}
@@ -199,13 +199,13 @@ export function DirectionBadge({ data }: DirectionBadgeProps) {
               top: 176.5,
             },
           )
-        : anchor('line-badge', <LineIdBadge lineId={lineId} color={idColor} height={lineBadgeHeight} />, {
+        : anchor('line-badge', <LineIdBadge lineId={lineId} color={idColor} textColor={idTextColor} height={lineBadgeHeight} />, {
             left: { to: 'arrow', edge: 'right', gap: arrowGap },
             top: 218,
           })}
 
       {isRightward
-        ? anchor('line-badge', <LineIdBadge lineId={lineId} color={idColor} height={lineBadgeHeight} />, {
+        ? anchor('line-badge', <LineIdBadge lineId={lineId} color={idColor} textColor={idTextColor} height={lineBadgeHeight} />, {
             right: { to: 'to-label', edge: 'left', gap: lineBadgeGap },
             top: 218,
           })
