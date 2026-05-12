@@ -632,17 +632,6 @@ function App() {
                 {' '}
                 项目的启发，在此表示感谢。
               </p>
-              <div className="docs-callout">
-                <strong>参考资料与推导过程</strong>
-                <p>
-                  参考资料、尺寸记录与推导过程见
-                  {' '}
-                  <a href={docsReferenceUrl} target="_blank" rel="noreferrer">
-                    docs/
-                  </a>
-                  。
-                </p>
-              </div>
               <div className="inline-links" aria-label="外部链接">
                 <a href="https://github.com/kyuri-metro/njmetro-railmap-creator" target="_blank" rel="noreferrer">
                   GitHub 仓库
@@ -669,15 +658,9 @@ function App() {
             <section className="panel">
               <h2>字体检测</h2>
               <p className="panel-subtitle">
-                使用与旧项目相同的 Canvas 字形宽度签名检查目标字体是否存在，避免预览与导出在不同设备上静默回退。
+                通过浏览器测得的字形宽度检查目标字体是否存在，避免预览与导出在不同设备上静默回退。
               </p>
-              <p className="font-detection-summary">
-                {fontDetectionState === 'checking'
-                  ? '正在测量 Microsoft YaHei、FZHei-B01、Helvetica。'
-                  : missingTargetFonts.length === 0
-                    ? '三种目标字体均已检测到。'
-                    : `以下字体未通过签名校验：${missingTargetFonts.map((result) => result.fontFamily).join('、')}。`}
-              </p>
+              {fontDetectionState === 'checking' && <p className="font-detection-summary">正在测量 Microsoft YaHei、FZHei-B01、Helvetica。</p>}
               <div className="font-detection-list" role="list" aria-label="字体检测结果">
                 {fontDetectionResults.map((result) => (
                   <article key={result.fontFamily} className="font-detection-card" role="listitem">
@@ -746,7 +729,6 @@ function App() {
                     按线路填充已开通站点
                   </button>
                 </label>
-                <span className="field-hint">若该编号在南京地铁线路调色板中有定义，将自动填入下方的线路标识色。</span>
                 <label className="field-label">
                   <span>idColor（线路标识色）</span>
                   <input

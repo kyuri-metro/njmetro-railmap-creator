@@ -37,7 +37,6 @@ export function StationTable({ currentStnId, stations, onEdit, onInsert, onRever
               最后插入
             </button>
           </div>
-          <p className="toolbar-hint">点击表格行可切换当前站点，之前/之后插入会基于当前站点执行。</p>
         </div>
         <button type="button" className="secondary-button station-reverse-list-button" onClick={onReverseList}>
           反转列表
