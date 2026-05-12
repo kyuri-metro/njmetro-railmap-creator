@@ -28,6 +28,7 @@ h1 {
   flex-shrink: 0;
   width: 100%;
   margin: 0;
+  border-bottom: 1px solid var(--site-header-border);
   background: var(--site-header-bg);
   color: var(--site-fg);
   box-sizing: border-box;
