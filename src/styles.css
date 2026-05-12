@@ -46,10 +46,11 @@ h1 {
 
 .app-topbar-title {
   margin: 0;
-  font-size: clamp(1.05rem, 2.2vw, 1.4rem);
-  line-height: 1.25;
+  /* Match umamichi.moe SiteFrame: Chakra Heading size="lg" → textStyle lg (fontSizes.lg + lineHeight) */
+  font-size: 1.125rem;
+  line-height: 1.75rem;
+  letter-spacing: -0.025em;
   font-weight: 400;
-  letter-spacing: -0.02em;
   color: inherit;
 }
 
