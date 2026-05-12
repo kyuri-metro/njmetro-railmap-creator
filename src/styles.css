@@ -881,6 +881,23 @@ html.dark .station-table th {
   margin-top: 10px;
 }
 
+/* 编辑站点弹窗：取消与保存始终同一行（覆盖 common-css 窄屏纵向栈叠） */
+.modal-card .modal-actions {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.modal-card .modal-actions .secondary-button,
+.modal-card .modal-actions .primary-button {
+  width: auto;
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
 .modal-transfer-editor {
   display: grid;
   gap: 8px;
