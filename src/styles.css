@@ -279,7 +279,7 @@ h3 {
   width: 100%;
   max-width: 400px;
   padding: 20px 22px 18px;
-  border-radius: var(--radius-md);
+  border-radius: 0;
   border: 1px solid var(--site-border);
   background: var(--site-surface);
   color: var(--site-fg);
@@ -539,7 +539,7 @@ h3 {
   align-items: center;
   justify-content: center;
   pointer-events: none;
-  border-radius: var(--radius-md);
+  border-radius: 0;
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   background: color-mix(in srgb, var(--site-surface) 62%, transparent);
@@ -547,7 +547,7 @@ h3 {
 
 .preview-loading-label {
   padding: 10px 18px;
-  border-radius: var(--radius-sm);
+  border-radius: 0;
   font-size: 0.95rem;
   color: var(--site-fg);
   background: color-mix(in srgb, var(--site-surface) 88%, transparent);
@@ -609,7 +609,7 @@ h3 {
   max-height: calc(100vh - 32px);
   padding: 16px 18px 14px;
   box-sizing: border-box;
-  border-radius: var(--radius-md);
+  border-radius: 0;
   border: 1px solid var(--site-border);
   background: var(--site-surface);
   color: var(--site-fg);
@@ -662,7 +662,7 @@ h3 {
   min-height: 0;
   overflow: auto;
   border: 1px solid var(--site-border);
-  border-radius: var(--radius-sm);
+  border-radius: 0;
   background: var(--site-surface);
 }
 
@@ -750,4 +750,10 @@ h3 {
   .station-table {
     min-width: 620px;
   }
+}
+
+/* Square modal chrome (overrides @umamichi-ui/common-css `.modal-card` / `.example-modal`) */
+.modal-card,
+.example-modal {
+  border-radius: 0;
 }
