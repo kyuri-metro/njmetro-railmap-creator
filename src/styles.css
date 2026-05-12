@@ -765,3 +765,147 @@ h3 {
 .example-modal {
   border-radius: 0;
 }
+
+/* DirectionBadge：预览包装 + 线路号方块 HTML 说明层（不进入序列化 SVG） */
+.direction-badge-preview-wrap {
+  position: relative;
+  width: 100%;
+}
+
+.direction-badge-preview-wrap > .badge-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.line-id-attribution-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.line-id-attribution-anchor {
+  position: absolute;
+  box-sizing: border-box;
+  pointer-events: none;
+}
+
+.line-id-attribution-hit {
+  position: absolute;
+  left: 4%;
+  top: 6%;
+  width: clamp(36px, 26%, 56px);
+  aspect-ratio: 1;
+  box-sizing: border-box;
+  border-radius: 50%;
+  overflow: hidden;
+  pointer-events: auto;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+}
+
+.line-id-attribution-dot {
+  position: relative;
+  z-index: 1;
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--site-muted-fg) 18%, transparent);
+  border: 2px solid color-mix(in srgb, var(--site-muted-fg) 42%, transparent);
+  transform-origin: 50% 50%;
+}
+
+.line-id-attribution-ripple {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  z-index: 0;
+  box-sizing: border-box;
+  background: color-mix(in srgb, var(--site-muted-fg) 34%, transparent);
+  opacity: 0.5;
+  transform: scale(0.2);
+  transform-origin: 50% 50%;
+  animation: line-id-attribution-ripple-wave 2.4s ease-out infinite;
+  pointer-events: none;
+}
+
+.line-id-attribution-ripple--delayed {
+  animation-delay: 1.2s;
+}
+
+.line-id-attribution-layer--tooltip-open .line-id-attribution-hit .line-id-attribution-dot,
+.line-id-attribution-layer--tooltip-open .line-id-attribution-hit .line-id-attribution-ripple {
+  animation-play-state: paused;
+}
+
+@keyframes line-id-attribution-ripple-wave {
+  0% {
+    transform: scale(0.2);
+    opacity: 0.48;
+  }
+
+  100% {
+    transform: scale(1.9);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .line-id-attribution-dot,
+  .line-id-attribution-ripple {
+    animation: none;
+  }
+
+  .line-id-attribution-ripple {
+    display: none;
+  }
+
+  .line-id-attribution-dot {
+    opacity: 0.95;
+  }
+}
+
+.line-id-attribution-tooltip {
+  position: absolute;
+  z-index: 3;
+  box-sizing: border-box;
+  max-width: min(22rem, calc(100vw - 2rem));
+  padding: 10px 12px;
+  border: 1px solid var(--site-border);
+  background: var(--site-surface);
+  color: var(--site-content-fg);
+  font-size: 0.82rem;
+  line-height: 1.55;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.18s ease;
+  word-break: break-word;
+}
+
+.line-id-attribution-tooltip.is-visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.line-id-attribution-tooltip-line {
+  margin: 0;
+}
+
+.line-id-attribution-tooltip-line + .line-id-attribution-tooltip-line {
+  margin-top: 8px;
+}
+
+.line-id-attribution-tooltip a {
+  color: var(--site-accent);
+  text-decoration: underline;
+}
+
+.line-id-attribution-tooltip a:hover {
+  color: var(--site-accent-hover);
+}

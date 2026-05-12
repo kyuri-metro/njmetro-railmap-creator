@@ -1,6 +1,6 @@
 import { useCallback, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 
-type SvgBox = {
+export type SvgBox = {
   x: number;
   y: number;
   width: number;
@@ -323,5 +323,5 @@ export function useSvgPositioner(width: number, height: number) {
     );
   };
 
-  return { anchor, position: anchor };
+  return { anchor, position: anchor, resolvedBoxes };
 }

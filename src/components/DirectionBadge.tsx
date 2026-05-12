@@ -1,7 +1,8 @@
-import type { CSSProperties } from 'react';
+import type { CSSProperties, ReactElement } from 'react';
 import type { GeneratorState } from '../features/generatorSlice';
 import { sansLatinFontStack, sansZhFontStack } from '../fontStacks';
-import { LineIdBadge } from './LineIdBadge';
+import { getLineIdBadgeWidth, LineIdBadge } from './LineIdBadge';
+import { LineIdBlockAttributionOverlay } from './LineIdBlockAttributionOverlay';
 import { useSvgPositioner } from './svgPositioning';
 
 type DirectionBadgeProps = {
@@ -121,7 +122,21 @@ const NextStationNameBlock = ({ enName, stationName }: { enName: string; station
 
 export function DirectionBadge({ data }: DirectionBadgeProps) {
   const { stnList, currentStnId, direction, idColor, lineId } = data;
-  const { anchor } = useSvgPositioner(width, height);
+  const { anchor, resolvedBoxes } = useSvgPositioner(width, height);
+
+  const lineBadgeBox = resolvedBoxes['line-badge'];
+  const lineIdBadgeSupported = getLineIdBadgeWidth(lineId, lineBadgeHeight) !== null;
+  const showLineIdAttribution =
+    lineIdBadgeSupported && lineBadgeBox !== undefined && lineBadgeBox.width > 0.5;
+
+  const wrapPreview = (svg: ReactElement) => (
+    <div className="direction-badge-preview-wrap">
+      {svg}
+      {showLineIdAttribution ? (
+        <LineIdBlockAttributionOverlay viewWidth={width} viewHeight={height} box={lineBadgeBox} />
+      ) : null}
+    </div>
+  );
 
   const isRightward = direction === 'r';
   const leftMargin = 171;
@@ -140,7 +155,7 @@ export function DirectionBadge({ data }: DirectionBadgeProps) {
   const safeNextStation = nextStation ?? { chName: '不存在或未定义', enName: 'Bucunzai Huo Weidingyi' };
 
   if (isTerminus) {
-    return (
+    return wrapPreview(
       <svg viewBox={`0 0 ${width} ${height}`} className="badge-svg" role="img" aria-label="终点站方向牌">
         <rect id="white-background" x="0" y="0" width={width} height={height} fill="white" />
         <rect id="button-line" x="0" y={height - 157.5} width={width} height="157.5" fill={idColor} />
@@ -159,11 +174,11 @@ export function DirectionBadge({ data }: DirectionBadgeProps) {
           right: { edge: 'right', gap: 538.5 },
           top: 174,
         })}
-      </svg>
+      </svg>,
     );
   }
 
-  return (
+  return wrapPreview(
     <svg viewBox={`0 0 ${width} ${height}`} className="badge-svg" role="img" aria-label="方向牌">
       <rect id="white-background" x="0" y="0" width={width} height={height} fill="white" />
       <rect id="button-line" x="0" y={height - 157.5} width={width} height="157.5" fill={idColor} />
@@ -236,6 +251,6 @@ export function DirectionBadge({ data }: DirectionBadgeProps) {
               top: 176.5,
             },
           )}
-    </svg>
+    </svg>,
   );
 }
