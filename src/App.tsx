@@ -612,7 +612,15 @@ function App() {
     <main className="app-layout">
       <header className="app-topbar">
         <div className="app-topbar-inner">
-          <h1 className="app-topbar-title">南京地铁屏蔽门上方贴纸生成器（Alpha）</h1>
+          <div className="app-topbar-title-wrap">
+            <h1 className="app-topbar-title">
+              <span className="app-topbar-title-text">南京地铁屏蔽门上方贴纸生成器</span>
+              <span className="visually-hidden">（Beta 测试版）</span>
+            </h1>
+            <span className="app-topbar-beta-mark" aria-hidden="true">
+              Beta
+            </span>
+          </div>
           <button
             className="theme-toggle app-topbar-theme-toggle"
             type="button"
@@ -628,7 +636,6 @@ function App() {
         <div className="app-columns">
           <div className="app-column app-column-main">
             <section className="app-content-intro" aria-label="项目说明">
-              <p>用于演示 SVG 输出骨架</p>
               <p>
                 本项目受到
                 {' '}
@@ -756,8 +763,8 @@ function App() {
             </section>
 
             <section className="panel">
-              <h2>站点列表</h2>
-              <div className="station-list-fill-row">
+              <div className="station-list-heading">
+                <h2>站点列表</h2>
                 <button type="button" className="primary-button" onClick={handleFillStationsByLineId}>
                   按线路填充已开通站点
                 </button>

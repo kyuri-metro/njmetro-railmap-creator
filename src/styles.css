@@ -44,7 +44,30 @@ h1 {
   box-sizing: border-box;
 }
 
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.app-topbar-title-wrap {
+  position: relative;
+  display: inline-block;
+  /* 不要 flex-grow：否则块会被顶栏拉满，Beta 的 left:% 会相对整块算，飘到很靠右 */
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: calc(100% - 52px);
+  vertical-align: middle;
+}
+
 .app-topbar-title {
+  display: inline;
   margin: 0;
   /* Match umamichi.moe SiteFrame: Chakra Heading size="lg" → textStyle lg (fontSizes.lg + lineHeight) */
   font-size: 1.125rem;
@@ -52,6 +75,28 @@ h1 {
   letter-spacing: -0.025em;
   font-weight: 400;
   color: inherit;
+}
+
+.app-topbar-beta-mark {
+  position: absolute;
+  z-index: 1;
+  top: -0.25em;
+  left: 0;
+  padding: 3px 11px;
+  border: 1px solid var(--site-accent-border);
+  border-radius: 2px;
+  background: var(--site-surface);
+  color: var(--site-accent);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  line-height: 1;
+  white-space: nowrap;
+  pointer-events: none;
+  /* 仅水平平移 + 倾斜：锚在标题左缘（「南京」起笔），translateX 向左收回半个标签宽以压在字左上方 */
+  transform: translateX(-35%) rotate(-20deg);
+  transform-origin: left center;
 }
 
 .app-topbar .theme-toggle.app-topbar-theme-toggle {
@@ -411,8 +456,27 @@ h3 {
   font-size: 0.9rem;
 }
 
-.station-list-fill-row {
+.station-list-heading {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
   margin-bottom: 12px;
+  min-width: 0;
+}
+
+.station-list-heading h2 {
+  margin: 0;
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.station-list-heading .primary-button {
+  flex-shrink: 0;
 }
 
 .station-section-toolbar {
@@ -618,9 +682,11 @@ html.dark .station-table th {
 
 .result-block-heading {
   display: flex;
+  flex-wrap: nowrap;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: 8px;
+  min-width: 0;
 }
 
 .result-block-heading h3 {
@@ -628,6 +694,9 @@ html.dark .station-table th {
   flex: 1 1 auto;
   min-width: 0;
   line-height: 1.35;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .badge-preview {
@@ -636,23 +705,12 @@ html.dark .station-table th {
 
 .result-actions {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: center;
   justify-content: flex-end;
   gap: 8px;
   flex-shrink: 0;
   margin-top: 0;
-}
-
-@media (max-width: 720px) {
-  .result-block-heading {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .result-block-heading .result-actions {
-    align-self: flex-end;
-  }
 }
 
 .result-svg-zoom-trigger {
