@@ -772,11 +772,10 @@ html.dark .station-table th {
 }
 
 .download-format-menu-panel {
-  position: absolute;
-  top: calc(100% + 4px);
-  right: 0;
-  z-index: 120;
+  position: fixed;
+  z-index: 200;
   min-width: 11.5rem;
+  max-width: calc(100vw - 16px);
   margin: 0;
   padding: 4px 0;
   list-style: none;
@@ -784,7 +783,6 @@ html.dark .station-table th {
   background: var(--site-surface);
   color: var(--site-fg);
   box-sizing: border-box;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
 }
 
 .download-format-menu-panel > li {

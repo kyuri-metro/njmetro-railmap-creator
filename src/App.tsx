@@ -3,6 +3,7 @@ import {
   useDeferredValue,
   useEffect,
   useId,
+  useLayoutEffect,
   useRef,
   useState,
   type ChangeEvent,
@@ -213,10 +214,103 @@ type BadgeDownloadFormatMenuProps = {
   triggerClassName?: string;
 };
 
+type FloatingMenuGeometry = {
+  top: number;
+  left: number;
+  maxHeight?: number;
+};
+
+const computeFloatingMenuGeometry = (trigger: HTMLElement, menu: HTMLElement): FloatingMenuGeometry => {
+  const pad = 8;
+  const gap = 4;
+  const minScrollHeight = 120;
+  const rect = trigger.getBoundingClientRect();
+  const vw = window.innerWidth;
+  const vh = window.innerHeight;
+  const menuWidth = menu.offsetWidth;
+  const menuHeight = menu.offsetHeight;
+
+  let left = rect.right - menuWidth;
+
+  if (left < pad) {
+    left = rect.left;
+  }
+
+  left = Math.max(pad, Math.min(left, vw - menuWidth - pad));
+
+  let top = rect.bottom + gap;
+  let maxHeight: number | undefined;
+
+  if (top + menuHeight > vh - pad) {
+    const topIfAbove = rect.top - gap - menuHeight;
+
+    if (topIfAbove >= pad) {
+      top = topIfAbove;
+    } else {
+      maxHeight = Math.max(minScrollHeight, vh - pad - top);
+    }
+  }
+
+  return { top, left, maxHeight };
+};
+
 const BadgeDownloadFormatMenu = ({ fileName, getSvgElement, triggerClassName }: BadgeDownloadFormatMenuProps) => {
   const wrapRef = useRef<HTMLDivElement | null>(null);
+  const triggerRef = useRef<HTMLButtonElement | null>(null);
+  const menuPanelRef = useRef<HTMLUListElement | null>(null);
   const menuId = useId();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [menuGeometry, setMenuGeometry] = useState<FloatingMenuGeometry | null>(null);
+
+  useLayoutEffect(() => {
+    if (!menuOpen) {
+      setMenuGeometry(null);
+      return;
+    }
+
+    const update = () => {
+      const trigger = triggerRef.current;
+      const menu = menuPanelRef.current;
+
+      if (!trigger || !menu) {
+        return;
+      }
+
+      setMenuGeometry(computeFloatingMenuGeometry(trigger, menu));
+    };
+
+    update();
+
+    const scrollRoots: HTMLElement[] = [];
+    const previewColumn = wrapRef.current?.closest('.app-column-preview');
+    const zoomDialog = wrapRef.current?.closest('.svg-preview-zoom-dialog');
+    const zoomBody =
+      zoomDialog instanceof HTMLElement ? zoomDialog.querySelector<HTMLElement>('.svg-preview-zoom-body') : null;
+
+    if (previewColumn instanceof HTMLElement) {
+      scrollRoots.push(previewColumn);
+    }
+
+    if (zoomBody) {
+      scrollRoots.push(zoomBody);
+    }
+
+    window.addEventListener('resize', update);
+    window.addEventListener('scroll', update, true);
+
+    for (const root of scrollRoots) {
+      root.addEventListener('scroll', update, { passive: true });
+    }
+
+    return () => {
+      window.removeEventListener('resize', update);
+      window.removeEventListener('scroll', update, true);
+
+      for (const root of scrollRoots) {
+        root.removeEventListener('scroll', update);
+      }
+    };
+  }, [menuOpen]);
 
   useEffect(() => {
     if (!menuOpen) {
@@ -224,9 +318,17 @@ const BadgeDownloadFormatMenu = ({ fileName, getSvgElement, triggerClassName }: 
     }
 
     const onDocumentMouseDown = (event: MouseEvent) => {
-      if (wrapRef.current && !wrapRef.current.contains(event.target as Node)) {
-        setMenuOpen(false);
+      const target = event.target as Node;
+
+      if (wrapRef.current?.contains(target)) {
+        return;
       }
+
+      if (menuPanelRef.current?.contains(target)) {
+        return;
+      }
+
+      setMenuOpen(false);
     };
 
     document.addEventListener('mousedown', onDocumentMouseDown);
@@ -289,9 +391,56 @@ const BadgeDownloadFormatMenu = ({ fileName, getSvgElement, triggerClassName }: 
 
   const triggerClass = ['download-format-menu-trigger', triggerClassName].filter(Boolean).join(' ');
 
+  const menuPanel = menuOpen ? (
+    <ul
+      ref={menuPanelRef}
+      id={menuId}
+      className="download-format-menu-panel"
+      role="menu"
+      aria-label="选择下载格式"
+      style={{
+        top: menuGeometry?.top ?? -9999,
+        left: menuGeometry?.left ?? -9999,
+        visibility: menuGeometry ? 'visible' : 'hidden',
+        maxHeight: menuGeometry?.maxHeight,
+        overflowY: menuGeometry?.maxHeight ? 'auto' : undefined,
+      }}
+    >
+      <li role="none">
+        <button type="button" className="download-format-menu-item" role="menuitem" onClick={downloadSvg}>
+          下载 SVG
+        </button>
+      </li>
+      <li className="download-format-menu-separator" role="separator" aria-orientation="horizontal" />
+      <li role="none">
+        <button type="button" className="download-format-menu-item" role="menuitem" onClick={() => void downloadRaster('png')}>
+          下载 PNG
+        </button>
+      </li>
+      <li role="none">
+        <button type="button" className="download-format-menu-item" role="menuitem" onClick={() => void downloadRaster('jpeg')}>
+          下载 JPEG
+        </button>
+      </li>
+      <li role="none">
+        <button
+          type="button"
+          className="download-format-menu-item"
+          role="menuitem"
+          disabled={!webpRasterExportSupported}
+          title={!webpRasterExportSupported ? '当前浏览器不支持导出 WebP' : undefined}
+          onClick={() => void downloadRaster('webp')}
+        >
+          下载 WebP
+        </button>
+      </li>
+    </ul>
+  ) : null;
+
   return (
     <div className="download-format-menu" ref={wrapRef}>
       <button
+        ref={triggerRef}
         type="button"
         className={`primary-button ${triggerClass}`.trim()}
         aria-expanded={menuOpen}
@@ -303,38 +452,7 @@ const BadgeDownloadFormatMenu = ({ fileName, getSvgElement, triggerClassName }: 
       >
         下载 <span className="download-format-menu-chevron" aria-hidden>▾</span>
       </button>
-      {menuOpen ? (
-        <ul id={menuId} className="download-format-menu-panel" role="menu" aria-label="选择下载格式">
-          <li role="none">
-            <button type="button" className="download-format-menu-item" role="menuitem" onClick={downloadSvg}>
-              下载 SVG
-            </button>
-          </li>
-          <li className="download-format-menu-separator" role="separator" aria-orientation="horizontal" />
-          <li role="none">
-            <button type="button" className="download-format-menu-item" role="menuitem" onClick={() => void downloadRaster('png')}>
-              下载 PNG
-            </button>
-          </li>
-          <li role="none">
-            <button type="button" className="download-format-menu-item" role="menuitem" onClick={() => void downloadRaster('jpeg')}>
-              下载 JPEG
-            </button>
-          </li>
-          <li role="none">
-            <button
-              type="button"
-              className="download-format-menu-item"
-              role="menuitem"
-              disabled={!webpRasterExportSupported}
-              title={!webpRasterExportSupported ? '当前浏览器不支持导出 WebP' : undefined}
-              onClick={() => void downloadRaster('webp')}
-            >
-              下载 WebP
-            </button>
-          </li>
-        </ul>
-      ) : null}
+      {menuPanel ? createPortal(menuPanel, document.body) : null}
     </div>
   );
 };
