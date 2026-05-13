@@ -16,6 +16,9 @@ import { DirectionBadge } from './components/DirectionBadge';
 import { RouteBadge } from './components/RouteBadge';
 import { StationFormModal, stationToDraft, type StationFormDraft } from './components/StationFormModal';
 import { StationTable } from './components/StationTable';
+import { KyuriRmgToolModal } from './components/KyuriRmgToolModal';
+import { StationYamlExportMenu, StationYamlImportMenu } from './components/StationYamlIoMenus';
+import { KYURI_RMG_IFRAME_ORIGIN } from './config/kyuriRmgIframe';
 import { getBuiltinOpenedStationsByLineId } from './builtinOpenedLineStations';
 import {
   deleteStation,
@@ -582,34 +585,6 @@ const MagnifyPreviewIcon = () => (
   </svg>
 );
 
-/** 导出：箭头向下落入托盘（保存到本地文件的常见隐喻） */
-const ExportYamlIcon = () => (
-  <svg className="station-yaml-tool-icon" viewBox="0 0 24 24" width="20" height="20" aria-hidden>
-    <path
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"
-    />
-  </svg>
-);
-
-/** 导入：文件夹（从本地选取文件） */
-const ImportYamlIcon = () => (
-  <svg className="station-yaml-tool-icon" viewBox="0 0 24 24" width="20" height="20" aria-hidden>
-    <path
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      d="M4 19h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-6.5a2 2 0 0 1-1.7-1L9.2 4.3A2 2 0 0 0 7.3 3H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2Z"
-    />
-  </svg>
-);
-
 type DownloadableBadgeCardProps = {
   title: string;
   fileName: string;
@@ -763,6 +738,7 @@ function App() {
   const [isYamlImportConfirmOpen, setIsYamlImportConfirmOpen] = useState(false);
   const [pendingRailmapImport, setPendingRailmapImport] = useState<RailmapYamlImport | null>(null);
   const [yamlImportError, setYamlImportError] = useState<string | null>(null);
+  const [kyuriRmgModal, setKyuriRmgModal] = useState<null | { mode: 'import' | 'export' }>(null);
   const yamlFileInputRef = useRef<HTMLInputElement>(null);
   const [builtinUnavailableNotice, setBuiltinUnavailableNotice] = useState<string | null>(null);
   const [fontDetectionResults, setFontDetectionResults] = useState<FontDetectionResult[]>(fallbackFontDetectionResults);
@@ -1076,6 +1052,18 @@ function App() {
     window.URL.revokeObjectURL(objectUrl);
   };
 
+  const applyYamlTextForImport = (text: string) => {
+    const result = parseRailmapYaml(text, generator);
+
+    if (!result.ok) {
+      setYamlImportError(result.message);
+      return;
+    }
+
+    setPendingRailmapImport(result.data);
+    setIsYamlImportConfirmOpen(true);
+  };
+
   const handleYamlFileChange = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     event.target.value = '';
@@ -1088,15 +1076,7 @@ function App() {
 
     reader.onload = () => {
       const text = String(reader.result ?? '');
-      const result = parseRailmapYaml(text, generator);
-
-      if (!result.ok) {
-        setYamlImportError(result.message);
-        return;
-      }
-
-      setPendingRailmapImport(result.data);
-      setIsYamlImportConfirmOpen(true);
+      applyYamlTextForImport(text);
     };
 
     reader.onerror = () => {
@@ -1331,17 +1311,16 @@ function App() {
                 <h2>站点列表</h2>
                 <div className="station-list-heading-end">
                   <div className="station-list-yaml-tools" role="group" aria-label="站点列表 YAML">
-                    <button type="button" className="icon-button" aria-label="导出线路与站点为 YAML" onClick={handleExportStationYaml}>
-                      <ExportYamlIcon />
-                    </button>
-                    <button
-                      type="button"
-                      className="icon-button"
-                      aria-label="从 YAML 导入线路与站点"
-                      onClick={() => yamlFileInputRef.current?.click()}
-                    >
-                      <ImportYamlIcon />
-                    </button>
+                    <StationYamlExportMenu
+                      rmgToolConfigured={Boolean(KYURI_RMG_IFRAME_ORIGIN)}
+                      onDownloadYaml={handleExportStationYaml}
+                      onOpenRmgExport={() => setKyuriRmgModal({ mode: 'export' })}
+                    />
+                    <StationYamlImportMenu
+                      yamlFileInputRef={yamlFileInputRef}
+                      rmgToolConfigured={Boolean(KYURI_RMG_IFRAME_ORIGIN)}
+                      onOpenRmgImport={() => setKyuriRmgModal({ mode: 'import' })}
+                    />
                     <input
                       ref={yamlFileInputRef}
                       type="file"
@@ -1419,6 +1398,20 @@ function App() {
               : undefined
           }
           onSubmit={handleModalSubmit}
+        />
+      ) : null}
+
+      {kyuriRmgModal ? (
+        <KyuriRmgToolModal
+          open
+          mode={kyuriRmgModal.mode}
+          baseUrl={KYURI_RMG_IFRAME_ORIGIN}
+          kyuriYamlForExport={serializeRailmapYaml(generator)}
+          onClose={() => setKyuriRmgModal(null)}
+          onImportedYaml={(yaml) => {
+            applyYamlTextForImport(yaml);
+            setKyuriRmgModal(null);
+          }}
         />
       ) : null}
 

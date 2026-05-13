@@ -495,8 +495,24 @@ h3 {
   padding-inline-end: 2px;
 }
 
-.station-list-yaml-tools .icon-button {
+.station-list-yaml-tools .download-format-menu {
   flex-shrink: 0;
+}
+
+.kyuri-rmg-tool-dialog {
+  width: min(960px, 96vw);
+  max-width: 96vw;
+  max-height: 92vh;
+  overflow: auto;
+}
+
+.kyuri-rmg-tool-iframe {
+  display: block;
+  width: 100%;
+  height: min(72vh, 720px);
+  margin: 0;
+  border: 1px solid var(--site-header-border);
+  background: var(--site-bg);
 }
 
 .station-yaml-tool-icon {
