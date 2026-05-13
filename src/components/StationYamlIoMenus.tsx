@@ -162,7 +162,7 @@ export function StationYamlImportMenu({ yamlFileInputRef, rmgToolConfigured, onO
             setMenuOpen(false);
           }}
         >
-          从 RMG 导入…
+          导入 RMG JSON 存档
         </button>
       </li>
     </ul>
@@ -271,7 +271,7 @@ export function StationYamlExportMenu({ rmgToolConfigured, onDownloadYaml, onOpe
             setMenuOpen(false);
           }}
         >
-          从 RMG 导出…
+          导出 RMG JSON 存档
         </button>
       </li>
     </ul>

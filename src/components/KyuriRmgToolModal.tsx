@@ -133,7 +133,7 @@ export function KyuriRmgToolModal({
         onClick={(ev) => ev.stopPropagation()}
       >
         <h2 id="kyuri-rmg-modal-title" className="confirm-dialog-title">
-          {mode === 'import' ? '从 RMG 导入' : '从 RMG 导出'}
+          {mode === 'import' ? '导入 RMG JSON 存档' : '导出 RMG JSON 存档'}
         </h2>
         <p className="confirm-dialog-body" style={{ marginBottom: 10 }}>
           {mode === 'import'
