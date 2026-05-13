@@ -14,7 +14,7 @@ type StationTableProps = {
   currentStnId: string;
   stations: StationItem[];
   onEdit: (station: StationItem) => void;
-  onInsert: (position: 'before' | 'after' | 'start' | 'end') => void;
+  onInsert: (position: 'before' | 'after' | 'start' | 'end', basisStationId?: string) => void;
   onReverseList: () => void;
   onSelect: (stationId: string) => void;
 };
@@ -45,7 +45,7 @@ export function StationTable({ currentStnId, stations, onEdit, onInsert, onRever
       </div>
 
       <div className="table-wrap">
-        <table className="station-table">
+        <table className="station-table station-table--page-list">
           <colgroup>
             <col className="station-col-name" />
             <col className="station-col-en" />
@@ -57,7 +57,7 @@ export function StationTable({ currentStnId, stations, onEdit, onInsert, onRever
               <th>中文名</th>
               <th>英文名</th>
               <th>换乘线路</th>
-              <th aria-label="编辑操作" />
+              <th scope="col">操作</th>
             </tr>
           </thead>
           <tbody>
@@ -102,17 +102,39 @@ export function StationTable({ currentStnId, stations, onEdit, onInsert, onRever
                     )}
                   </td>
                   <td className="station-action-cell">
-                    <button
-                      type="button"
-                      className="icon-button"
+                    <div
+                      className="station-action-cluster"
                       onClick={(event) => {
                         event.stopPropagation();
-                        onEdit(station);
                       }}
-                      aria-label={`编辑 ${station.chName}`}
                     >
-                      <PencilIcon />
-                    </button>
+                      <button
+                        type="button"
+                        className="station-row-insert-btn"
+                        title={`在「${station.chName}」之前插入新站点`}
+                        aria-label={`在 ${station.chName} 之前插入新站点`}
+                        onClick={() => onInsert('before', station.id)}
+                      >
+                        前
+                      </button>
+                      <button
+                        type="button"
+                        className="icon-button"
+                        onClick={() => onEdit(station)}
+                        aria-label={`编辑 ${station.chName}`}
+                      >
+                        <PencilIcon />
+                      </button>
+                      <button
+                        type="button"
+                        className="station-row-insert-btn"
+                        title={`在「${station.chName}」之后插入新站点`}
+                        aria-label={`在 ${station.chName} 之后插入新站点`}
+                        onClick={() => onInsert('after', station.id)}
+                      >
+                        后
+                      </button>
+                    </div>
                   </td>
                 </tr>
               );

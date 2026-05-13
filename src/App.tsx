@@ -1017,11 +1017,12 @@ function App() {
     }
   };
 
-  const openInsertModal = (position: 'before' | 'after' | 'start' | 'end') => {
+  const openInsertModal = (position: 'before' | 'after' | 'start' | 'end', basisStationId?: string) => {
     setModalState({
       kind: 'create',
       position,
-      basisId: position === 'before' || position === 'after' ? generator.currentStnId : undefined,
+      basisId:
+        position === 'before' || position === 'after' ? (basisStationId ?? generator.currentStnId) : undefined,
     });
   };
 
