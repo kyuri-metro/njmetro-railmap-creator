@@ -315,7 +315,7 @@ export const serializeRailmapYaml = (state: GeneratorState): string => {
     currentStnId: state.currentStnId,
     lineId: state.lineId,
     color: normalizeHexColor(state.idColor),
-    lineIdTextColor: normalizeHexColor(state.idTextColor),
+    textColor: normalizeHexColor(state.idTextColor),
     njMetroSettings: {
       totalLength: state.totalLength,
       showStationTypeIcons: state.showStationTypeIcons,
@@ -362,7 +362,7 @@ export const parseRailmapYaml = (text: string, fallbacks: GeneratorState): Parse
     return {
       ok: false,
       message:
-        '根节点必须是对象（含 version、lineId、color、lineIdTextColor（version 2+ 必填）、njMetroSettings、stations；version 3 另含 schema，且 direction 与 currentStnId 在根上）或旧版站点数组。',
+        '根节点必须是对象（含 version、lineId、color、njMetroSettings、stations；version 2 另含 lineIdTextColor；version 3 另含 schema、根级 textColor（与换乘 textColor 对称）、direction 与 currentStnId）或旧版站点数组。',
     };
   }
 
@@ -399,13 +399,21 @@ export const parseRailmapYaml = (text: string, fallbacks: GeneratorState): Parse
   }
 
   let lineIdTextColor: string;
-  if (docVersion >= 2) {
+  if (docVersion === 1) {
+    lineIdTextColor = '';
+  } else if (docVersion === 3) {
+    if (!isValidHex6(root.textColor)) {
+      return {
+        ok: false,
+        message: 'version 3 要求根字段 textColor（#RRGGBB）。',
+      };
+    }
+    lineIdTextColor = normalizeHexColor(String(root.textColor));
+  } else {
     if (!isValidHex6(root.lineIdTextColor)) {
-      return { ok: false, message: 'version 2 或 3 要求根字段 lineIdTextColor（#RRGGBB）。' };
+      return { ok: false, message: 'version 2 要求根字段 lineIdTextColor（#RRGGBB）。' };
     }
     lineIdTextColor = normalizeHexColor(root.lineIdTextColor);
-  } else {
-    lineIdTextColor = '';
   }
 
   if (docVersion === 3) {
