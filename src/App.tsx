@@ -80,6 +80,264 @@ const normalizeIdColorDraft = (raw: string) => {
 const themeStorageKey = 'site-theme';
 const themeTransitionLockClassName = 'theme-transition-lock';
 const svgExportComment = '<!-- created by njmetro-railmap-creator, (https://github.com/kyuri-metro/njmetro-railmap-creator) -->';
+
+const getBadgeDownloadBaseName = (fileName: string) => fileName.replace(/\.svg$/i, '') || 'badge';
+
+const webpRasterExportSupported =
+  typeof document !== 'undefined'
+    ? (() => {
+        try {
+          const probe = document.createElement('canvas');
+          probe.width = 1;
+          probe.height = 1;
+          return probe.toDataURL('image/webp').startsWith('data:image/webp');
+        } catch {
+          return false;
+        }
+      })()
+    : false;
+
+const getSvgExportPixelSize = (svg: SVGSVGElement): { width: number; height: number } => {
+  const viewBox = svg.getAttribute('viewBox');
+
+  if (viewBox) {
+    const parts = viewBox.trim().split(/[\s,]+/).filter(Boolean);
+
+    if (parts.length >= 4) {
+      const w = Number.parseFloat(parts[2] ?? '');
+      const h = Number.parseFloat(parts[3] ?? '');
+
+      if (Number.isFinite(w) && Number.isFinite(h) && w > 0 && h > 0) {
+        return { width: Math.round(w), height: Math.round(h) };
+      }
+    }
+  }
+
+  const widthAttr = svg.getAttribute('width');
+  const heightAttr = svg.getAttribute('height');
+
+  if (widthAttr && heightAttr) {
+    const w = Number.parseFloat(widthAttr);
+    const h = Number.parseFloat(heightAttr);
+
+    if (Number.isFinite(w) && Number.isFinite(h) && w > 0 && h > 0) {
+      return { width: Math.round(w), height: Math.round(h) };
+    }
+  }
+
+  const rect = svg.getBoundingClientRect();
+  const w = Math.max(1, Math.round(rect.width));
+  const h = Math.max(1, Math.round(rect.height));
+
+  return { width: w, height: h };
+};
+
+const triggerBlobDownload = (blob: Blob, downloadName: string) => {
+  const objectUrl = window.URL.createObjectURL(blob);
+  const downloadLink = document.createElement('a');
+
+  downloadLink.href = objectUrl;
+  downloadLink.download = downloadName;
+  document.body.append(downloadLink);
+  downloadLink.click();
+  downloadLink.remove();
+  window.URL.revokeObjectURL(objectUrl);
+};
+
+const exportSvgToRasterBlob = async (
+  svgElement: SVGSVGElement,
+  format: 'png' | 'jpeg' | 'webp',
+): Promise<Blob | null> => {
+  const { width, height } = getSvgExportPixelSize(svgElement);
+  const serializer = new XMLSerializer();
+  const clone = svgElement.cloneNode(true) as SVGSVGElement;
+
+  clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+
+  if (!clone.getAttribute('xmlns:xlink')) {
+    clone.setAttribute('xmlns:xlink', 'http://www.w3.org/1999/xlink');
+  }
+
+  clone.setAttribute('width', String(width));
+  clone.setAttribute('height', String(height));
+
+  const svgMarkup = serializer.serializeToString(clone);
+  const svgBlob = new Blob([svgMarkup], { type: 'image/svg+xml;charset=utf-8' });
+  const objectUrl = window.URL.createObjectURL(svgBlob);
+  const image = new Image();
+
+  try {
+    await new Promise<void>((resolve, reject) => {
+      image.onload = () => {
+        resolve();
+      };
+
+      image.onerror = () => {
+        reject(new Error('svg raster load failed'));
+      };
+
+      image.src = objectUrl;
+    });
+  } catch {
+    window.URL.revokeObjectURL(objectUrl);
+    return null;
+  }
+
+  window.URL.revokeObjectURL(objectUrl);
+
+  const canvas = document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = height;
+
+  const context = canvas.getContext('2d');
+
+  if (!context) {
+    return null;
+  }
+
+  context.fillStyle = '#ffffff';
+  context.fillRect(0, 0, width, height);
+  context.drawImage(image, 0, 0, width, height);
+
+  const mimeType = format === 'png' ? 'image/png' : format === 'jpeg' ? 'image/jpeg' : 'image/webp';
+  const quality = format === 'jpeg' || format === 'webp' ? 0.92 : undefined;
+
+  return await new Promise((resolve) => {
+    canvas.toBlob((nextBlob) => resolve(nextBlob), mimeType, quality);
+  });
+};
+
+type BadgeDownloadFormatMenuProps = {
+  fileName: string;
+  getSvgElement: () => SVGSVGElement | null;
+  triggerClassName?: string;
+};
+
+const BadgeDownloadFormatMenu = ({ fileName, getSvgElement, triggerClassName }: BadgeDownloadFormatMenuProps) => {
+  const wrapRef = useRef<HTMLDivElement | null>(null);
+  const menuId = useId();
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  useEffect(() => {
+    if (!menuOpen) {
+      return;
+    }
+
+    const onDocumentMouseDown = (event: MouseEvent) => {
+      if (wrapRef.current && !wrapRef.current.contains(event.target as Node)) {
+        setMenuOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', onDocumentMouseDown);
+    return () => document.removeEventListener('mousedown', onDocumentMouseDown);
+  }, [menuOpen]);
+
+  useEffect(() => {
+    if (!menuOpen) {
+      return;
+    }
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.stopPropagation();
+        setMenuOpen(false);
+      }
+    };
+
+    window.addEventListener('keydown', onKeyDown, true);
+    return () => window.removeEventListener('keydown', onKeyDown, true);
+  }, [menuOpen]);
+
+  const baseName = getBadgeDownloadBaseName(fileName);
+
+  const downloadSvg = () => {
+    const svgElement = getSvgElement();
+
+    if (!svgElement) {
+      return;
+    }
+
+    const serializer = new XMLSerializer();
+    const svgMarkup = `${svgExportComment}\n${serializer.serializeToString(svgElement)}`;
+    const svgBlob = new Blob([svgMarkup], { type: 'image/svg+xml;charset=utf-8' });
+
+    triggerBlobDownload(svgBlob, fileName);
+    setMenuOpen(false);
+  };
+
+  const downloadRaster = async (format: 'png' | 'jpeg' | 'webp') => {
+    const svgElement = getSvgElement();
+
+    if (!svgElement) {
+      return;
+    }
+
+    const blob = await exportSvgToRasterBlob(svgElement, format);
+
+    if (!blob) {
+      window.alert('导出失败，请重试。');
+      setMenuOpen(false);
+      return;
+    }
+
+    const extension = format === 'jpeg' ? 'jpg' : format;
+
+    triggerBlobDownload(blob, `${baseName}.${extension}`);
+    setMenuOpen(false);
+  };
+
+  const triggerClass = ['download-format-menu-trigger', triggerClassName].filter(Boolean).join(' ');
+
+  return (
+    <div className="download-format-menu" ref={wrapRef}>
+      <button
+        type="button"
+        className={`primary-button ${triggerClass}`.trim()}
+        aria-expanded={menuOpen}
+        aria-haspopup="menu"
+        aria-controls={menuId}
+        onClick={() => {
+          setMenuOpen((open) => !open);
+        }}
+      >
+        下载 <span className="download-format-menu-chevron" aria-hidden>▾</span>
+      </button>
+      {menuOpen ? (
+        <ul id={menuId} className="download-format-menu-panel" role="menu" aria-label="选择下载格式">
+          <li role="none">
+            <button type="button" className="download-format-menu-item" role="menuitem" onClick={downloadSvg}>
+              下载 SVG
+            </button>
+          </li>
+          <li className="download-format-menu-separator" role="separator" aria-orientation="horizontal" />
+          <li role="none">
+            <button type="button" className="download-format-menu-item" role="menuitem" onClick={() => void downloadRaster('png')}>
+              下载 PNG
+            </button>
+          </li>
+          <li role="none">
+            <button type="button" className="download-format-menu-item" role="menuitem" onClick={() => void downloadRaster('jpeg')}>
+              下载 JPEG
+            </button>
+          </li>
+          <li role="none">
+            <button
+              type="button"
+              className="download-format-menu-item"
+              role="menuitem"
+              disabled={!webpRasterExportSupported}
+              title={!webpRasterExportSupported ? '当前浏览器不支持导出 WebP' : undefined}
+              onClick={() => void downloadRaster('webp')}
+            >
+              下载 WebP
+            </button>
+          </li>
+        </ul>
+      ) : null}
+    </div>
+  );
+};
 const docsReferenceUrl = 'https://github.com/kyuri-metro/njmetro-railmap-creator/tree/main/docs';
 const builtinLineUnavailableMessage =
   '当前线路编号未内置已开通站点列表。支持：1、2、3、4、5、6、7、10、S1、S2、S3、S4、S6、S7、S8、S9。';
@@ -262,25 +520,10 @@ const DownloadableBadgeCard = ({ title, fileName, children }: DownloadableBadgeC
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [isSvgZoomOpen]);
 
-  const handleDownload = () => {
-    const svgElement = badgeContainerRef.current?.querySelector('svg');
+  const getBadgeSvgElement = () => {
+    const candidate = badgeContainerRef.current?.querySelector('svg');
 
-    if (!svgElement) {
-      return;
-    }
-
-    const serializer = new XMLSerializer();
-    const svgMarkup = `${svgExportComment}\n${serializer.serializeToString(svgElement)}`;
-    const svgBlob = new Blob([svgMarkup], { type: 'image/svg+xml;charset=utf-8' });
-    const objectUrl = window.URL.createObjectURL(svgBlob);
-    const downloadLink = document.createElement('a');
-
-    downloadLink.href = objectUrl;
-    downloadLink.download = fileName;
-    document.body.append(downloadLink);
-    downloadLink.click();
-    downloadLink.remove();
-    window.URL.revokeObjectURL(objectUrl);
+    return candidate instanceof SVGSVGElement ? candidate : null;
   };
 
   const openSvgZoom = () => {
@@ -306,9 +549,7 @@ const DownloadableBadgeCard = ({ title, fileName, children }: DownloadableBadgeC
         <div className="result-block-heading">
           <h3>{title}</h3>
           <div className="result-actions">
-            <button type="button" className="primary-button" onClick={handleDownload}>
-              下载 SVG
-            </button>
+            <BadgeDownloadFormatMenu fileName={fileName} getSvgElement={getBadgeSvgElement} />
             <button
               type="button"
               className="icon-button result-svg-zoom-trigger"
@@ -356,9 +597,11 @@ const DownloadableBadgeCard = ({ title, fileName, children }: DownloadableBadgeC
                     />
                     <span className="svg-preview-zoom-scale-value">{svgZoomPercent}%</span>
                   </label>
-                  <button type="button" className="primary-button svg-preview-zoom-download" onClick={handleDownload}>
-                    下载 SVG
-                  </button>
+                  <BadgeDownloadFormatMenu
+                    fileName={fileName}
+                    getSvgElement={getBadgeSvgElement}
+                    triggerClassName="svg-preview-zoom-download"
+                  />
                 </div>
                 <div className="svg-preview-zoom-body">
                   <div className="svg-preview-zoom-scaled" style={{ width: `${svgZoomPercent}%` }}>

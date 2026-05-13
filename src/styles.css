@@ -753,6 +753,81 @@ html.dark .station-table th {
   margin-top: 0;
 }
 
+.download-format-menu {
+  position: relative;
+  display: inline-flex;
+  flex-shrink: 0;
+}
+
+.download-format-menu-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.28em;
+}
+
+.download-format-menu-chevron {
+  font-size: 0.72em;
+  line-height: 1;
+  opacity: 0.82;
+}
+
+.download-format-menu-panel {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  z-index: 120;
+  min-width: 11.5rem;
+  margin: 0;
+  padding: 4px 0;
+  list-style: none;
+  border: 1px solid var(--site-border);
+  background: var(--site-surface);
+  color: var(--site-fg);
+  box-sizing: border-box;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+}
+
+.download-format-menu-panel > li {
+  margin: 0;
+}
+
+.download-format-menu-separator {
+  height: 0;
+  margin: 6px 10px;
+  padding: 0;
+  list-style: none;
+  border: 0;
+  border-top: 1px solid var(--site-border);
+  pointer-events: none;
+}
+
+.download-format-menu-item {
+  display: block;
+  width: 100%;
+  padding: 8px 14px;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 0.92rem;
+  line-height: 1.35;
+  text-align: left;
+  cursor: pointer;
+}
+
+.download-format-menu-item:hover:not(:disabled) {
+  background: var(--site-hover-bg);
+}
+
+.download-format-menu-item:active:not(:disabled) {
+  background: var(--site-active-bg);
+}
+
+.download-format-menu-item:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
 .result-svg-zoom-trigger {
   flex-shrink: 0;
 }
