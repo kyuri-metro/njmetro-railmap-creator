@@ -636,9 +636,9 @@ html.dark .station-table th {
   align-items: center;
   min-height: 20px;
   padding: 0 7px;
-  border: 1px solid color-mix(in srgb, var(--transfer-color) 12%, white);
+  border: 1px solid color-mix(in srgb, var(--transfer-color) 78%, black);
   border-radius: 999px;
-  background: color-mix(in srgb, var(--transfer-color) 38%, white);
+  background: var(--transfer-color);
   color: var(--transfer-text, color-mix(in srgb, var(--transfer-color) 68%, black));
   font-size: 0.78rem;
   font-weight: 700;
