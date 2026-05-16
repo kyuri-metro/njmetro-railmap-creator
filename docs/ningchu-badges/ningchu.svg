@@ -1,0 +1,16 @@
+<svg width="2050" height="1000" viewBox="0 0 2050 1000" xmlns="http://www.w3.org/2000/svg">
+  <rect width="2050" height="1000" fill="#ff631b" />
+  <text
+    x="160.63272"
+    y="586"
+    fill="#ffffff"
+    font-family="'Microsoft YaHei', 'Microsoft YaHei_MSFontService', sans-serif"
+    font-size="540px"
+    letter-spacing="51px">宁滁线</text>
+  <text
+    x="138.76744"
+    y="834"
+    fill="#ffffff"
+    font-family="FZHei-B01, FZHei-B01_MSFontService, sans-serif"
+    font-size="181px">Nanjing-Chuzhou Line</text>
+</svg>
