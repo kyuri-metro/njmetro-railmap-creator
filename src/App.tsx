@@ -1174,7 +1174,7 @@ function App() {
                   RMG
                 </a>
                 {' '}
-                项目的启发，在此表示感谢。
+                项目的<b>启发</b>，在此表示感谢。
               </p>
               <div className="inline-links" aria-label="外部链接">
                 <a href="https://github.com/kyuri-metro/njmetro-railmap-creator" target="_blank" rel="noreferrer">
