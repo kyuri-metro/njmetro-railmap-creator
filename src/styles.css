@@ -366,6 +366,11 @@ h3 {
   flex-shrink: 0;
 }
 
+.dropdown-menu-chevron {
+  display: block;
+  flex-shrink: 0;
+}
+
 .kyuri-rmg-tool-dialog {
   width: min(960px, 96vw);
   max-width: 96vw;

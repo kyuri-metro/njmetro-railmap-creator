@@ -1,5 +1,6 @@
 import { useEffect, useId, useLayoutEffect, useRef, useState, type RefObject } from 'react';
 import { createPortal } from 'react-dom';
+import { DropdownMenuChevron } from './DropdownMenuChevron';
 
 type FloatingMenuGeometry = {
   top: number;
@@ -179,7 +180,7 @@ export function StationYamlImportMenu({ yamlFileInputRef, rmgToolConfigured, onO
         aria-controls={menuId}
         onClick={() => setMenuOpen((o) => !o)}
       >
-        导入 <span className="dropdown-menu-chevron" aria-hidden>▾</span>
+        导入 <DropdownMenuChevron />
       </button>
       {menuPanel ? createPortal(menuPanel, document.body) : null}
     </div>
@@ -288,7 +289,7 @@ export function StationYamlExportMenu({ rmgToolConfigured, onDownloadYaml, onOpe
         aria-controls={menuId}
         onClick={() => setMenuOpen((o) => !o)}
       >
-        导出 <span className="dropdown-menu-chevron" aria-hidden>▾</span>
+        导出 <DropdownMenuChevron />
       </button>
       {menuPanel ? createPortal(menuPanel, document.body) : null}
     </div>

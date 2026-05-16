@@ -17,6 +17,7 @@ import { RouteBadge } from './components/RouteBadge';
 import { StationFormModal, stationToDraft, type StationFormDraft } from './components/StationFormModal';
 import { StationTable } from './components/StationTable';
 import { KyuriRmgToolModal } from './components/KyuriRmgToolModal';
+import { DropdownMenuChevron } from './components/DropdownMenuChevron';
 import { StationYamlExportMenu, StationYamlImportMenu } from './components/StationYamlIoMenus';
 import { KYURI_RMG_IFRAME_ORIGIN } from './config/kyuriRmgIframe';
 import { getBuiltinOpenedStationsByLineId } from './builtinOpenedLineStations';
@@ -580,7 +581,7 @@ const BadgeDownloadFormatMenu = ({ fileName, getSvgElement, triggerClassName }: 
           setMenuOpen((open) => !open);
         }}
       >
-        下载 <span className="dropdown-menu-chevron" aria-hidden>▾</span>
+        下载 <DropdownMenuChevron />
       </button>
       {menuPanel ? createPortal(menuPanel, document.body) : null}
     </div>
