@@ -1493,15 +1493,15 @@ function App() {
               <section className="panel result-panel">
                 <h2>结果</h2>
 
-                <DownloadableBadgeCard title="CurrentStationBadge" fileName="current-station-badge.svg">
+                <DownloadableBadgeCard title="当前站吊板" fileName="current-station-badge.svg">
                   <CurrentStationBadge data={previewGenerator} />
                 </DownloadableBadgeCard>
 
-                <DownloadableBadgeCard title="DirectionBadge" fileName="direction-badge.svg">
+                <DownloadableBadgeCard title="方向吊板" fileName="direction-badge.svg">
                   <DirectionBadge data={previewGenerator} />
                 </DownloadableBadgeCard>
 
-                <DownloadableBadgeCard title="RouteBadge" fileName="route-badge.svg">
+                <DownloadableBadgeCard title="线路图吊板" fileName="route-badge.svg">
                   <RouteBadge data={previewGenerator} />
                 </DownloadableBadgeCard>
               </section>
