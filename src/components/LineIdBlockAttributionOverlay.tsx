@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import type { SvgBox } from './svgPositioning';
 
-const LINE_ID_GENERATOR_URL = 'https://njmetro-line-id-block-generator.umamichi.moe/';
+const LINE_ID_GENERATOR_URL = 'https://kyuri-metro-storybook.umamichi.moe/?path=/docs/kyuri-metro-njmetro-line-id-block-svg-generator--docs';
 const LINE_ID_NPM_URL = 'https://www.npmjs.com/package/@kyuri-metro/njmetro-line-id-block-svg-generator';
 
 const HIDE_DELAY_MS = 220;
