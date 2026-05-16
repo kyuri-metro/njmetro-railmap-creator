@@ -34,6 +34,14 @@ h1 {
   box-sizing: border-box;
 }
 
+/**
+ * 站点列表表头 position:sticky 时与顶栏错开；与 `.app-topbar-inner` 的 min-height、padding 及顶栏底边框大致一致。
+ * 窄屏标题换行时顶栏可能变高，略留余量以免表头与顶栏重叠。
+ */
+:root {
+  --app-sticky-topbar-offset: 80px;
+}
+
 .app-topbar-inner {
   display: flex;
   align-items: center;
@@ -566,7 +574,7 @@ h3 {
 }
 
 .station-col-action {
-  width: 56px;
+  width: 104px;
 }
 
 .station-table th,
@@ -595,6 +603,17 @@ h3 {
 html.dark .station-table th {
   color: var(--gray-300);
   background: var(--gray-800);
+}
+
+.station-table.station-table--page-list thead th {
+  position: sticky;
+  top: var(--app-sticky-topbar-offset);
+  z-index: 4;
+  box-shadow: 0 1px 0 color-mix(in srgb, var(--gray-700) 24%, transparent);
+}
+
+html.dark .station-table.station-table--page-list thead th {
+  box-shadow: 0 1px 0 color-mix(in srgb, var(--gray-300) 16%, transparent);
 }
 
 .station-table tbody tr {
@@ -665,8 +684,39 @@ html.dark .station-table th {
   text-align: center;
 }
 
+.station-action-cluster {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  flex-wrap: nowrap;
+}
+
+.station-row-insert-btn {
+  box-sizing: border-box;
+  min-width: 28px;
+  padding: 5px 4px;
+  border: 1px solid var(--site-border);
+  border-radius: 6px;
+  background: var(--site-button-bg);
+  color: var(--site-muted-fg);
+  font-size: 0.72rem;
+  font-weight: 700;
+  line-height: 1.1;
+  cursor: pointer;
+}
+
+.station-row-insert-btn:hover {
+  border-color: var(--site-accent-border);
+  background: var(--site-accent-soft);
+  color: var(--site-accent);
+}
+
+.station-row-insert-btn:active {
+  background: var(--site-button-active-bg);
+}
+
 .station-action-cell .icon-button {
-  margin-left: auto;
   border: none;
   background: var(--site-button-bg);
   color: var(--site-muted-fg);
