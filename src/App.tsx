@@ -101,6 +101,12 @@ const webpRasterExportSupported =
       })()
     : false;
 
+/** PNG/JPEG/WebP 导出相对 SVG viewBox 的像素倍率（1 = 与 viewBox 同尺寸） */
+const RASTER_EXPORT_PIXEL_SCALE = 1;
+
+/** 单块光栅画布最大边长（适配 iOS 等环境的 canvas 面积/尺寸限制） */
+const RASTER_EXPORT_TILE_MAX = 4096;
+
 const getSvgExportPixelSize = (svg: SVGSVGElement): { width: number; height: number } => {
   const viewBox = svg.getAttribute('viewBox');
 
@@ -136,24 +142,26 @@ const getSvgExportPixelSize = (svg: SVGSVGElement): { width: number; height: num
   return { width: w, height: h };
 };
 
-const triggerBlobDownload = (blob: Blob, downloadName: string) => {
-  const objectUrl = window.URL.createObjectURL(blob);
-  const downloadLink = document.createElement('a');
+const getSvgViewBoxOrigin = (svg: SVGSVGElement): { x: number; y: number } => {
+  const viewBox = svg.getAttribute('viewBox');
 
-  downloadLink.href = objectUrl;
-  downloadLink.download = downloadName;
-  document.body.append(downloadLink);
-  downloadLink.click();
-  downloadLink.remove();
-  window.URL.revokeObjectURL(objectUrl);
+  if (viewBox) {
+    const parts = viewBox.trim().split(/[\s,]+/).filter(Boolean);
+
+    if (parts.length >= 2) {
+      const x = Number.parseFloat(parts[0] ?? '0');
+      const y = Number.parseFloat(parts[1] ?? '0');
+
+      if (Number.isFinite(x) && Number.isFinite(y)) {
+        return { x, y };
+      }
+    }
+  }
+
+  return { x: 0, y: 0 };
 };
 
-const exportSvgToRasterBlob = async (
-  svgElement: SVGSVGElement,
-  format: 'png' | 'jpeg' | 'webp',
-): Promise<Blob | null> => {
-  const { width, height } = getSvgExportPixelSize(svgElement);
-  const serializer = new XMLSerializer();
+const prepareSvgExportClone = (svgElement: SVGSVGElement, width: number, height: number): SVGSVGElement => {
   const clone = svgElement.cloneNode(true) as SVGSVGElement;
 
   clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
@@ -165,7 +173,10 @@ const exportSvgToRasterBlob = async (
   clone.setAttribute('width', String(width));
   clone.setAttribute('height', String(height));
 
-  const svgMarkup = serializer.serializeToString(clone);
+  return clone;
+};
+
+const loadSvgMarkupAsImage = async (svgMarkup: string): Promise<HTMLImageElement | null> => {
   const svgBlob = new Blob([svgMarkup], { type: 'image/svg+xml;charset=utf-8' });
   const objectUrl = window.URL.createObjectURL(svgBlob);
   const image = new Image();
@@ -182,13 +193,32 @@ const exportSvgToRasterBlob = async (
 
       image.src = objectUrl;
     });
+
+    return image;
   } catch {
-    window.URL.revokeObjectURL(objectUrl);
     return null;
+  } finally {
+    window.URL.revokeObjectURL(objectUrl);
   }
+};
 
-  window.URL.revokeObjectURL(objectUrl);
+const canvasToRasterBlob = async (
+  canvas: HTMLCanvasElement,
+  format: 'png' | 'jpeg' | 'webp',
+): Promise<Blob | null> => {
+  const mimeType = format === 'png' ? 'image/png' : format === 'jpeg' ? 'image/jpeg' : 'image/webp';
+  const quality = format === 'jpeg' || format === 'webp' ? 0.92 : undefined;
 
+  return await new Promise((resolve) => {
+    canvas.toBlob((nextBlob) => resolve(nextBlob), mimeType, quality);
+  });
+};
+
+const rasterizeLoadedImageToCanvas = (
+  image: HTMLImageElement,
+  width: number,
+  height: number,
+): HTMLCanvasElement | null => {
   const canvas = document.createElement('canvas');
   canvas.width = width;
   canvas.height = height;
@@ -203,12 +233,109 @@ const exportSvgToRasterBlob = async (
   context.fillRect(0, 0, width, height);
   context.drawImage(image, 0, 0, width, height);
 
-  const mimeType = format === 'png' ? 'image/png' : format === 'jpeg' ? 'image/jpeg' : 'image/webp';
-  const quality = format === 'jpeg' || format === 'webp' ? 0.92 : undefined;
+  return canvas;
+};
 
-  return await new Promise((resolve) => {
-    canvas.toBlob((nextBlob) => resolve(nextBlob), mimeType, quality);
-  });
+const rasterizeSvgMarkupToCanvas = async (
+  svgMarkup: string,
+  width: number,
+  height: number,
+): Promise<HTMLCanvasElement | null> => {
+  const image = await loadSvgMarkupAsImage(svgMarkup);
+
+  if (!image) {
+    return null;
+  }
+
+  return rasterizeLoadedImageToCanvas(image, width, height);
+};
+
+const renderSvgExportTileToCanvas = async (
+  baseClone: SVGSVGElement,
+  viewBox: string,
+  width: number,
+  height: number,
+): Promise<HTMLCanvasElement | null> => {
+  const tileClone = baseClone.cloneNode(true) as SVGSVGElement;
+
+  tileClone.setAttribute('viewBox', viewBox);
+  tileClone.setAttribute('width', String(width));
+  tileClone.setAttribute('height', String(height));
+
+  const serializer = new XMLSerializer();
+  const svgMarkup = serializer.serializeToString(tileClone);
+
+  return rasterizeSvgMarkupToCanvas(svgMarkup, width, height);
+};
+
+const triggerBlobDownload = (blob: Blob, downloadName: string) => {
+  const objectUrl = window.URL.createObjectURL(blob);
+  const downloadLink = document.createElement('a');
+
+  downloadLink.href = objectUrl;
+  downloadLink.download = downloadName;
+  document.body.append(downloadLink);
+  downloadLink.click();
+  downloadLink.remove();
+  window.URL.revokeObjectURL(objectUrl);
+};
+
+const exportSvgToRasterBlob = async (
+  svgElement: SVGSVGElement,
+  format: 'png' | 'jpeg' | 'webp',
+): Promise<Blob | null> => {
+  const logical = getSvgExportPixelSize(svgElement);
+  const width = Math.round(logical.width * RASTER_EXPORT_PIXEL_SCALE);
+  const height = Math.round(logical.height * RASTER_EXPORT_PIXEL_SCALE);
+  const needsTiling = width > RASTER_EXPORT_TILE_MAX || height > RASTER_EXPORT_TILE_MAX;
+
+  if (!needsTiling) {
+    const clone = prepareSvgExportClone(svgElement, width, height);
+    const svgMarkup = new XMLSerializer().serializeToString(clone);
+    const canvas = await rasterizeSvgMarkupToCanvas(svgMarkup, width, height);
+
+    if (!canvas) {
+      return null;
+    }
+
+    return canvasToRasterBlob(canvas, format);
+  }
+
+  const viewBoxOrigin = getSvgViewBoxOrigin(svgElement);
+  const baseClone = prepareSvgExportClone(svgElement, width, height);
+  const finalCanvas = document.createElement('canvas');
+  finalCanvas.width = width;
+  finalCanvas.height = height;
+
+  const finalContext = finalCanvas.getContext('2d');
+
+  if (!finalContext) {
+    return null;
+  }
+
+  finalContext.fillStyle = '#ffffff';
+  finalContext.fillRect(0, 0, width, height);
+
+  for (let tileY = 0; tileY < height; tileY += RASTER_EXPORT_TILE_MAX) {
+    for (let tileX = 0; tileX < width; tileX += RASTER_EXPORT_TILE_MAX) {
+      const tileWidth = Math.min(RASTER_EXPORT_TILE_MAX, width - tileX);
+      const tileHeight = Math.min(RASTER_EXPORT_TILE_MAX, height - tileY);
+      const viewBoxX = viewBoxOrigin.x + tileX / RASTER_EXPORT_PIXEL_SCALE;
+      const viewBoxY = viewBoxOrigin.y + tileY / RASTER_EXPORT_PIXEL_SCALE;
+      const viewBoxWidth = tileWidth / RASTER_EXPORT_PIXEL_SCALE;
+      const viewBoxHeight = tileHeight / RASTER_EXPORT_PIXEL_SCALE;
+      const viewBox = `${viewBoxX} ${viewBoxY} ${viewBoxWidth} ${viewBoxHeight}`;
+      const tileCanvas = await renderSvgExportTileToCanvas(baseClone, viewBox, tileWidth, tileHeight);
+
+      if (!tileCanvas) {
+        return null;
+      }
+
+      finalContext.drawImage(tileCanvas, tileX, tileY);
+    }
+  }
+
+  return canvasToRasterBlob(finalCanvas, format);
 };
 
 type BadgeDownloadFormatMenuProps = {
