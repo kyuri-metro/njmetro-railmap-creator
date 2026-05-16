@@ -260,13 +260,13 @@ h3 {
   margin-left: auto;
 }
 
-/* common-css sets label / .field-label to 600; use normal weight for app forms */
-.form-grid label.field-label,
-.modal-form label.field-label {
+/* common-css .form-scope sets label / .field-label to 600; use normal weight for app forms */
+.form-scope label.field-label,
+.form-scope .field-label {
   font-weight: 400;
 }
 
-.field-label-checkbox {
+.form-scope .field-label-checkbox {
   display: flex;
   flex-direction: row;
   align-items: center;
@@ -274,7 +274,7 @@ h3 {
   gap: 10px;
 }
 
-.field-label-checkbox input {
+.form-scope .field-label-checkbox input {
   flex: 0 0 auto;
 }
 
@@ -294,9 +294,9 @@ h3 {
   width: 100%;
 }
 
-.form-grid.generator-settings-grid .field-label .text-input,
-.form-grid.generator-settings-grid .field-label .solver-select,
-.form-grid.generator-settings-grid .field-label input[type='color'] {
+.form-scope.form-grid.generator-settings-grid .field-label .text-input,
+.form-scope.form-grid.generator-settings-grid .field-label .select-input,
+.form-scope.form-grid.generator-settings-grid .field-label input[type='color'] {
   max-width: none;
   width: 100%;
 }
@@ -326,9 +326,9 @@ h3 {
   width: 100%;
 }
 
-.form-grid.single-column .field-label .text-input,
-.form-grid.single-column .field-label .solver-select,
-.form-grid.single-column .field-label input[type='color'] {
+.form-scope.form-grid.single-column .field-label .text-input,
+.form-scope.form-grid.single-column .field-label .select-input,
+.form-scope.form-grid.single-column .field-label input[type='color'] {
   max-width: 280px;
   width: 100%;
 }

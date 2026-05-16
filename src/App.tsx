@@ -803,7 +803,7 @@ const DownloadableBadgeCard = ({ title, fileName, children }: DownloadableBadgeC
                     ×
                   </button>
                 </header>
-                <div className="svg-preview-zoom-toolbar">
+                <div className="svg-preview-zoom-toolbar form-scope">
                   <label className="svg-preview-zoom-scale-label">
                     <span>缩放</span>
                     <input
@@ -1348,7 +1348,7 @@ function App() {
 
             <section className="panel">
               <h2>生成设置</h2>
-              <div className="form-grid generator-settings-grid">
+              <div className="form-scope form-grid generator-settings-grid">
                 <label className="field-label">
                   <span>总长（px）</span>
                   <input
@@ -1368,7 +1368,7 @@ function App() {
                 <label className="field-label">
                   <span>列车行进方向</span>
                   <select
-                    className="solver-select"
+                    className="select-input"
                     value={generator.direction}
                     onChange={(event) => {
                       startTransition(() => {

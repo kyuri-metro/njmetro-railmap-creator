@@ -119,7 +119,7 @@ export function StationFormModal({
         </div>
 
         <form
-          className="modal-form"
+          className="modal-form form-scope"
           onSubmit={(event) => {
             event.preventDefault();
             onSubmit(draft);
@@ -148,7 +148,7 @@ export function StationFormModal({
           <label className="field-label">
             <span>type（站点类型）</span>
             <select
-              className="text-input"
+              className="select-input"
               value={draft.type}
               onChange={(event) => setDraft((current) => ({ ...current, type: event.target.value as StationType }))}
             >
