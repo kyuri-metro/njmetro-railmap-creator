@@ -25,21 +25,21 @@ export function StationTable({ currentStnId, stations, onEdit, onInsert, onRever
       <div className="section-toolbar station-section-toolbar">
         <div className="station-toolbar-cluster">
           <div className="toolbar-buttons">
-            <button type="button" className="secondary-button" onClick={() => onInsert('after')}>
+            <button type="button" className="outline-button" onClick={() => onInsert('after')}>
               之后插入
             </button>
-            <button type="button" className="secondary-button" onClick={() => onInsert('before')}>
+            <button type="button" className="outline-button" onClick={() => onInsert('before')}>
               之前插入
             </button>
-            <button type="button" className="secondary-button" onClick={() => onInsert('start')}>
+            <button type="button" className="outline-button" onClick={() => onInsert('start')}>
               最前插入
             </button>
-            <button type="button" className="secondary-button" onClick={() => onInsert('end')}>
+            <button type="button" className="outline-button" onClick={() => onInsert('end')}>
               最后插入
             </button>
           </div>
         </div>
-        <button type="button" className="secondary-button station-reverse-list-button" onClick={onReverseList}>
+        <button type="button" className="outline-button station-reverse-list-button" onClick={onReverseList}>
           反转列表
         </button>
       </div>

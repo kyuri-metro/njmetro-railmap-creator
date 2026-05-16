@@ -122,7 +122,7 @@ export function StationYamlImportMenu({ yamlFileInputRef, rmgToolConfigured, onO
     <ul
       ref={menuPanelRef}
       id={menuId}
-      className="download-format-menu-panel"
+      className="dropdown-menu-panel"
       role="menu"
       aria-label="导入线路数据"
       style={{
@@ -136,7 +136,7 @@ export function StationYamlImportMenu({ yamlFileInputRef, rmgToolConfigured, onO
       <li role="none">
         <button
           type="button"
-          className="download-format-menu-item"
+          className="dropdown-menu-item"
           role="menuitem"
           onClick={() => {
             yamlFileInputRef.current?.click();
@@ -146,11 +146,11 @@ export function StationYamlImportMenu({ yamlFileInputRef, rmgToolConfigured, onO
           从 YAML 文件导入…
         </button>
       </li>
-      <li className="download-format-menu-separator" role="separator" aria-orientation="horizontal" />
+      <li className="dropdown-menu-separator" role="separator" aria-orientation="horizontal" />
       <li role="none">
         <button
           type="button"
-          className="download-format-menu-item"
+          className="dropdown-menu-item"
           role="menuitem"
           disabled={!rmgToolConfigured}
           title={!rmgToolConfigured ? 'RMG 转换窗口未配置，无法使用此选项' : undefined}
@@ -169,17 +169,17 @@ export function StationYamlImportMenu({ yamlFileInputRef, rmgToolConfigured, onO
   ) : null;
 
   return (
-    <div className="download-format-menu" ref={wrapRef}>
+    <div className="dropdown-menu" ref={wrapRef}>
       <button
         ref={triggerRef}
         type="button"
-        className="primary-button download-format-menu-trigger"
+        className="primary-button dropdown-menu-trigger"
         aria-expanded={menuOpen}
         aria-haspopup="menu"
         aria-controls={menuId}
         onClick={() => setMenuOpen((o) => !o)}
       >
-        导入 <span className="download-format-menu-chevron" aria-hidden>▾</span>
+        导入 <span className="dropdown-menu-chevron" aria-hidden>▾</span>
       </button>
       {menuPanel ? createPortal(menuPanel, document.body) : null}
     </div>
@@ -231,7 +231,7 @@ export function StationYamlExportMenu({ rmgToolConfigured, onDownloadYaml, onOpe
     <ul
       ref={menuPanelRef}
       id={menuId}
-      className="download-format-menu-panel"
+      className="dropdown-menu-panel"
       role="menu"
       aria-label="导出线路数据"
       style={{
@@ -245,7 +245,7 @@ export function StationYamlExportMenu({ rmgToolConfigured, onDownloadYaml, onOpe
       <li role="none">
         <button
           type="button"
-          className="download-format-menu-item"
+          className="dropdown-menu-item"
           role="menuitem"
           onClick={() => {
             onDownloadYaml();
@@ -255,11 +255,11 @@ export function StationYamlExportMenu({ rmgToolConfigured, onDownloadYaml, onOpe
           下载 YAML
         </button>
       </li>
-      <li className="download-format-menu-separator" role="separator" aria-orientation="horizontal" />
+      <li className="dropdown-menu-separator" role="separator" aria-orientation="horizontal" />
       <li role="none">
         <button
           type="button"
-          className="download-format-menu-item"
+          className="dropdown-menu-item"
           role="menuitem"
           disabled={!rmgToolConfigured}
           title={!rmgToolConfigured ? 'RMG 转换窗口未配置，无法使用此选项' : undefined}
@@ -278,17 +278,17 @@ export function StationYamlExportMenu({ rmgToolConfigured, onDownloadYaml, onOpe
   ) : null;
 
   return (
-    <div className="download-format-menu" ref={wrapRef}>
+    <div className="dropdown-menu" ref={wrapRef}>
       <button
         ref={triggerRef}
         type="button"
-        className="primary-button download-format-menu-trigger"
+        className="primary-button dropdown-menu-trigger"
         aria-expanded={menuOpen}
         aria-haspopup="menu"
         aria-controls={menuId}
         onClick={() => setMenuOpen((o) => !o)}
       >
-        导出 <span className="download-format-menu-chevron" aria-hidden>▾</span>
+        导出 <span className="dropdown-menu-chevron" aria-hidden>▾</span>
       </button>
       {menuPanel ? createPortal(menuPanel, document.body) : null}
     </div>

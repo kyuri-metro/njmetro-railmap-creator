@@ -519,13 +519,13 @@ const BadgeDownloadFormatMenu = ({ fileName, getSvgElement, triggerClassName }: 
     setMenuOpen(false);
   };
 
-  const triggerClass = ['download-format-menu-trigger', triggerClassName].filter(Boolean).join(' ');
+  const triggerClass = ['dropdown-menu-trigger', triggerClassName].filter(Boolean).join(' ');
 
   const menuPanel = menuOpen ? (
     <ul
       ref={menuPanelRef}
       id={menuId}
-      className="download-format-menu-panel"
+      className="dropdown-menu-panel"
       role="menu"
       aria-label="选择下载格式"
       style={{
@@ -537,25 +537,25 @@ const BadgeDownloadFormatMenu = ({ fileName, getSvgElement, triggerClassName }: 
       }}
     >
       <li role="none">
-        <button type="button" className="download-format-menu-item" role="menuitem" onClick={downloadSvg}>
+        <button type="button" className="dropdown-menu-item" role="menuitem" onClick={downloadSvg}>
           下载 SVG
         </button>
       </li>
-      <li className="download-format-menu-separator" role="separator" aria-orientation="horizontal" />
+      <li className="dropdown-menu-separator" role="separator" aria-orientation="horizontal" />
       <li role="none">
-        <button type="button" className="download-format-menu-item" role="menuitem" onClick={() => void downloadRaster('png')}>
+        <button type="button" className="dropdown-menu-item" role="menuitem" onClick={() => void downloadRaster('png')}>
           下载 PNG
         </button>
       </li>
       <li role="none">
-        <button type="button" className="download-format-menu-item" role="menuitem" onClick={() => void downloadRaster('jpeg')}>
+        <button type="button" className="dropdown-menu-item" role="menuitem" onClick={() => void downloadRaster('jpeg')}>
           下载 JPEG
         </button>
       </li>
       <li role="none">
         <button
           type="button"
-          className="download-format-menu-item"
+          className="dropdown-menu-item"
           role="menuitem"
           disabled={!webpRasterExportSupported}
           title={!webpRasterExportSupported ? '当前浏览器不支持导出 WebP' : undefined}
@@ -568,7 +568,7 @@ const BadgeDownloadFormatMenu = ({ fileName, getSvgElement, triggerClassName }: 
   ) : null;
 
   return (
-    <div className="download-format-menu" ref={wrapRef}>
+    <div className="dropdown-menu" ref={wrapRef}>
       <button
         ref={triggerRef}
         type="button"
@@ -580,7 +580,7 @@ const BadgeDownloadFormatMenu = ({ fileName, getSvgElement, triggerClassName }: 
           setMenuOpen((open) => !open);
         }}
       >
-        下载 <span className="download-format-menu-chevron" aria-hidden>▾</span>
+        下载 <span className="dropdown-menu-chevron" aria-hidden>▾</span>
       </button>
       {menuPanel ? createPortal(menuPanel, document.body) : null}
     </div>
