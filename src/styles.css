@@ -410,18 +410,18 @@ h3 {
   margin-left: auto;
 }
 
-/* 避免在 grid/flex 列内被内容撑破视口 */
+/* 避免在 grid/flex 列内被内容撑破视口；外框用 --site-border（不用 --site-content-border） */
 .table-wrap {
   width: 100%;
   max-width: 100%;
   min-width: 0;
   box-sizing: border-box;
+  border: 1px solid var(--site-border);
 }
 
 .station-table {
   width: 100%;
-  border-collapse: separate;
-  border-spacing: 0;
+  border-collapse: collapse;
   table-layout: fixed;
 }
 
@@ -447,6 +447,7 @@ h3 {
   text-align: left;
   vertical-align: middle;
   font-size: 0.92rem;
+  border: 0;
 }
 
 .station-table td {
@@ -464,6 +465,10 @@ h3 {
   white-space: nowrap;
 }
 
+.station-table thead tr {
+  border-bottom: 1px solid var(--site-border);
+}
+
 html.dark .station-table th {
   color: var(--gray-300);
   background: var(--gray-800);
@@ -473,23 +478,27 @@ html.dark .station-table th {
   transition: background-color 0.16s ease;
 }
 
-.station-table tbody tr:nth-child(odd) td {
+.station-table tbody td {
   background: var(--site-surface);
 }
 
-.station-table tbody tr:nth-child(even) td {
-  background: var(--site-surface-muted);
+.station-table tbody tr + tr td {
+  border-top: 1px solid var(--site-border);
 }
 
-.station-table tbody tr:hover td {
+.station-table:not(.modal-transfer-table) tbody tr {
+  cursor: pointer;
+}
+
+.station-table:not(.modal-transfer-table) tbody tr:hover td {
   background: var(--site-hover-bg);
 }
 
-.station-table tbody tr.is-current {
+.station-table tbody tr.is-current td {
   background: var(--site-accent-soft);
 }
 
-.station-table tbody tr.is-current td {
+.station-table:not(.modal-transfer-table) tbody tr.is-current:hover td {
   background: var(--site-accent-soft);
 }
 
@@ -540,17 +549,16 @@ html.dark .station-table th {
 .station-action-cell .icon-button {
   margin-left: auto;
   border: none;
-  background: var(--site-button-bg);
+  background: transparent;
   color: var(--site-muted-fg);
 }
 
 .station-action-cell .icon-button:hover {
   border: none;
-  background: var(--site-accent-soft);
-  color: var(--site-accent);
+  background: var(--site-hover-bg);
+  color: var(--site-fg);
 }
 
-/* Current row already uses accent-soft; deepen action hover so it stays visible */
 .station-table tbody tr.is-current .station-action-cell .icon-button:hover {
   border: none;
   background: var(--site-button-active-bg);
