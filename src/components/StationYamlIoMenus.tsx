@@ -1,5 +1,6 @@
 import { useEffect, useId, useLayoutEffect, useRef, useState, type RefObject } from 'react';
 import { createPortal } from 'react-dom';
+import { mergeOverlayRefs, useOverlayPresence, withOverlayOpen } from '../hooks/useOverlayPresence';
 import { DropdownMenuChevron } from './DropdownMenuChevron';
 
 type FloatingMenuGeometry = {
@@ -37,13 +38,13 @@ const computeFloatingMenuGeometry = (trigger: HTMLElement, menu: HTMLElement): F
   return { top, left, maxHeight };
 };
 
-function useYamlIoMenuGeometry(menuOpen: boolean) {
+function useYamlIoMenuGeometry(menuOpen: boolean, menuMounted: boolean) {
   const menuPanelRef = useRef<HTMLUListElement | null>(null);
   const triggerRef = useRef<HTMLButtonElement | null>(null);
   const [menuGeometry, setMenuGeometry] = useState<FloatingMenuGeometry | null>(null);
 
   useLayoutEffect(() => {
-    if (!menuOpen) {
+    if (!menuOpen || !menuMounted) {
       setMenuGeometry(null);
       return;
     }
@@ -73,7 +74,7 @@ function useYamlIoMenuGeometry(menuOpen: boolean) {
         root.removeEventListener('scroll', update);
       }
     };
-  }, [menuOpen]);
+  }, [menuOpen, menuMounted]);
 
   return { menuPanelRef, triggerRef, menuGeometry };
 }
@@ -88,7 +89,9 @@ export function StationYamlImportMenu({ yamlFileInputRef, rmgToolConfigured, onO
   const wrapRef = useRef<HTMLDivElement | null>(null);
   const menuId = useId();
   const [menuOpen, setMenuOpen] = useState(false);
-  const { menuPanelRef, triggerRef, menuGeometry } = useYamlIoMenuGeometry(menuOpen);
+  const { mounted: menuMounted, isOpen: menuShown, overlayRef: menuOverlayRef } =
+    useOverlayPresence<HTMLUListElement>(menuOpen);
+  const { menuPanelRef, triggerRef, menuGeometry } = useYamlIoMenuGeometry(menuOpen, menuMounted);
 
   useEffect(() => {
     if (!menuOpen) {
@@ -119,17 +122,16 @@ export function StationYamlImportMenu({ yamlFileInputRef, rmgToolConfigured, onO
     return () => window.removeEventListener('keydown', onKeyDown, true);
   }, [menuOpen]);
 
-  const menuPanel = menuOpen ? (
+  const menuPanel = menuMounted ? (
     <ul
-      ref={menuPanelRef}
+      ref={mergeOverlayRefs(menuOverlayRef, menuPanelRef)}
       id={menuId}
-      className="dropdown-menu-panel"
+      className={withOverlayOpen('dropdown-menu-panel', menuShown && menuGeometry !== null)}
       role="menu"
       aria-label="导入线路数据"
       style={{
         top: menuGeometry?.top ?? -9999,
         left: menuGeometry?.left ?? -9999,
-        visibility: menuGeometry ? 'visible' : 'hidden',
         maxHeight: menuGeometry?.maxHeight,
         overflowY: menuGeometry?.maxHeight ? 'auto' : undefined,
       }}
@@ -197,7 +199,9 @@ export function StationYamlExportMenu({ rmgToolConfigured, onDownloadYaml, onOpe
   const wrapRef = useRef<HTMLDivElement | null>(null);
   const menuId = useId();
   const [menuOpen, setMenuOpen] = useState(false);
-  const { menuPanelRef, triggerRef, menuGeometry } = useYamlIoMenuGeometry(menuOpen);
+  const { mounted: menuMounted, isOpen: menuShown, overlayRef: menuOverlayRef } =
+    useOverlayPresence<HTMLUListElement>(menuOpen);
+  const { menuPanelRef, triggerRef, menuGeometry } = useYamlIoMenuGeometry(menuOpen, menuMounted);
 
   useEffect(() => {
     if (!menuOpen) {
@@ -228,17 +232,16 @@ export function StationYamlExportMenu({ rmgToolConfigured, onDownloadYaml, onOpe
     return () => window.removeEventListener('keydown', onKeyDown, true);
   }, [menuOpen]);
 
-  const menuPanel = menuOpen ? (
+  const menuPanel = menuMounted ? (
     <ul
-      ref={menuPanelRef}
+      ref={mergeOverlayRefs(menuOverlayRef, menuPanelRef)}
       id={menuId}
-      className="dropdown-menu-panel"
+      className={withOverlayOpen('dropdown-menu-panel', menuShown && menuGeometry !== null)}
       role="menu"
       aria-label="导出线路数据"
       style={{
         top: menuGeometry?.top ?? -9999,
         left: menuGeometry?.left ?? -9999,
-        visibility: menuGeometry ? 'visible' : 'hidden',
         maxHeight: menuGeometry?.maxHeight,
         overflowY: menuGeometry?.maxHeight ? 'auto' : undefined,
       }}

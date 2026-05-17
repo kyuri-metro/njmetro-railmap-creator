@@ -474,12 +474,9 @@ html.dark .station-table th {
   background: var(--gray-800);
 }
 
-.station-table tbody tr {
-  transition: background-color 0.16s ease;
-}
-
 .station-table tbody td {
   background: var(--site-surface);
+  transition: background-color var(--transition-fast);
 }
 
 .station-table tbody tr + tr td {
@@ -658,17 +655,7 @@ html.dark .station-table th {
 }
 
 .svg-preview-zoom-backdrop {
-  position: fixed;
-  inset: 0;
   z-index: 100;
-  display: flex;
-  align-items: flex-start;
-  justify-content: center;
-  padding: 16px;
-  box-sizing: border-box;
-  backdrop-filter: blur(var(--site-frosted-blur));
-  -webkit-backdrop-filter: blur(var(--site-frosted-blur));
-  background: var(--site-frosted-overlay);
 }
 
 .svg-preview-zoom-dialog {

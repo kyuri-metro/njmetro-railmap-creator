@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import type { StationItem, StationType, TransferLine } from '../features/generatorSlice';
+import { useOverlayPresence, withOverlayOpen } from '../hooks/useOverlayPresence';
 import { getNjmetroLineBackgroundColor, getNjmetroLineForegroundColor } from '../njmetroLinePalette';
 
 export type StationFormDraft = {
@@ -25,7 +26,9 @@ type StationFormModalProps = {
   allowDelete: boolean;
   initialValue: StationFormDraft;
   modeLabel: string;
+  open: boolean;
   onClose: () => void;
+  onExited?: () => void;
   onDelete?: () => void;
   onSubmit: (draft: StationFormDraft) => void;
 };
@@ -34,11 +37,20 @@ export function StationFormModal({
   allowDelete,
   initialValue,
   modeLabel,
+  open,
   onClose,
+  onExited,
   onDelete,
   onSubmit,
 }: StationFormModalProps) {
   const [draft, setDraft] = useState(initialValue);
+  const { mounted, isOpen, overlayRef } = useOverlayPresence<HTMLDivElement>(open);
+
+  useEffect(() => {
+    if (!mounted) {
+      onExited?.();
+    }
+  }, [mounted, onExited]);
 
   const updateTransferLine = (index: number, field: keyof TransferLine, value: string) => {
     setDraft((current) => ({
@@ -94,8 +106,12 @@ export function StationFormModal({
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [onClose]);
 
+  if (!mounted) {
+    return null;
+  }
+
   return (
-    <div className="modal-backdrop" role="presentation" onClick={onClose}>
+    <div ref={overlayRef} className={withOverlayOpen('modal-backdrop', isOpen)} role="presentation" onClick={onClose}>
       <div
         className="modal-card"
         role="dialog"

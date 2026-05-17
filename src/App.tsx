@@ -10,7 +10,9 @@ import {
   type ReactNode,
 } from 'react';
 import { createPortal } from 'react-dom';
+import { ConfirmDialogOverlay } from './components/ConfirmDialogOverlay';
 import { usePreviewLoadingOverlay } from './hooks/usePreviewLoadingOverlay';
+import { mergeOverlayRefs, useOverlayPresence, withOverlayOpen } from './hooks/useOverlayPresence';
 import { CurrentStationBadge } from './components/CurrentStationBadge';
 import { DirectionBadge } from './components/DirectionBadge';
 import { RouteBadge } from './components/RouteBadge';
@@ -392,9 +394,11 @@ const BadgeDownloadFormatMenu = ({ fileName, getSvgElement, triggerClassName }: 
   const menuId = useId();
   const [menuOpen, setMenuOpen] = useState(false);
   const [menuGeometry, setMenuGeometry] = useState<FloatingMenuGeometry | null>(null);
+  const { mounted: menuMounted, isOpen: menuShown, overlayRef: menuOverlayRef } =
+    useOverlayPresence<HTMLUListElement>(menuOpen);
 
   useLayoutEffect(() => {
-    if (!menuOpen) {
+    if (!menuOpen || !menuMounted) {
       setMenuGeometry(null);
       return;
     }
@@ -441,7 +445,7 @@ const BadgeDownloadFormatMenu = ({ fileName, getSvgElement, triggerClassName }: 
         root.removeEventListener('scroll', update);
       }
     };
-  }, [menuOpen]);
+  }, [menuOpen, menuMounted]);
 
   useEffect(() => {
     if (!menuOpen) {
@@ -522,17 +526,16 @@ const BadgeDownloadFormatMenu = ({ fileName, getSvgElement, triggerClassName }: 
 
   const triggerClass = ['dropdown-menu-trigger', triggerClassName].filter(Boolean).join(' ');
 
-  const menuPanel = menuOpen ? (
+  const menuPanel = menuMounted ? (
     <ul
-      ref={menuPanelRef}
+      ref={mergeOverlayRefs(menuOverlayRef, menuPanelRef)}
       id={menuId}
-      className="dropdown-menu-panel"
+      className={withOverlayOpen('dropdown-menu-panel', menuShown && menuGeometry !== null)}
       role="menu"
       aria-label="选择下载格式"
       style={{
         top: menuGeometry?.top ?? -9999,
         left: menuGeometry?.left ?? -9999,
-        visibility: menuGeometry ? 'visible' : 'hidden',
         maxHeight: menuGeometry?.maxHeight,
         overflowY: menuGeometry?.maxHeight ? 'auto' : undefined,
       }}
@@ -723,6 +726,8 @@ const DownloadableBadgeCard = ({ title, fileName, children }: DownloadableBadgeC
   const badgeContainerRef = useRef<HTMLDivElement | null>(null);
   const svgZoomTitleId = useId();
   const [isSvgZoomOpen, setIsSvgZoomOpen] = useState(false);
+  const { mounted: svgZoomMounted, isOpen: svgZoomOpen, overlayRef: svgZoomOverlayRef } =
+    useOverlayPresence<HTMLDivElement>(isSvgZoomOpen);
   const [svgZoomMarkup, setSvgZoomMarkup] = useState('');
   const [svgZoomPercent, setSvgZoomPercent] = useState(100);
 
@@ -786,11 +791,16 @@ const DownloadableBadgeCard = ({ title, fileName, children }: DownloadableBadgeC
         </div>
       </div>
 
-      {isSvgZoomOpen
+      {svgZoomMounted
         ? createPortal(
-            <div className="svg-preview-zoom-backdrop" role="presentation" onClick={closeSvgZoom}>
+            <div
+              ref={svgZoomOverlayRef}
+              className={withOverlayOpen('site-overlay-backdrop svg-preview-zoom-backdrop', svgZoomOpen)}
+              role="presentation"
+              onClick={closeSvgZoom}
+            >
               <section
-                className="svg-preview-zoom-dialog"
+                className="site-overlay-panel svg-preview-zoom-dialog"
                 role="dialog"
                 aria-modal="true"
                 aria-labelledby={svgZoomTitleId}
@@ -843,6 +853,7 @@ function App() {
   const generator = useAppSelector((state) => state.generator);
   const previewGenerator = useDeferredValue(generator);
   const [modalState, setModalState] = useState<ModalState>(null);
+  const [stationModalVisible, setStationModalVisible] = useState(false);
   const previewLoading = usePreviewLoadingOverlay(generator, 16);
   const [totalLengthDraft, setTotalLengthDraft] = useState(() => String(generator.totalLength));
   const totalLengthDraftRef = useRef(totalLengthDraft);
@@ -862,11 +873,14 @@ function App() {
   const idTextColorDebounceRef = useRef(0);
   const [themeMode, setThemeMode] = useState<ThemeMode>('light');
   const [isExampleModalOpen, setIsExampleModalOpen] = useState(false);
+  const { mounted: exampleModalMounted, isOpen: exampleModalOpen, overlayRef: exampleModalOverlayRef } =
+    useOverlayPresence<HTMLDivElement>(isExampleModalOpen);
   const [isOverwriteStationsConfirmOpen, setIsOverwriteStationsConfirmOpen] = useState(false);
   const [isYamlImportConfirmOpen, setIsYamlImportConfirmOpen] = useState(false);
   const [pendingRailmapImport, setPendingRailmapImport] = useState<RailmapYamlImport | null>(null);
   const [yamlImportError, setYamlImportError] = useState<string | null>(null);
   const [kyuriRmgModal, setKyuriRmgModal] = useState<null | { mode: 'import' | 'export' }>(null);
+  const [kyuriRmgOpen, setKyuriRmgOpen] = useState(false);
   const yamlFileInputRef = useRef<HTMLInputElement>(null);
   const [builtinUnavailableNotice, setBuiltinUnavailableNotice] = useState<string | null>(null);
   const [fontDetectionResults, setFontDetectionResults] = useState<FontDetectionResult[]>(fallbackFontDetectionResults);
@@ -1127,6 +1141,15 @@ function App() {
       position,
       basisId: position === 'before' || position === 'after' ? generator.currentStnId : undefined,
     });
+    setStationModalVisible(true);
+  };
+
+  const closeStationModal = () => {
+    setStationModalVisible(false);
+  };
+
+  const clearStationModal = () => {
+    setModalState(null);
   };
 
   const handleModalSubmit = (draft: StationFormDraft) => {
@@ -1145,7 +1168,7 @@ function App() {
       );
     }
 
-    setModalState(null);
+    closeStationModal();
   };
 
   const handleThemeToggle = () => {
@@ -1441,12 +1464,18 @@ function App() {
                     <StationYamlExportMenu
                       rmgToolConfigured={Boolean(KYURI_RMG_IFRAME_ORIGIN)}
                       onDownloadYaml={handleExportStationYaml}
-                      onOpenRmgExport={() => setKyuriRmgModal({ mode: 'export' })}
+                      onOpenRmgExport={() => {
+                        setKyuriRmgModal({ mode: 'export' });
+                        setKyuriRmgOpen(true);
+                      }}
                     />
                     <StationYamlImportMenu
                       yamlFileInputRef={yamlFileInputRef}
                       rmgToolConfigured={Boolean(KYURI_RMG_IFRAME_ORIGIN)}
-                      onOpenRmgImport={() => setKyuriRmgModal({ mode: 'import' })}
+                      onOpenRmgImport={() => {
+                        setKyuriRmgModal({ mode: 'import' });
+                        setKyuriRmgOpen(true);
+                      }}
                     />
                     <input
                       ref={yamlFileInputRef}
@@ -1465,7 +1494,10 @@ function App() {
               <StationTable
                 currentStnId={generator.currentStnId}
                 stations={generator.stnList}
-                onEdit={(station) => setModalState({ kind: 'edit', station })}
+                onEdit={(station) => {
+                  setModalState({ kind: 'edit', station });
+                  setStationModalVisible(true);
+                }}
                 onInsert={openInsertModal}
                 onReverseList={() => {
                   startTransition(() => {
@@ -1515,12 +1547,14 @@ function App() {
           allowDelete={modalState.kind === 'edit'}
           initialValue={modalState.kind === 'edit' ? stationToDraft(modalState.station) : stationToDraft()}
           modeLabel={modalState.kind === 'edit' ? '编辑站点' : '新增站点'}
-          onClose={() => setModalState(null)}
+          open={stationModalVisible}
+          onClose={closeStationModal}
+          onExited={clearStationModal}
           onDelete={
             modalState.kind === 'edit'
               ? () => {
                   dispatch(deleteStation(modalState.station.id));
-                  setModalState(null);
+                  closeStationModal();
                 }
               : undefined
           }
@@ -1530,30 +1564,29 @@ function App() {
 
       {kyuriRmgModal ? (
         <KyuriRmgToolModal
-          open
+          open={kyuriRmgOpen}
           mode={kyuriRmgModal.mode}
           baseUrl={KYURI_RMG_IFRAME_ORIGIN}
           kyuriYamlForExport={serializeRailmapYaml(generator)}
-          onClose={() => setKyuriRmgModal(null)}
+          onClose={() => setKyuriRmgOpen(false)}
+          onExited={() => setKyuriRmgModal(null)}
           onImportedYaml={(yaml) => {
             applyYamlTextForImport(yaml);
-            setKyuriRmgModal(null);
+            setKyuriRmgOpen(false);
           }}
         />
       ) : null}
 
-      {isYamlImportConfirmOpen ? (
+      <ConfirmDialogOverlay
+        open={isYamlImportConfirmOpen}
+        onDismiss={() => {
+          setIsYamlImportConfirmOpen(false);
+          setPendingRailmapImport(null);
+        }}
+      >
         <div
-          className="confirm-dialog-backdrop"
-          role="presentation"
-          onClick={() => {
-            setIsYamlImportConfirmOpen(false);
-            setPendingRailmapImport(null);
-          }}
-        >
-          <div
-            className="confirm-dialog"
-            role="alertdialog"
+          className="confirm-dialog"
+          role="alertdialog"
             aria-modal="true"
             aria-labelledby="yaml-import-confirm-title"
             aria-describedby="yaml-import-confirm-desc"
@@ -1580,12 +1613,11 @@ function App() {
                 继续
               </button>
             </div>
-          </div>
         </div>
-      ) : null}
+      </ConfirmDialogOverlay>
 
-      {yamlImportError ? (
-        <div className="confirm-dialog-backdrop" role="presentation" onClick={() => setYamlImportError(null)}>
+      <ConfirmDialogOverlay open={yamlImportError !== null} onDismiss={() => setYamlImportError(null)}>
+        {yamlImportError ? (
           <div
             className="confirm-dialog"
             role="alertdialog"
@@ -1606,17 +1638,15 @@ function App() {
               </button>
             </div>
           </div>
-        </div>
-      ) : null}
+        ) : null}
+      </ConfirmDialogOverlay>
 
-      {isOverwriteStationsConfirmOpen ? (
+      <ConfirmDialogOverlay
+        open={isOverwriteStationsConfirmOpen}
+        onDismiss={() => setIsOverwriteStationsConfirmOpen(false)}
+      >
         <div
-          className="confirm-dialog-backdrop"
-          role="presentation"
-          onClick={() => setIsOverwriteStationsConfirmOpen(false)}
-        >
-          <div
-            className="confirm-dialog"
+          className="confirm-dialog"
             role="alertdialog"
             aria-modal="true"
             aria-labelledby="overwrite-stations-confirm-title"
@@ -1637,16 +1667,14 @@ function App() {
                 继续
               </button>
             </div>
-          </div>
         </div>
-      ) : null}
+      </ConfirmDialogOverlay>
 
-      {builtinUnavailableNotice ? (
-        <div
-          className="confirm-dialog-backdrop"
-          role="presentation"
-          onClick={() => setBuiltinUnavailableNotice(null)}
-        >
+      <ConfirmDialogOverlay
+        open={builtinUnavailableNotice !== null}
+        onDismiss={() => setBuiltinUnavailableNotice(null)}
+      >
+        {builtinUnavailableNotice ? (
           <div
             className="confirm-dialog"
             role="alertdialog"
@@ -1667,11 +1695,16 @@ function App() {
               </button>
             </div>
           </div>
-        </div>
-      ) : null}
+        ) : null}
+      </ConfirmDialogOverlay>
 
-      {isExampleModalOpen ? (
-        <div className="example-modal-backdrop" role="presentation" onClick={() => setIsExampleModalOpen(false)}>
+      {exampleModalMounted ? (
+        <div
+          ref={exampleModalOverlayRef}
+          className={withOverlayOpen('example-modal-backdrop', exampleModalOpen)}
+          role="presentation"
+          onClick={() => setIsExampleModalOpen(false)}
+        >
           <section
             className="example-modal"
             role="dialog"
