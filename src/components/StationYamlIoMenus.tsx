@@ -174,7 +174,7 @@ export function StationYamlImportMenu({ yamlFileInputRef, rmgToolConfigured, onO
       <button
         ref={triggerRef}
         type="button"
-        className="primary-button dropdown-menu-trigger"
+        className="secondary-button dropdown-menu-trigger"
         aria-expanded={menuOpen}
         aria-haspopup="menu"
         aria-controls={menuId}
@@ -283,7 +283,7 @@ export function StationYamlExportMenu({ rmgToolConfigured, onDownloadYaml, onOpe
       <button
         ref={triggerRef}
         type="button"
-        className="primary-button dropdown-menu-trigger"
+        className="secondary-button dropdown-menu-trigger"
         aria-expanded={menuOpen}
         aria-haspopup="menu"
         aria-controls={menuId}
