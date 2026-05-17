@@ -667,7 +667,7 @@ html.dark .station-table th {
   padding: 16px 18px 14px;
   box-sizing: border-box;
   border-radius: 0;
-  border: 1px solid var(--site-border);
+  border: 1px solid var(--site-border-strong);
   background: var(--site-surface);
   color: var(--site-fg);
 }
