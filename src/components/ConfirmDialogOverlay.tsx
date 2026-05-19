@@ -1,5 +1,6 @@
 import type { MouseEventHandler, ReactNode } from 'react';
 import { useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useOverlayPresence, withOverlayOpen } from '../hooks/useOverlayPresence';
 
 type ConfirmDialogOverlayProps = {
@@ -26,7 +27,7 @@ export function ConfirmDialogOverlay({ open, onDismiss, onExited, children }: Co
     onDismiss();
   };
 
-  return (
+  return createPortal(
     <div
       ref={overlayRef}
       className={withOverlayOpen('confirm-dialog-backdrop', isOpen)}
@@ -34,6 +35,7 @@ export function ConfirmDialogOverlay({ open, onDismiss, onExited, children }: Co
       onClick={onBackdropClick}
     >
       {children}
-    </div>
+    </div>,
+    document.body,
   );
 }

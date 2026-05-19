@@ -49,7 +49,7 @@ h1 {
   /* 不要 flex-grow：否则块会被顶栏拉满，Beta 的 left:% 会相对整块算，飘到很靠右 */
   flex: 0 1 auto;
   min-width: 0;
-  max-width: calc(100% - 52px);
+  max-width: calc(100% - 96px);
   vertical-align: middle;
 }
 
@@ -84,6 +84,36 @@ h1 {
   /* 仅水平平移 + 倾斜：锚在标题左缘（「南京」起笔），translateX 向左收回半个标签宽以压在字左上方 */
   transform: translateX(-35%) rotate(-20deg);
   transform-origin: left center;
+}
+
+.app-topbar-actions {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 4px;
+}
+
+.app-topbar .app-topbar-info-button {
+  width: 38px;
+  height: 38px;
+  min-width: 38px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--site-header-fg);
+}
+
+.app-topbar .app-topbar-info-button:hover {
+  background: var(--site-hover-bg);
+}
+
+.app-topbar .app-topbar-info-button:active {
+  background: var(--site-active-bg);
+}
+
+.app-info-circle-icon {
+  display: block;
 }
 
 .app-topbar .theme-toggle.app-topbar-theme-toggle {
@@ -654,8 +684,28 @@ html.dark .station-table th {
   display: block;
 }
 
+/* Full-viewport overlays (align with @umamichi-ui/common-css layout until next package release). */
+.modal-backdrop,
+.example-modal-backdrop,
+.site-overlay-backdrop,
+.confirm-dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  width: 100%;
+  min-width: 100vw;
+  min-height: 100vh;
+  min-height: 100dvh;
+  margin: 0;
+}
+
 .svg-preview-zoom-backdrop {
-  z-index: 100;
+  z-index: 1010;
+}
+
+/* 确认框（含下载）需叠在 SVG 大图预览等 site-overlay 之上 */
+.confirm-dialog-backdrop {
+  z-index: 1020;
 }
 
 .svg-preview-zoom-dialog {
@@ -862,6 +912,148 @@ html.dark .station-table th {
     -webkit-backdrop-filter: none;
     background: var(--site-backdrop);
   }
+}
+
+.badge-download-dialog {
+  width: min(100%, 28rem);
+}
+
+.badge-download-dialog-body {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.badge-download-attribution {
+  align-items: flex-start;
+}
+
+.badge-download-attribution span {
+  line-height: 1.55;
+}
+
+.badge-download-attribution code {
+  display: inline;
+  margin: 0 0.15em;
+  padding: 0.1em 0.35em;
+  border-radius: 4px;
+  background: var(--site-surface-muted);
+  font-size: 0.88em;
+  word-break: break-word;
+}
+
+.about-dialog {
+  width: min(calc(100vw - 48px), 36rem);
+  max-width: min(calc(100vw - 48px), 36rem);
+}
+
+.about-dialog-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.about-dialog-product {
+  text-align: center;
+}
+
+.about-dialog-app-name {
+  margin: 0 0 6px;
+  font-size: 1.05rem;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.about-dialog-version {
+  margin: 0 0 10px;
+  color: var(--site-muted-fg);
+  font-size: 0.92rem;
+  line-height: 1.4;
+}
+
+.about-dialog-channel {
+  color: var(--site-subtle-fg);
+}
+
+.about-dialog-tagline {
+  margin: 0;
+  color: var(--site-content-fg);
+  font-size: 0.9rem;
+  line-height: 1.55;
+}
+
+.about-dialog-copyright {
+  margin: 14px 0 0;
+  text-align: center;
+  color: var(--site-muted-fg);
+  font-size: 0.86rem;
+}
+
+.about-dialog-divider {
+  margin: 16px 0;
+  border: 0;
+  border-top: 1px solid var(--site-border);
+}
+
+.about-dialog-section-title {
+  margin: 0 0 6px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--site-subtle-fg);
+  text-transform: uppercase;
+}
+
+.about-dialog-section-text {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.55;
+  color: var(--site-content-fg);
+}
+
+.about-dialog-meta {
+  margin: 14px 0 0;
+}
+
+.about-dialog-meta-row {
+  display: grid;
+  grid-template-columns: 5.5rem minmax(0, 1fr);
+  gap: 8px 12px;
+  align-items: baseline;
+  font-size: 0.88rem;
+  line-height: 1.45;
+}
+
+.about-dialog-meta-row + .about-dialog-meta-row {
+  margin-top: 8px;
+}
+
+.about-dialog-meta dt {
+  margin: 0;
+  color: var(--site-muted-fg);
+}
+
+.about-dialog-meta dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.about-dialog-meta-row:first-child dd a {
+  white-space: nowrap;
+}
+
+@media (max-width: 560px) {
+  .about-dialog-meta-row:first-child dd a {
+    white-space: normal;
+  }
+}
+
+.about-dialog-actions {
+  justify-content: center;
+}
+
+.about-dialog-actions .primary-button {
+  min-width: 6.5rem;
 }
 
 /* Square modal chrome (overrides @umamichi-ui/common-css `.modal-card` / `.example-modal`) */

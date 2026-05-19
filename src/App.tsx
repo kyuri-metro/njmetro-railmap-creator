@@ -3,7 +3,6 @@ import {
   useDeferredValue,
   useEffect,
   useId,
-  useLayoutEffect,
   useRef,
   useState,
   type ChangeEvent,
@@ -12,14 +11,16 @@ import {
 import { createPortal } from 'react-dom';
 import { ConfirmDialogOverlay } from './components/ConfirmDialogOverlay';
 import { usePreviewLoadingOverlay } from './hooks/usePreviewLoadingOverlay';
-import { mergeOverlayRefs, useOverlayPresence, withOverlayOpen } from './hooks/useOverlayPresence';
+import { useOverlayPresence, withOverlayOpen } from './hooks/useOverlayPresence';
 import { CurrentStationBadge } from './components/CurrentStationBadge';
 import { DirectionBadge } from './components/DirectionBadge';
 import { RouteBadge } from './components/RouteBadge';
 import { StationFormModal, stationToDraft, type StationFormDraft } from './components/StationFormModal';
 import { StationTable } from './components/StationTable';
 import { KyuriRmgToolModal } from './components/KyuriRmgToolModal';
-import { DropdownMenuChevron } from './components/DropdownMenuChevron';
+import { AboutDialog } from './components/AboutDialog';
+import { BadgeDownloadTrigger } from './components/BadgeDownloadTrigger';
+import { InfoCircleIcon } from './components/InfoCircleIcon';
 import { StationYamlExportMenu, StationYamlImportMenu } from './components/StationYamlIoMenus';
 import { KYURI_RMG_IFRAME_ORIGIN } from './config/kyuriRmgIframe';
 import { getBuiltinOpenedStationsByLineId } from './builtinOpenedLineStations';
@@ -86,510 +87,6 @@ const normalizeIdColorDraft = (raw: string) => {
 
 const themeStorageKey = 'site-theme';
 const themeTransitionLockClassName = 'theme-transition-lock';
-const svgExportComment = '<!-- created by njmetro-railmap-creator, (https://github.com/kyuri-metro/njmetro-railmap-creator) -->';
-
-const getBadgeDownloadBaseName = (fileName: string) => fileName.replace(/\.svg$/i, '') || 'badge';
-
-const webpRasterExportSupported =
-  typeof document !== 'undefined'
-    ? (() => {
-        try {
-          const probe = document.createElement('canvas');
-          probe.width = 1;
-          probe.height = 1;
-          return probe.toDataURL('image/webp').startsWith('data:image/webp');
-        } catch {
-          return false;
-        }
-      })()
-    : false;
-
-/** PNG/JPEG/WebP 导出相对 SVG viewBox 的像素倍率（1 = 与 viewBox 同尺寸） */
-const RASTER_EXPORT_PIXEL_SCALE = 1;
-
-/** 单块光栅画布最大边长（适配 iOS 等环境的 canvas 面积/尺寸限制） */
-const RASTER_EXPORT_TILE_MAX = 4096;
-
-const getSvgExportPixelSize = (svg: SVGSVGElement): { width: number; height: number } => {
-  const viewBox = svg.getAttribute('viewBox');
-
-  if (viewBox) {
-    const parts = viewBox.trim().split(/[\s,]+/).filter(Boolean);
-
-    if (parts.length >= 4) {
-      const w = Number.parseFloat(parts[2] ?? '');
-      const h = Number.parseFloat(parts[3] ?? '');
-
-      if (Number.isFinite(w) && Number.isFinite(h) && w > 0 && h > 0) {
-        return { width: Math.round(w), height: Math.round(h) };
-      }
-    }
-  }
-
-  const widthAttr = svg.getAttribute('width');
-  const heightAttr = svg.getAttribute('height');
-
-  if (widthAttr && heightAttr) {
-    const w = Number.parseFloat(widthAttr);
-    const h = Number.parseFloat(heightAttr);
-
-    if (Number.isFinite(w) && Number.isFinite(h) && w > 0 && h > 0) {
-      return { width: Math.round(w), height: Math.round(h) };
-    }
-  }
-
-  const rect = svg.getBoundingClientRect();
-  const w = Math.max(1, Math.round(rect.width));
-  const h = Math.max(1, Math.round(rect.height));
-
-  return { width: w, height: h };
-};
-
-const getSvgViewBoxOrigin = (svg: SVGSVGElement): { x: number; y: number } => {
-  const viewBox = svg.getAttribute('viewBox');
-
-  if (viewBox) {
-    const parts = viewBox.trim().split(/[\s,]+/).filter(Boolean);
-
-    if (parts.length >= 2) {
-      const x = Number.parseFloat(parts[0] ?? '0');
-      const y = Number.parseFloat(parts[1] ?? '0');
-
-      if (Number.isFinite(x) && Number.isFinite(y)) {
-        return { x, y };
-      }
-    }
-  }
-
-  return { x: 0, y: 0 };
-};
-
-const prepareSvgExportClone = (svgElement: SVGSVGElement, width: number, height: number): SVGSVGElement => {
-  const clone = svgElement.cloneNode(true) as SVGSVGElement;
-
-  clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
-
-  if (!clone.getAttribute('xmlns:xlink')) {
-    clone.setAttribute('xmlns:xlink', 'http://www.w3.org/1999/xlink');
-  }
-
-  clone.setAttribute('width', String(width));
-  clone.setAttribute('height', String(height));
-
-  return clone;
-};
-
-const loadSvgMarkupAsImage = async (svgMarkup: string): Promise<HTMLImageElement | null> => {
-  const svgBlob = new Blob([svgMarkup], { type: 'image/svg+xml;charset=utf-8' });
-  const objectUrl = window.URL.createObjectURL(svgBlob);
-  const image = new Image();
-
-  try {
-    await new Promise<void>((resolve, reject) => {
-      image.onload = () => {
-        resolve();
-      };
-
-      image.onerror = () => {
-        reject(new Error('svg raster load failed'));
-      };
-
-      image.src = objectUrl;
-    });
-
-    return image;
-  } catch {
-    return null;
-  } finally {
-    window.URL.revokeObjectURL(objectUrl);
-  }
-};
-
-const canvasToRasterBlob = async (
-  canvas: HTMLCanvasElement,
-  format: 'png' | 'jpeg' | 'webp',
-): Promise<Blob | null> => {
-  const mimeType = format === 'png' ? 'image/png' : format === 'jpeg' ? 'image/jpeg' : 'image/webp';
-  const quality = format === 'jpeg' || format === 'webp' ? 0.92 : undefined;
-
-  return await new Promise((resolve) => {
-    canvas.toBlob((nextBlob) => resolve(nextBlob), mimeType, quality);
-  });
-};
-
-const rasterizeLoadedImageToCanvas = (
-  image: HTMLImageElement,
-  width: number,
-  height: number,
-): HTMLCanvasElement | null => {
-  const canvas = document.createElement('canvas');
-  canvas.width = width;
-  canvas.height = height;
-
-  const context = canvas.getContext('2d');
-
-  if (!context) {
-    return null;
-  }
-
-  context.fillStyle = '#ffffff';
-  context.fillRect(0, 0, width, height);
-  context.drawImage(image, 0, 0, width, height);
-
-  return canvas;
-};
-
-const rasterizeSvgMarkupToCanvas = async (
-  svgMarkup: string,
-  width: number,
-  height: number,
-): Promise<HTMLCanvasElement | null> => {
-  const image = await loadSvgMarkupAsImage(svgMarkup);
-
-  if (!image) {
-    return null;
-  }
-
-  return rasterizeLoadedImageToCanvas(image, width, height);
-};
-
-const renderSvgExportTileToCanvas = async (
-  baseClone: SVGSVGElement,
-  viewBox: string,
-  width: number,
-  height: number,
-): Promise<HTMLCanvasElement | null> => {
-  const tileClone = baseClone.cloneNode(true) as SVGSVGElement;
-
-  tileClone.setAttribute('viewBox', viewBox);
-  tileClone.setAttribute('width', String(width));
-  tileClone.setAttribute('height', String(height));
-
-  const serializer = new XMLSerializer();
-  const svgMarkup = serializer.serializeToString(tileClone);
-
-  return rasterizeSvgMarkupToCanvas(svgMarkup, width, height);
-};
-
-const triggerBlobDownload = (blob: Blob, downloadName: string) => {
-  const objectUrl = window.URL.createObjectURL(blob);
-  const downloadLink = document.createElement('a');
-
-  downloadLink.href = objectUrl;
-  downloadLink.download = downloadName;
-  document.body.append(downloadLink);
-  downloadLink.click();
-  downloadLink.remove();
-  window.URL.revokeObjectURL(objectUrl);
-};
-
-const exportSvgToRasterBlob = async (
-  svgElement: SVGSVGElement,
-  format: 'png' | 'jpeg' | 'webp',
-): Promise<Blob | null> => {
-  const logical = getSvgExportPixelSize(svgElement);
-  const width = Math.round(logical.width * RASTER_EXPORT_PIXEL_SCALE);
-  const height = Math.round(logical.height * RASTER_EXPORT_PIXEL_SCALE);
-  const needsTiling = width > RASTER_EXPORT_TILE_MAX || height > RASTER_EXPORT_TILE_MAX;
-
-  if (!needsTiling) {
-    const clone = prepareSvgExportClone(svgElement, width, height);
-    const svgMarkup = new XMLSerializer().serializeToString(clone);
-    const canvas = await rasterizeSvgMarkupToCanvas(svgMarkup, width, height);
-
-    if (!canvas) {
-      return null;
-    }
-
-    return canvasToRasterBlob(canvas, format);
-  }
-
-  const viewBoxOrigin = getSvgViewBoxOrigin(svgElement);
-  const baseClone = prepareSvgExportClone(svgElement, width, height);
-  const finalCanvas = document.createElement('canvas');
-  finalCanvas.width = width;
-  finalCanvas.height = height;
-
-  const finalContext = finalCanvas.getContext('2d');
-
-  if (!finalContext) {
-    return null;
-  }
-
-  finalContext.fillStyle = '#ffffff';
-  finalContext.fillRect(0, 0, width, height);
-
-  for (let tileY = 0; tileY < height; tileY += RASTER_EXPORT_TILE_MAX) {
-    for (let tileX = 0; tileX < width; tileX += RASTER_EXPORT_TILE_MAX) {
-      const tileWidth = Math.min(RASTER_EXPORT_TILE_MAX, width - tileX);
-      const tileHeight = Math.min(RASTER_EXPORT_TILE_MAX, height - tileY);
-      const viewBoxX = viewBoxOrigin.x + tileX / RASTER_EXPORT_PIXEL_SCALE;
-      const viewBoxY = viewBoxOrigin.y + tileY / RASTER_EXPORT_PIXEL_SCALE;
-      const viewBoxWidth = tileWidth / RASTER_EXPORT_PIXEL_SCALE;
-      const viewBoxHeight = tileHeight / RASTER_EXPORT_PIXEL_SCALE;
-      const viewBox = `${viewBoxX} ${viewBoxY} ${viewBoxWidth} ${viewBoxHeight}`;
-      const tileCanvas = await renderSvgExportTileToCanvas(baseClone, viewBox, tileWidth, tileHeight);
-
-      if (!tileCanvas) {
-        return null;
-      }
-
-      finalContext.drawImage(tileCanvas, tileX, tileY);
-    }
-  }
-
-  return canvasToRasterBlob(finalCanvas, format);
-};
-
-type BadgeDownloadFormatMenuProps = {
-  fileName: string;
-  getSvgElement: () => SVGSVGElement | null;
-  triggerClassName?: string;
-};
-
-type FloatingMenuGeometry = {
-  top: number;
-  left: number;
-  maxHeight?: number;
-};
-
-const computeFloatingMenuGeometry = (trigger: HTMLElement, menu: HTMLElement): FloatingMenuGeometry => {
-  const pad = 8;
-  const gap = 4;
-  const minScrollHeight = 120;
-  const rect = trigger.getBoundingClientRect();
-  const vw = window.innerWidth;
-  const vh = window.innerHeight;
-  const menuWidth = menu.offsetWidth;
-  const menuHeight = menu.offsetHeight;
-
-  let left = rect.right - menuWidth;
-
-  if (left < pad) {
-    left = rect.left;
-  }
-
-  left = Math.max(pad, Math.min(left, vw - menuWidth - pad));
-
-  let top = rect.bottom + gap;
-  let maxHeight: number | undefined;
-
-  if (top + menuHeight > vh - pad) {
-    const topIfAbove = rect.top - gap - menuHeight;
-
-    if (topIfAbove >= pad) {
-      top = topIfAbove;
-    } else {
-      maxHeight = Math.max(minScrollHeight, vh - pad - top);
-    }
-  }
-
-  return { top, left, maxHeight };
-};
-
-const BadgeDownloadFormatMenu = ({ fileName, getSvgElement, triggerClassName }: BadgeDownloadFormatMenuProps) => {
-  const wrapRef = useRef<HTMLDivElement | null>(null);
-  const triggerRef = useRef<HTMLButtonElement | null>(null);
-  const menuPanelRef = useRef<HTMLUListElement | null>(null);
-  const menuId = useId();
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [menuGeometry, setMenuGeometry] = useState<FloatingMenuGeometry | null>(null);
-  const { mounted: menuMounted, isOpen: menuShown, overlayRef: menuOverlayRef } =
-    useOverlayPresence<HTMLUListElement>(menuOpen);
-
-  useLayoutEffect(() => {
-    if (!menuOpen || !menuMounted) {
-      setMenuGeometry(null);
-      return;
-    }
-
-    const update = () => {
-      const trigger = triggerRef.current;
-      const menu = menuPanelRef.current;
-
-      if (!trigger || !menu) {
-        return;
-      }
-
-      setMenuGeometry(computeFloatingMenuGeometry(trigger, menu));
-    };
-
-    update();
-
-    const scrollRoots: HTMLElement[] = [];
-    const previewColumn = wrapRef.current?.closest('.app-column-preview');
-    const zoomDialog = wrapRef.current?.closest('.svg-preview-zoom-dialog');
-    const zoomBody =
-      zoomDialog instanceof HTMLElement ? zoomDialog.querySelector<HTMLElement>('.svg-preview-zoom-body') : null;
-
-    if (previewColumn instanceof HTMLElement) {
-      scrollRoots.push(previewColumn);
-    }
-
-    if (zoomBody) {
-      scrollRoots.push(zoomBody);
-    }
-
-    window.addEventListener('resize', update);
-    window.addEventListener('scroll', update, true);
-
-    for (const root of scrollRoots) {
-      root.addEventListener('scroll', update, { passive: true });
-    }
-
-    return () => {
-      window.removeEventListener('resize', update);
-      window.removeEventListener('scroll', update, true);
-
-      for (const root of scrollRoots) {
-        root.removeEventListener('scroll', update);
-      }
-    };
-  }, [menuOpen, menuMounted]);
-
-  useEffect(() => {
-    if (!menuOpen) {
-      return;
-    }
-
-    const onDocumentMouseDown = (event: MouseEvent) => {
-      const target = event.target as Node;
-
-      if (wrapRef.current?.contains(target)) {
-        return;
-      }
-
-      if (menuPanelRef.current?.contains(target)) {
-        return;
-      }
-
-      setMenuOpen(false);
-    };
-
-    document.addEventListener('mousedown', onDocumentMouseDown);
-    return () => document.removeEventListener('mousedown', onDocumentMouseDown);
-  }, [menuOpen]);
-
-  useEffect(() => {
-    if (!menuOpen) {
-      return;
-    }
-
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        event.stopPropagation();
-        setMenuOpen(false);
-      }
-    };
-
-    window.addEventListener('keydown', onKeyDown, true);
-    return () => window.removeEventListener('keydown', onKeyDown, true);
-  }, [menuOpen]);
-
-  const baseName = getBadgeDownloadBaseName(fileName);
-
-  const downloadSvg = () => {
-    const svgElement = getSvgElement();
-
-    if (!svgElement) {
-      return;
-    }
-
-    const serializer = new XMLSerializer();
-    const svgMarkup = `${svgExportComment}\n${serializer.serializeToString(svgElement)}`;
-    const svgBlob = new Blob([svgMarkup], { type: 'image/svg+xml;charset=utf-8' });
-
-    triggerBlobDownload(svgBlob, fileName);
-    setMenuOpen(false);
-  };
-
-  const downloadRaster = async (format: 'png' | 'jpeg' | 'webp') => {
-    const svgElement = getSvgElement();
-
-    if (!svgElement) {
-      return;
-    }
-
-    const blob = await exportSvgToRasterBlob(svgElement, format);
-
-    if (!blob) {
-      window.alert('导出失败，请重试。');
-      setMenuOpen(false);
-      return;
-    }
-
-    const extension = format === 'jpeg' ? 'jpg' : format;
-
-    triggerBlobDownload(blob, `${baseName}.${extension}`);
-    setMenuOpen(false);
-  };
-
-  const triggerClass = ['dropdown-menu-trigger', triggerClassName].filter(Boolean).join(' ');
-
-  const menuPanel = menuMounted ? (
-    <ul
-      ref={mergeOverlayRefs(menuOverlayRef, menuPanelRef)}
-      id={menuId}
-      className={withOverlayOpen('dropdown-menu-panel', menuShown && menuGeometry !== null)}
-      role="menu"
-      aria-label="选择下载格式"
-      style={{
-        top: menuGeometry?.top ?? -9999,
-        left: menuGeometry?.left ?? -9999,
-        maxHeight: menuGeometry?.maxHeight,
-        overflowY: menuGeometry?.maxHeight ? 'auto' : undefined,
-      }}
-    >
-      <li role="none">
-        <button type="button" className="dropdown-menu-item" role="menuitem" onClick={downloadSvg}>
-          下载 SVG
-        </button>
-      </li>
-      <li className="dropdown-menu-separator" role="separator" aria-orientation="horizontal" />
-      <li role="none">
-        <button type="button" className="dropdown-menu-item" role="menuitem" onClick={() => void downloadRaster('png')}>
-          下载 PNG
-        </button>
-      </li>
-      <li role="none">
-        <button type="button" className="dropdown-menu-item" role="menuitem" onClick={() => void downloadRaster('jpeg')}>
-          下载 JPEG
-        </button>
-      </li>
-      <li role="none">
-        <button
-          type="button"
-          className="dropdown-menu-item"
-          role="menuitem"
-          disabled={!webpRasterExportSupported}
-          title={!webpRasterExportSupported ? '当前浏览器不支持导出 WebP' : undefined}
-          onClick={() => void downloadRaster('webp')}
-        >
-          下载 WebP
-        </button>
-      </li>
-    </ul>
-  ) : null;
-
-  return (
-    <div className="dropdown-menu" ref={wrapRef}>
-      <button
-        ref={triggerRef}
-        type="button"
-        className={`primary-button ${triggerClass}`.trim()}
-        aria-expanded={menuOpen}
-        aria-haspopup="menu"
-        aria-controls={menuId}
-        onClick={() => {
-          setMenuOpen((open) => !open);
-        }}
-      >
-        下载 <DropdownMenuChevron />
-      </button>
-      {menuPanel ? createPortal(menuPanel, document.body) : null}
-    </div>
-  );
-};
 const docsReferenceUrl = 'https://github.com/kyuri-metro/njmetro-railmap-creator/tree/main/docs';
 const builtinLineUnavailableMessage =
   '当前线路编号未内置已开通站点列表。支持：1、2、3、4、5、6、7、10、S1、S2、S3、S4、S6、S7、S8、S9。';
@@ -775,7 +272,7 @@ const DownloadableBadgeCard = ({ title, fileName, children }: DownloadableBadgeC
         <div className="result-block-heading">
           <h3>{title}</h3>
           <div className="result-actions">
-            <BadgeDownloadFormatMenu fileName={fileName} getSvgElement={getBadgeSvgElement} />
+            <BadgeDownloadTrigger fileName={fileName} getSvgElement={getBadgeSvgElement} />
             <button
               type="button"
               className="icon-button result-svg-zoom-trigger"
@@ -828,7 +325,7 @@ const DownloadableBadgeCard = ({ title, fileName, children }: DownloadableBadgeC
                     />
                     <span className="svg-preview-zoom-scale-value">{svgZoomPercent}%</span>
                   </label>
-                  <BadgeDownloadFormatMenu
+                  <BadgeDownloadTrigger
                     fileName={fileName}
                     getSvgElement={getBadgeSvgElement}
                     triggerClassName="svg-preview-zoom-download"
@@ -872,6 +369,7 @@ function App() {
   const idTextColorDirtyRef = useRef(false);
   const idTextColorDebounceRef = useRef(0);
   const [themeMode, setThemeMode] = useState<ThemeMode>('light');
+  const [isAboutOpen, setIsAboutOpen] = useState(false);
   const [isExampleModalOpen, setIsExampleModalOpen] = useState(false);
   const { mounted: exampleModalMounted, isOpen: exampleModalOpen, overlayRef: exampleModalOverlayRef } =
     useOverlayPresence<HTMLDivElement>(isExampleModalOpen);
@@ -1303,14 +801,24 @@ function App() {
               Beta
             </span>
           </div>
-          <button
-            className="theme-toggle app-topbar-theme-toggle"
-            type="button"
-            onClick={handleThemeToggle}
-            aria-label={themeMode === 'dark' ? '切换到浅色模式' : '切换到深色模式'}
-          >
-            {themeMode === 'dark' ? <SunIcon /> : <MoonIcon />}
-          </button>
+          <div className="app-topbar-actions">
+            <button
+              type="button"
+              className="icon-button app-topbar-info-button"
+              aria-label="关于本生成器"
+              onClick={() => setIsAboutOpen(true)}
+            >
+              <InfoCircleIcon />
+            </button>
+            <button
+              className="theme-toggle app-topbar-theme-toggle"
+              type="button"
+              onClick={handleThemeToggle}
+              aria-label={themeMode === 'dark' ? '切换到浅色模式' : '切换到深色模式'}
+            >
+              {themeMode === 'dark' ? <SunIcon /> : <MoonIcon />}
+            </button>
+          </div>
         </div>
       </header>
 
@@ -1698,20 +1206,21 @@ function App() {
         ) : null}
       </ConfirmDialogOverlay>
 
-      {exampleModalMounted ? (
-        <div
-          ref={exampleModalOverlayRef}
-          className={withOverlayOpen('example-modal-backdrop', exampleModalOpen)}
-          role="presentation"
-          onClick={() => setIsExampleModalOpen(false)}
-        >
-          <section
-            className="example-modal"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="example-modal-title"
-            onClick={(event) => event.stopPropagation()}
-          >
+      {exampleModalMounted
+        ? createPortal(
+            <div
+              ref={exampleModalOverlayRef}
+              className={withOverlayOpen('example-modal-backdrop', exampleModalOpen)}
+              role="presentation"
+              onClick={() => setIsExampleModalOpen(false)}
+            >
+              <section
+                className="example-modal"
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="example-modal-title"
+                onClick={(event) => event.stopPropagation()}
+              >
             <div className="example-modal-header">
               <div>
                 <h2 id="example-modal-title">参考样例</h2>
@@ -1732,9 +1241,13 @@ function App() {
                 </figure>
               ))}
             </div>
-          </section>
-        </div>
-      ) : null}
+              </section>
+            </div>,
+            document.body,
+          )
+        : null}
+
+      <AboutDialog open={isAboutOpen} onClose={() => setIsAboutOpen(false)} />
     </main>
   );
 }

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import type { StationItem, StationType, TransferLine } from '../features/generatorSlice';
 import { useOverlayPresence, withOverlayOpen } from '../hooks/useOverlayPresence';
 import { getNjmetroLineBackgroundColor, getNjmetroLineForegroundColor } from '../njmetroLinePalette';
@@ -110,7 +111,7 @@ export function StationFormModal({
     return null;
   }
 
-  return (
+  return createPortal(
     <div ref={overlayRef} className={withOverlayOpen('modal-backdrop', isOpen)} role="presentation" onClick={onClose}>
       <div
         className="modal-card"
@@ -261,7 +262,8 @@ export function StationFormModal({
           </div>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
 
