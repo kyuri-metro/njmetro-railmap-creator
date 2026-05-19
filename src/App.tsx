@@ -153,6 +153,7 @@ const applyThemeMode = (themeMode: ThemeMode, disableTransitions = false) => {
   }
 
   rootElement.classList.toggle('dark', themeMode === 'dark');
+  rootElement.classList.toggle('light', themeMode === 'light');
   rootElement.style.colorScheme = themeMode;
 
   if (disableTransitions) {
