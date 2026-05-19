@@ -29,7 +29,7 @@ h1 {
   width: 100%;
   margin: 0;
   background: var(--site-header-bg);
-  color: var(--site-fg);
+  color: var(--site-header-fg);
   box-sizing: border-box;
 }
 
@@ -94,7 +94,7 @@ h1 {
   border: none;
   border-radius: 50%;
   background: transparent;
-  color: var(--site-fg);
+  color: var(--site-header-fg);
 }
 
 .app-topbar .theme-toggle.app-topbar-theme-toggle:hover {
