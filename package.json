@@ -17,6 +17,7 @@
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-redux": "^9.2.0",
+    "redux-undo": "^1.1.0",
     "yaml": "^2.9.0"
   },
   "devDependencies": {

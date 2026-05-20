@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
-import { createPortal } from 'react-dom';
-import { useOverlayPresence, withOverlayOpen } from '../hooks/useOverlayPresence';
 import { KYURI_RMG_CHILD_SOURCE, KYURI_RMG_PARENT_SOURCE } from '../kyuriRmgProtocol';
+import { OVERLAY_IDS } from '../overlay/overlayIds';
+import { SiteOverlayBackdrop } from '../overlay/SiteOverlayBackdrop';
 
 type KyuriRmgToolModalProps = {
   open: boolean;
@@ -35,7 +35,6 @@ export function KyuriRmgToolModal({
   onExited,
   onImportedYaml,
 }: KyuriRmgToolModalProps) {
-  const { mounted, isOpen, overlayRef } = useOverlayPresence<HTMLDivElement>(open);
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
   const exportPayloadSentRef = useRef(false);
   const kyuriYamlRef = useRef(kyuriYamlForExport);
@@ -117,24 +116,16 @@ export function KyuriRmgToolModal({
     return () => window.removeEventListener('message', onMsg);
   }, [open, baseUrl, mode, onImportedYaml, onClose]);
 
-  useEffect(() => {
-    if (!mounted) {
-      onExited?.();
-    }
-  }, [mounted, onExited]);
-
-  if (!mounted || !baseUrl) {
+  if (!baseUrl) {
     return null;
   }
 
-  return createPortal(
-    <div
-      ref={overlayRef}
-      className={withOverlayOpen('confirm-dialog-backdrop', isOpen)}
-      role="presentation"
-      onClick={() => {
-        onClose();
-      }}
+  return (
+    <SiteOverlayBackdrop
+      open={open}
+      overlayId={OVERLAY_IDS.kyuriRmg}
+      onDismiss={onClose}
+      onExited={onExited}
     >
       <div
         className="confirm-dialog kyuri-rmg-tool-dialog"
@@ -158,7 +149,6 @@ export function KyuriRmgToolModal({
           </button>
         </div>
       </div>
-    </div>,
-    document.body,
+    </SiteOverlayBackdrop>
   );
 }

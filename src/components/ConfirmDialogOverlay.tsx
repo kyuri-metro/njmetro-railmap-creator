@@ -1,41 +1,35 @@
-import type { MouseEventHandler, ReactNode } from 'react';
-import { useEffect } from 'react';
-import { createPortal } from 'react-dom';
-import { useOverlayPresence, withOverlayOpen } from '../hooks/useOverlayPresence';
+import type { ReactNode } from 'react';
+import { SiteOverlayBackdrop, type SiteOverlayAlign } from '../overlay/SiteOverlayBackdrop';
 
 type ConfirmDialogOverlayProps = {
   open: boolean;
+  overlayId: string;
   onDismiss: () => void;
   onExited?: () => void;
   children: ReactNode;
+  align?: SiteOverlayAlign;
+  dismissOnEscape?: boolean;
 };
 
-export function ConfirmDialogOverlay({ open, onDismiss, onExited, children }: ConfirmDialogOverlayProps) {
-  const { mounted, isOpen, overlayRef } = useOverlayPresence<HTMLDivElement>(open);
-
-  useEffect(() => {
-    if (!mounted) {
-      onExited?.();
-    }
-  }, [mounted, onExited]);
-
-  if (!mounted) {
-    return null;
-  }
-
-  const onBackdropClick: MouseEventHandler<HTMLDivElement> = () => {
-    onDismiss();
-  };
-
-  return createPortal(
-    <div
-      ref={overlayRef}
-      className={withOverlayOpen('confirm-dialog-backdrop', isOpen)}
-      role="presentation"
-      onClick={onBackdropClick}
+export function ConfirmDialogOverlay({
+  open,
+  overlayId,
+  onDismiss,
+  onExited,
+  children,
+  align = 'centered',
+  dismissOnEscape = true,
+}: ConfirmDialogOverlayProps) {
+  return (
+    <SiteOverlayBackdrop
+      open={open}
+      overlayId={overlayId}
+      align={align}
+      onDismiss={onDismiss}
+      onExited={onExited}
+      dismissOnEscape={dismissOnEscape}
     >
       {children}
-    </div>,
-    document.body,
+    </SiteOverlayBackdrop>
   );
 }

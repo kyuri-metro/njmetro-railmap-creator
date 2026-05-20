@@ -8,10 +8,8 @@ import {
   type ChangeEvent,
   type ReactNode,
 } from 'react';
-import { createPortal } from 'react-dom';
 import { ConfirmDialogOverlay } from './components/ConfirmDialogOverlay';
 import { usePreviewLoadingOverlay } from './hooks/usePreviewLoadingOverlay';
-import { useOverlayPresence, withOverlayOpen } from './hooks/useOverlayPresence';
 import { CurrentStationBadge } from './components/CurrentStationBadge';
 import { DirectionBadge } from './components/DirectionBadge';
 import { RouteBadge } from './components/RouteBadge';
@@ -19,15 +17,20 @@ import { StationFormModal, stationToDraft, type StationFormDraft } from './compo
 import { StationTable } from './components/StationTable';
 import { KyuriRmgToolModal } from './components/KyuriRmgToolModal';
 import { AboutDialog } from './components/AboutDialog';
+import { AutosaveListDialog } from './components/AutosaveListDialog';
+import { SettingsDialog } from './components/SettingsDialog';
 import { BadgeDownloadTrigger } from './components/BadgeDownloadTrigger';
 import { InfoCircleIcon } from './components/InfoCircleIcon';
 import { StationYamlExportMenu, StationYamlImportMenu } from './components/StationYamlIoMenus';
 import { KYURI_RMG_IFRAME_ORIGIN } from './config/kyuriRmgIframe';
 import { getBuiltinOpenedStationsByLineId } from './builtinOpenedLineStations';
+import type { AutosaveEntry } from './autosaveStorage';
+import { markAutosaveDirty } from './features/autosaveScheduler';
+import { builtinLineToGeneratorState, railmapImportToGeneratorState } from './features/generatorImport';
 import {
   deleteStation,
   insertStation,
-  replaceStations,
+  restoreGeneratorState,
   reverseStnList,
   setCurrentStation,
   setDirection,
@@ -37,13 +40,17 @@ import {
   setShowStationTypeIcons,
   setTotalLength,
   updateStation,
+  type GeneratorState,
   type StationItem,
   type TransferLine,
 } from './features/generatorSlice';
 import { detectTargetFonts, targetFontSignatures, type FontDetectionResult } from './fontSignature';
 import { getNjmetroLineForegroundColor } from './njmetroLinePalette';
 import { parseRailmapYaml, serializeRailmapYaml, type RailmapYamlImport } from './stationListYaml';
-import { useAppDispatch, useAppSelector } from './hooks';
+import { useAppDispatch, useAppSelector, selectCanRedo, selectCanUndo, selectGeneratorPresent } from './hooks';
+import { OVERLAY_IDS } from './overlay/overlayIds';
+import { SiteOverlayBackdrop } from './overlay/SiteOverlayBackdrop';
+import { store, UndoActionCreators } from './store';
 
 type ModalState =
   | {
@@ -84,6 +91,8 @@ const normalizeIdColorDraft = (raw: string) => {
 
   return null;
 };
+
+const hexColorsEqual = (a: string, b: string) => a.trim().toLowerCase() === b.trim().toLowerCase();
 
 const themeStorageKey = 'site-theme';
 const themeTransitionLockClassName = 'theme-transition-lock';
@@ -193,6 +202,45 @@ const SunIcon = () => (
   </svg>
 );
 
+const UndoIcon = () => (
+  <svg className="app-topbar-action-icon" viewBox="0 0 24 24" width="20" height="20" aria-hidden>
+    <path
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      d="M9 15 3 9m0 0 6-6M3 9h12a6 6 0 0 1 0 12h-3"
+    />
+  </svg>
+);
+
+const RedoIcon = () => (
+  <svg className="app-topbar-action-icon" viewBox="0 0 24 24" width="20" height="20" aria-hidden>
+    <path
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      d="m15 9 6 6m0 0-6 6M21 15H9a6 6 0 0 1 0-12h3"
+    />
+  </svg>
+);
+
+const SettingsIcon = () => (
+  <svg className="app-topbar-action-icon" viewBox="0 0 24 24" width="20" height="20" aria-hidden>
+    <path
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33 1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82 1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"
+    />
+  </svg>
+);
+
 const MoonIcon = () => (
   <svg className="app-theme-icon" viewBox="0 0 24 24" aria-hidden>
     <path
@@ -224,25 +272,9 @@ const DownloadableBadgeCard = ({ title, fileName, children }: DownloadableBadgeC
   const badgeContainerRef = useRef<HTMLDivElement | null>(null);
   const svgZoomTitleId = useId();
   const [isSvgZoomOpen, setIsSvgZoomOpen] = useState(false);
-  const { mounted: svgZoomMounted, isOpen: svgZoomOpen, overlayRef: svgZoomOverlayRef } =
-    useOverlayPresence<HTMLDivElement>(isSvgZoomOpen);
+  const svgZoomOverlayId = `${useId().replace(/:/g, '')}-svg-preview`;
   const [svgZoomMarkup, setSvgZoomMarkup] = useState('');
   const [svgZoomPercent, setSvgZoomPercent] = useState(100);
-
-  useEffect(() => {
-    if (!isSvgZoomOpen) {
-      return;
-    }
-
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        setIsSvgZoomOpen(false);
-      }
-    };
-
-    window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
-  }, [isSvgZoomOpen]);
 
   const getBadgeSvgElement = () => {
     const candidate = badgeContainerRef.current?.querySelector('svg');
@@ -289,21 +321,19 @@ const DownloadableBadgeCard = ({ title, fileName, children }: DownloadableBadgeC
         </div>
       </div>
 
-      {svgZoomMounted
-        ? createPortal(
-            <div
-              ref={svgZoomOverlayRef}
-              className={withOverlayOpen('site-overlay-backdrop svg-preview-zoom-backdrop', svgZoomOpen)}
-              role="presentation"
-              onClick={closeSvgZoom}
-            >
-              <section
-                className="site-overlay-panel svg-preview-zoom-dialog"
-                role="dialog"
-                aria-modal="true"
-                aria-labelledby={svgZoomTitleId}
-                onClick={(event) => event.stopPropagation()}
-              >
+      <SiteOverlayBackdrop
+        open={isSvgZoomOpen}
+        overlayId={svgZoomOverlayId}
+        align="top"
+        onDismiss={closeSvgZoom}
+      >
+        <section
+          className="site-overlay-panel svg-preview-zoom-dialog"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby={svgZoomTitleId}
+          onClick={(event) => event.stopPropagation()}
+        >
                 <header className="svg-preview-zoom-header">
                   <h2 id={svgZoomTitleId} className="svg-preview-zoom-title">
                     预览：{title}
@@ -338,17 +368,16 @@ const DownloadableBadgeCard = ({ title, fileName, children }: DownloadableBadgeC
                   </div>
                 </div>
               </section>
-            </div>,
-            document.body,
-          )
-        : null}
+      </SiteOverlayBackdrop>
     </>
   );
 };
 
 function App() {
   const dispatch = useAppDispatch();
-  const generator = useAppSelector((state) => state.generator);
+  const generator = useAppSelector(selectGeneratorPresent);
+  const canUndo = useAppSelector(selectCanUndo);
+  const canRedo = useAppSelector(selectCanRedo);
   const previewGenerator = useDeferredValue(generator);
   const [modalState, setModalState] = useState<ModalState>(null);
   const [stationModalVisible, setStationModalVisible] = useState(false);
@@ -371,9 +400,11 @@ function App() {
   const idTextColorDebounceRef = useRef(0);
   const [themeMode, setThemeMode] = useState<ThemeMode>('light');
   const [isAboutOpen, setIsAboutOpen] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isAutosaveListOpen, setIsAutosaveListOpen] = useState(false);
+  const [isAutosaveRestoreConfirmOpen, setIsAutosaveRestoreConfirmOpen] = useState(false);
+  const [pendingAutosaveEntry, setPendingAutosaveEntry] = useState<AutosaveEntry | null>(null);
   const [isExampleModalOpen, setIsExampleModalOpen] = useState(false);
-  const { mounted: exampleModalMounted, isOpen: exampleModalOpen, overlayRef: exampleModalOverlayRef } =
-    useOverlayPresence<HTMLDivElement>(isExampleModalOpen);
   const [isOverwriteStationsConfirmOpen, setIsOverwriteStationsConfirmOpen] = useState(false);
   const [isYamlImportConfirmOpen, setIsYamlImportConfirmOpen] = useState(false);
   const [pendingRailmapImport, setPendingRailmapImport] = useState<RailmapYamlImport | null>(null);
@@ -384,6 +415,34 @@ function App() {
   const [builtinUnavailableNotice, setBuiltinUnavailableNotice] = useState<string | null>(null);
   const [fontDetectionResults, setFontDetectionResults] = useState<FontDetectionResult[]>(fallbackFontDetectionResults);
   const [fontDetectionState, setFontDetectionState] = useState<'idle' | 'checking' | 'done'>('idle');
+
+  const syncControlDraftsFromGenerator = (state: GeneratorState) => {
+    totalLengthDirtyRef.current = false;
+    lineIdDirtyRef.current = false;
+    idColorDirtyRef.current = false;
+    idTextColorDirtyRef.current = false;
+    setTotalLengthDraft(String(state.totalLength));
+    setLineIdDraft(state.lineId);
+    setIdColorDraft(state.idColor);
+    setIdTextColorDraft(state.idTextColor);
+  };
+
+  const applyUndo = () => {
+    dispatch(UndoActionCreators.undo());
+    markAutosaveDirty();
+    queueMicrotask(() => syncControlDraftsFromGenerator(store.getState().generator.present));
+  };
+
+  const applyRedo = () => {
+    dispatch(UndoActionCreators.redo());
+    markAutosaveDirty();
+    queueMicrotask(() => syncControlDraftsFromGenerator(store.getState().generator.present));
+  };
+
+  const dismissAutosaveRestoreConfirm = () => {
+    setIsAutosaveRestoreConfirmOpen(false);
+    setPendingAutosaveEntry(null);
+  };
 
   useEffect(() => {
     const initialThemeMode = getInitialThemeMode();
@@ -413,36 +472,80 @@ function App() {
   }, []);
 
   useEffect(() => {
-    if (!isOverwriteStationsConfirmOpen && !builtinUnavailableNotice && !yamlImportError && !isYamlImportConfirmOpen) {
-      return;
-    }
-
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key !== 'Escape') {
+      const target = event.target;
+
+      if (event.key === 'Escape') {
+        if (isOverwriteStationsConfirmOpen) {
+          setIsOverwriteStationsConfirmOpen(false);
+          return;
+        }
+
+        if (isYamlImportConfirmOpen) {
+          setIsYamlImportConfirmOpen(false);
+          setPendingRailmapImport(null);
+          return;
+        }
+
+        if (yamlImportError) {
+          setYamlImportError(null);
+          return;
+        }
+
+        if (builtinUnavailableNotice) {
+          setBuiltinUnavailableNotice(null);
+          return;
+        }
+
         return;
       }
 
-      if (isOverwriteStationsConfirmOpen) {
-        setIsOverwriteStationsConfirmOpen(false);
+      if (!(target instanceof HTMLElement)) {
+        return;
       }
 
-      if (isYamlImportConfirmOpen) {
-        setIsYamlImportConfirmOpen(false);
-        setPendingRailmapImport(null);
+      const editingText =
+        target instanceof HTMLInputElement ||
+        target instanceof HTMLTextAreaElement ||
+        target instanceof HTMLSelectElement ||
+        target.isContentEditable;
+
+      if (editingText) {
+        return;
       }
 
-      if (yamlImportError) {
-        setYamlImportError(null);
+      const mod = event.ctrlKey || event.metaKey;
+
+      if (!mod) {
+        return;
       }
 
-      if (builtinUnavailableNotice) {
-        setBuiltinUnavailableNotice(null);
+      if (event.key === 'z' && !event.shiftKey) {
+        if (!canUndo) {
+          return;
+        }
+
+        event.preventDefault();
+        applyUndo();
+        return;
+      }
+
+      if (event.key === 'y' || (event.key === 'z' && event.shiftKey)) {
+        if (!canRedo) {
+          return;
+        }
+
+        event.preventDefault();
+        applyRedo();
       }
     };
 
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [
+    canRedo,
+    canUndo,
+    dispatch,
     isOverwriteStationsConfirmOpen,
     isYamlImportConfirmOpen,
     builtinUnavailableNotice,
@@ -523,7 +626,7 @@ function App() {
     idColorDebounceRef.current = window.setTimeout(() => {
       const next = normalizeIdColorDraft(idColorDraftRef.current);
 
-      if (next !== null && next !== generator.idColor) {
+      if (next !== null && !hexColorsEqual(next, generator.idColor)) {
         startTransition(() => {
           dispatch(setIdColor(next));
         });
@@ -548,7 +651,7 @@ function App() {
     idTextColorDebounceRef.current = window.setTimeout(() => {
       const next = normalizeIdColorDraft(idTextColorDraftRef.current);
 
-      if (next !== null && next !== generator.idTextColor) {
+      if (next !== null && !hexColorsEqual(next, generator.idTextColor)) {
         startTransition(() => {
           dispatch(setIdTextColor(next));
         });
@@ -600,7 +703,7 @@ function App() {
     window.clearTimeout(idColorDebounceRef.current);
     const next = normalizeIdColorDraft(idColorDraftRef.current);
 
-    if (next !== null && next !== generator.idColor) {
+    if (next !== null && !hexColorsEqual(next, generator.idColor)) {
       startTransition(() => {
         dispatch(setIdColor(next));
       });
@@ -619,7 +722,7 @@ function App() {
     window.clearTimeout(idTextColorDebounceRef.current);
     const next = normalizeIdColorDraft(idTextColorDraftRef.current);
 
-    if (next !== null && next !== generator.idTextColor) {
+    if (next !== null && !hexColorsEqual(next, generator.idTextColor)) {
       startTransition(() => {
         dispatch(setIdTextColor(next));
       });
@@ -741,28 +844,14 @@ function App() {
       return;
     }
 
-    const { stations, lineId, color, lineIdTextColor, njMetroSettings } = pendingRailmapImport;
     setIsYamlImportConfirmOpen(false);
     setPendingRailmapImport(null);
 
-    totalLengthDirtyRef.current = false;
-    lineIdDirtyRef.current = false;
-    idColorDirtyRef.current = false;
-    idTextColorDirtyRef.current = false;
-    setTotalLengthDraft(String(njMetroSettings.totalLength));
-    setLineIdDraft(lineId);
-    setIdColorDraft(color);
-    setIdTextColorDraft(lineIdTextColor);
+    const nextState = railmapImportToGeneratorState(pendingRailmapImport, generator);
+    syncControlDraftsFromGenerator(nextState);
 
     startTransition(() => {
-      dispatch(replaceStations({ stations }));
-      dispatch(setTotalLength(njMetroSettings.totalLength));
-      dispatch(setDirection(njMetroSettings.direction));
-      dispatch(setShowStationTypeIcons(njMetroSettings.showStationTypeIcons));
-      dispatch(setLineId(lineId));
-      dispatch(setIdColor(color));
-      dispatch(setIdTextColor(lineIdTextColor));
-      dispatch(setCurrentStation(njMetroSettings.currentStnId));
+      dispatch(restoreGeneratorState(nextState));
     });
   };
 
@@ -776,13 +865,41 @@ function App() {
       return;
     }
 
-    startTransition(() => {
-      if (targetLineId !== generator.lineId) {
-        dispatch(setLineId(targetLineId));
-      }
+    const nextState = builtinLineToGeneratorState(targetLineId, builtinStations, generator);
+    syncControlDraftsFromGenerator(nextState);
 
-      dispatch(replaceStations({ stations: builtinStations }));
-      dispatch(setCurrentStation(builtinStations[0]?.id ?? ''));
+    startTransition(() => {
+      dispatch(restoreGeneratorState(nextState));
+    });
+  };
+
+  const handleAutosaveEntrySelect = (entry: AutosaveEntry) => {
+    setPendingAutosaveEntry(entry);
+    setIsAutosaveRestoreConfirmOpen(true);
+  };
+
+  const confirmAutosaveRestore = () => {
+    if (!pendingAutosaveEntry) {
+      return;
+    }
+
+    const result = parseRailmapYaml(pendingAutosaveEntry.yaml, generator);
+
+    if (!result.ok) {
+      dismissAutosaveRestoreConfirm();
+      setYamlImportError(result.message);
+      return;
+    }
+
+    const nextState = railmapImportToGeneratorState(result.data, generator);
+    dismissAutosaveRestoreConfirm();
+    setIsAutosaveListOpen(false);
+    setIsSettingsOpen(false);
+    syncControlDraftsFromGenerator(nextState);
+
+    startTransition(() => {
+      dispatch(restoreGeneratorState(nextState));
+      dispatch(UndoActionCreators.clearHistory());
     });
   };
 
@@ -803,6 +920,32 @@ function App() {
             </span>
           </div>
           <div className="app-topbar-actions">
+            <button
+              type="button"
+              className="icon-button app-topbar-icon-button"
+              aria-label="撤销"
+              disabled={!canUndo}
+              onClick={applyUndo}
+            >
+              <UndoIcon />
+            </button>
+            <button
+              type="button"
+              className="icon-button app-topbar-icon-button"
+              aria-label="重做"
+              disabled={!canRedo}
+              onClick={applyRedo}
+            >
+              <RedoIcon />
+            </button>
+            <button
+              type="button"
+              className="icon-button app-topbar-icon-button"
+              aria-label="设置"
+              onClick={() => setIsSettingsOpen(true)}
+            >
+              <SettingsIcon />
+            </button>
             <button
               type="button"
               className="icon-button app-topbar-info-button"
@@ -1088,6 +1231,7 @@ function App() {
 
       <ConfirmDialogOverlay
         open={isYamlImportConfirmOpen}
+        overlayId={OVERLAY_IDS.yamlImportConfirm}
         onDismiss={() => {
           setIsYamlImportConfirmOpen(false);
           setPendingRailmapImport(null);
@@ -1105,7 +1249,7 @@ function App() {
               确认导入 YAML
             </h2>
             <p id="yaml-import-confirm-desc" className="confirm-dialog-body">
-              导入将覆盖当前站点列表、线路编号、标识色、线路编号字体色与生成设置（总长、方向等），且不可撤销。
+              导入将覆盖当前站点列表、线路编号、标识色、线路编号字体色与生成设置（总长、方向等）。导入后仍可通过顶栏撤销恢复。
             </p>
             <div className="confirm-dialog-actions">
               <button
@@ -1125,7 +1269,11 @@ function App() {
         </div>
       </ConfirmDialogOverlay>
 
-      <ConfirmDialogOverlay open={yamlImportError !== null} onDismiss={() => setYamlImportError(null)}>
+      <ConfirmDialogOverlay
+        open={yamlImportError !== null}
+        overlayId={OVERLAY_IDS.yamlImportError}
+        onDismiss={() => setYamlImportError(null)}
+      >
         {yamlImportError ? (
           <div
             className="confirm-dialog"
@@ -1152,6 +1300,7 @@ function App() {
 
       <ConfirmDialogOverlay
         open={isOverwriteStationsConfirmOpen}
+        overlayId={OVERLAY_IDS.overwriteStations}
         onDismiss={() => setIsOverwriteStationsConfirmOpen(false)}
       >
         <div
@@ -1166,7 +1315,7 @@ function App() {
               确认覆盖站点列表
             </h2>
             <p id="overwrite-stations-confirm-desc" className="confirm-dialog-body">
-              此操作将会覆盖站点列表，这一操作不可撤销
+              此操作将会覆盖站点列表。完成后仍可通过顶栏撤销恢复。
             </p>
             <div className="confirm-dialog-actions">
               <button type="button" className="secondary-button" onClick={() => setIsOverwriteStationsConfirmOpen(false)}>
@@ -1181,6 +1330,7 @@ function App() {
 
       <ConfirmDialogOverlay
         open={builtinUnavailableNotice !== null}
+        overlayId={OVERLAY_IDS.builtinUnavailable}
         onDismiss={() => setBuiltinUnavailableNotice(null)}
       >
         {builtinUnavailableNotice ? (
@@ -1207,46 +1357,85 @@ function App() {
         ) : null}
       </ConfirmDialogOverlay>
 
-      {exampleModalMounted
-        ? createPortal(
-            <div
-              ref={exampleModalOverlayRef}
-              className={withOverlayOpen('example-modal-backdrop', exampleModalOpen)}
-              role="presentation"
-              onClick={() => setIsExampleModalOpen(false)}
-            >
-              <section
-                className="example-modal"
-                role="dialog"
-                aria-modal="true"
-                aria-labelledby="example-modal-title"
-                onClick={(event) => event.stopPropagation()}
-              >
-            <div className="example-modal-header">
-              <div>
-                <h2 id="example-modal-title">参考样例</h2>
-                <p className="panel-subtitle">以下图片来自 public/assets，仅用于版式参考，并非当前表单的实时输出。</p>
-              </div>
-              <button type="button" className="icon-button" aria-label="关闭示例浮窗" onClick={() => setIsExampleModalOpen(false)}>
-                ×
-              </button>
+      <SiteOverlayBackdrop
+        open={isExampleModalOpen}
+        overlayId={OVERLAY_IDS.exampleModal}
+        align="centered"
+        onDismiss={() => setIsExampleModalOpen(false)}
+      >
+        <section
+          className="example-modal"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="example-modal-title"
+          onClick={(event) => event.stopPropagation()}
+        >
+          <div className="example-modal-header">
+            <div>
+              <h2 id="example-modal-title">参考样例</h2>
+              <p className="panel-subtitle">以下图片来自 public/assets，仅用于版式参考，并非当前表单的实时输出。</p>
             </div>
-            <div className="example-gallery">
-              {sampleImages.map((sample) => (
-                <figure key={sample.title} className="example-card">
-                  <img src={sample.src} alt={sample.title} loading="lazy" />
-                  <figcaption>
-                    <strong>{sample.title}</strong>
-                    <span>{sample.description}</span>
-                  </figcaption>
-                </figure>
-              ))}
-            </div>
-              </section>
-            </div>,
-            document.body,
-          )
-        : null}
+            <button type="button" className="icon-button" aria-label="关闭示例浮窗" onClick={() => setIsExampleModalOpen(false)}>
+              ×
+            </button>
+          </div>
+          <div className="example-gallery">
+            {sampleImages.map((sample) => (
+              <figure key={sample.title} className="example-card">
+                <img src={sample.src} alt={sample.title} loading="lazy" />
+                <figcaption>
+                  <strong>{sample.title}</strong>
+                  <span>{sample.description}</span>
+                </figcaption>
+              </figure>
+            ))}
+          </div>
+        </section>
+      </SiteOverlayBackdrop>
+
+      <SettingsDialog
+        open={isSettingsOpen}
+        onClose={() => setIsSettingsOpen(false)}
+        onOpenAutosaveList={() => setIsAutosaveListOpen(true)}
+      />
+
+      <AutosaveListDialog
+        open={isAutosaveListOpen}
+        onClose={() => setIsAutosaveListOpen(false)}
+        onSelectEntry={handleAutosaveEntrySelect}
+      />
+
+      <ConfirmDialogOverlay
+        open={isAutosaveRestoreConfirmOpen}
+        overlayId={OVERLAY_IDS.autosaveRestore}
+        onDismiss={dismissAutosaveRestoreConfirm}
+      >
+        <div
+          className="confirm-dialog"
+          role="alertdialog"
+          aria-modal="true"
+          aria-labelledby="autosave-restore-confirm-title"
+          aria-describedby="autosave-restore-confirm-desc"
+          onClick={(event) => event.stopPropagation()}
+        >
+          <h2 id="autosave-restore-confirm-title" className="confirm-dialog-title">
+            恢复自动保存
+          </h2>
+          <p id="autosave-restore-confirm-desc" className="confirm-dialog-body">
+            {pendingAutosaveEntry
+              ? `将用 ${pendingAutosaveEntry.summary}（${new Date(pendingAutosaveEntry.savedAt).toLocaleString('zh-CN')}）覆盖当前编辑内容。`
+              : ''}
+          </p>
+          <div className="confirm-dialog-actions">
+            <button type="button" className="secondary-button" onClick={dismissAutosaveRestoreConfirm}>
+              取消
+            </button>
+            <button type="button" className="primary-button" onClick={confirmAutosaveRestore}>
+              继续
+            </button>
+          </div>
+        </div>
+      </ConfirmDialogOverlay>
 
       <AboutDialog open={isAboutOpen} onClose={() => setIsAboutOpen(false)} />
     </main>

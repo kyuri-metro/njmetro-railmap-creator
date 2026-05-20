@@ -9,6 +9,7 @@ import {
   webpRasterExportSupported,
   type BadgeRasterFormat,
 } from '../badgeExport';
+import { OVERLAY_IDS } from '../overlay/overlayIds';
 import { ConfirmDialogOverlay } from './ConfirmDialogOverlay';
 
 export type BadgeDownloadFormat = 'svg' | BadgeRasterFormat;
@@ -81,7 +82,7 @@ export function BadgeDownloadDialog({ open, fileName, getSvgElement, onClose }: 
   };
 
   return (
-    <ConfirmDialogOverlay open={open} onDismiss={onClose}>
+    <ConfirmDialogOverlay open={open} overlayId={OVERLAY_IDS.badgeDownload} onDismiss={onClose}>
       <div
         className="confirm-dialog badge-download-dialog form-scope"
         role="dialog"

@@ -28,6 +28,7 @@ h1 {
   flex-shrink: 0;
   width: 100%;
   margin: 0;
+  overflow: visible;
   background: var(--site-header-bg);
   color: var(--site-header-fg);
   box-sizing: border-box;
@@ -49,7 +50,7 @@ h1 {
   /* 不要 flex-grow：否则块会被顶栏拉满，Beta 的 left:% 会相对整块算，飘到很靠右 */
   flex: 0 1 auto;
   min-width: 0;
-  max-width: calc(100% - 96px);
+  max-width: calc(100% - 220px);
   vertical-align: middle;
 }
 
@@ -91,9 +92,14 @@ h1 {
   flex-shrink: 0;
   align-items: center;
   gap: 4px;
+  overflow: visible;
 }
 
-.app-topbar .app-topbar-info-button {
+.app-topbar .app-topbar-info-button,
+.app-topbar .app-topbar-icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   width: 38px;
   height: 38px;
   min-width: 38px;
@@ -102,14 +108,32 @@ h1 {
   border-radius: 50%;
   background: transparent;
   color: var(--site-header-fg);
+  overflow: visible;
+  flex-shrink: 0;
+  line-height: 0;
 }
 
-.app-topbar .app-topbar-info-button:hover {
+.app-topbar .app-topbar-info-button:hover,
+.app-topbar .app-topbar-icon-button:hover:not(:disabled) {
   background: var(--site-hover-bg);
 }
 
-.app-topbar .app-topbar-info-button:active {
+.app-topbar .app-topbar-info-button:active,
+.app-topbar .app-topbar-icon-button:active:not(:disabled) {
   background: var(--site-active-bg);
+}
+
+.app-topbar .app-topbar-icon-button:disabled {
+  opacity: 0.38;
+  cursor: not-allowed;
+}
+
+.app-topbar-action-icon {
+  display: block;
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  overflow: visible;
 }
 
 .app-info-circle-icon {
@@ -117,6 +141,9 @@ h1 {
 }
 
 .app-topbar .theme-toggle.app-topbar-theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   width: 38px;
   height: 38px;
   min-width: 38px;
@@ -125,6 +152,9 @@ h1 {
   border-radius: 50%;
   background: transparent;
   color: var(--site-header-fg);
+  overflow: visible;
+  flex-shrink: 0;
+  line-height: 0;
 }
 
 .app-topbar .theme-toggle.app-topbar-theme-toggle:hover {
@@ -684,14 +714,10 @@ html.dark .station-table th {
   display: block;
 }
 
-/* Full-viewport overlays (align with @umamichi-ui/common-css layout until next package release). */
-.modal-backdrop,
-.example-modal-backdrop,
-.site-overlay-backdrop,
-.confirm-dialog-backdrop {
+/* Full-viewport overlays（统一毛玻璃 backdrop，z-index 由 OverlayStack 内联设置） */
+.site-overlay-backdrop {
   position: fixed;
   inset: 0;
-  z-index: 1000;
   width: 100%;
   min-width: 100vw;
   min-height: 100vh;
@@ -699,13 +725,34 @@ html.dark .station-table th {
   margin: 0;
 }
 
-.svg-preview-zoom-backdrop {
-  z-index: 1010;
+.site-overlay-backdrop-inactive {
+  pointer-events: none;
 }
 
-/* 确认框（含下载）需叠在 SVG 大图预览等 site-overlay 之上 */
-.confirm-dialog-backdrop {
-  z-index: 1020;
+/* z-index 由 OverlayStack 内联设置（1010 + 栈序号 × 10） */
+
+.site-overlay-backdrop--centered {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  box-sizing: border-box;
+}
+
+.site-overlay-backdrop--top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+.site-overlay-backdrop--centered.is-open > .confirm-dialog,
+.site-overlay-backdrop--centered.is-open > .modal-card,
+.site-overlay-backdrop--centered.is-open > .example-modal,
+.site-overlay-backdrop--top.is-open > .site-overlay-panel {
+  opacity: 1;
+  transform: translateY(0);
 }
 
 .svg-preview-zoom-dialog {
@@ -900,13 +947,13 @@ html.dark .station-table th {
 }
 
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-  .svg-preview-zoom-backdrop {
+  .site-overlay-backdrop {
     background: var(--site-backdrop);
   }
 }
 
 @media (prefers-reduced-transparency: reduce) {
-  .svg-preview-zoom-backdrop,
+  .site-overlay-backdrop,
   .preview-loading-overlay {
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
@@ -1054,6 +1101,86 @@ html.dark .station-table th {
 
 .about-dialog-actions .primary-button {
   min-width: 6.5rem;
+}
+
+.settings-dialog {
+  width: min(100%, 26rem);
+}
+
+.settings-dialog-body {
+  display: grid;
+  gap: 14px;
+}
+
+.settings-field {
+  display: grid;
+  gap: 6px;
+}
+
+.settings-field-label {
+  font-size: 0.9rem;
+  color: var(--site-content-fg);
+}
+
+.settings-autosave-list-button {
+  justify-self: start;
+}
+
+.autosave-list-dialog {
+  width: min(100%, 32rem);
+}
+
+.autosave-list-dialog-body {
+  max-height: min(52vh, 420px);
+  overflow: auto;
+}
+
+.autosave-list-empty {
+  margin: 0;
+  color: var(--site-muted-fg);
+  font-size: 0.9rem;
+}
+
+.autosave-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 0;
+  border: 1px solid var(--site-border);
+}
+
+.autosave-list-item {
+  display: grid;
+  gap: 4px;
+  width: 100%;
+  padding: 12px 14px;
+  border: 0;
+  border-bottom: 1px solid var(--site-border);
+  border-radius: 0;
+  background: var(--site-surface);
+  color: var(--site-fg);
+  text-align: left;
+  cursor: pointer;
+}
+
+.autosave-list li:last-child .autosave-list-item {
+  border-bottom: none;
+}
+
+.autosave-list-item:hover {
+  background: var(--site-hover-bg);
+}
+
+.autosave-list-item-time {
+  font-size: 0.88rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--site-content-fg);
+}
+
+.autosave-list-item-summary {
+  font-size: 0.82rem;
+  color: var(--site-muted-fg);
 }
 
 /* Square modal chrome (overrides @umamichi-ui/common-css `.modal-card` / `.example-modal`) */

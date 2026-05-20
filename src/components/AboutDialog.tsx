@@ -1,4 +1,5 @@
 import packageJson from '../../package.json';
+import { OVERLAY_IDS } from '../overlay/overlayIds';
 import { ConfirmDialogOverlay } from './ConfirmDialogOverlay';
 
 const appName = '南京地铁屏蔽门上方贴纸生成器';
@@ -15,7 +16,7 @@ type AboutDialogProps = {
 
 export function AboutDialog({ open, onClose }: AboutDialogProps) {
   return (
-    <ConfirmDialogOverlay open={open} onDismiss={onClose}>
+    <ConfirmDialogOverlay open={open} overlayId={OVERLAY_IDS.about} onDismiss={onClose}>
       <div
         className="confirm-dialog about-dialog"
         role="dialog"

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
-import { createPortal } from 'react-dom';
 import type { StationItem, StationType, TransferLine } from '../features/generatorSlice';
-import { useOverlayPresence, withOverlayOpen } from '../hooks/useOverlayPresence';
+import { OVERLAY_IDS } from '../overlay/overlayIds';
+import { SiteOverlayBackdrop } from '../overlay/SiteOverlayBackdrop';
 import { getNjmetroLineBackgroundColor, getNjmetroLineForegroundColor } from '../njmetroLinePalette';
 
 export type StationFormDraft = {
@@ -45,13 +45,6 @@ export function StationFormModal({
   onSubmit,
 }: StationFormModalProps) {
   const [draft, setDraft] = useState(initialValue);
-  const { mounted, isOpen, overlayRef } = useOverlayPresence<HTMLDivElement>(open);
-
-  useEffect(() => {
-    if (!mounted) {
-      onExited?.();
-    }
-  }, [mounted, onExited]);
 
   const updateTransferLine = (index: number, field: keyof TransferLine, value: string) => {
     setDraft((current) => ({
@@ -96,23 +89,14 @@ export function StationFormModal({
     }));
   };
 
-  useEffect(() => {
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        onClose();
-      }
-    };
-
-    window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
-  }, [onClose]);
-
-  if (!mounted) {
-    return null;
-  }
-
-  return createPortal(
-    <div ref={overlayRef} className={withOverlayOpen('modal-backdrop', isOpen)} role="presentation" onClick={onClose}>
+  return (
+    <SiteOverlayBackdrop
+      open={open}
+      overlayId={OVERLAY_IDS.stationForm}
+      align="centered"
+      onDismiss={onClose}
+      onExited={onExited}
+    >
       <div
         className="modal-card"
         role="dialog"
@@ -262,8 +246,7 @@ export function StationFormModal({
           </div>
         </form>
       </div>
-    </div>,
-    document.body,
+    </SiteOverlayBackdrop>
   );
 }
 

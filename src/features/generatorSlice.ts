@@ -54,14 +54,16 @@ const initialStations = builtinLine3Stations;
 const initialCurrentStnId =
   initialStations.find((station) => station.chName === '大行宫')?.id ?? initialStations[0].id;
 
+const initialLineId = '3';
+
 const initialState: GeneratorState = {
   stnList: initialStations,
   currentStnId: initialCurrentStnId,
   totalLength: 6550,
   direction: 'l',
-  lineId: '3',
-  idColor: '#009A44',
-  idTextColor: getNjmetroLineForegroundColor('3') ?? '#ffffff',
+  lineId: initialLineId,
+  idColor: getNjmetroLineBackgroundColor(initialLineId) ?? '#009a44',
+  idTextColor: getNjmetroLineForegroundColor(initialLineId) ?? '#ffffff',
   showStationTypeIcons: false,
 };
 
@@ -151,6 +153,9 @@ const generatorSlice = createSlice({
     reverseStnList(state) {
       state.stnList.reverse();
     },
+    restoreGeneratorState(_state, action: PayloadAction<GeneratorState>) {
+      return action.payload;
+    },
   },
 });
 
@@ -166,6 +171,7 @@ export const {
   setShowStationTypeIcons,
   setTotalLength,
   replaceStations,
+  restoreGeneratorState,
   updateStation,
 } = generatorSlice.actions;
 export default generatorSlice.reducer;
