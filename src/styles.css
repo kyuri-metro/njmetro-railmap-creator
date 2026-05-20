@@ -193,6 +193,20 @@ h1 {
   .app-topbar-inner {
     padding-inline: 20px;
   }
+
+  .app-topbar-title {
+    display: block;
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  .app-topbar-title-text {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 100%;
+  }
 }
 
 .app-columns {
