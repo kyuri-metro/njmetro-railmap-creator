@@ -29,6 +29,7 @@ import { markAutosaveDirty } from './features/autosaveScheduler';
 import { builtinLineToGeneratorState, railmapImportToGeneratorState } from './features/generatorImport';
 import {
   deleteStation,
+  getEmptyGeneratorState,
   insertStation,
   restoreGeneratorState,
   reverseStnList,
@@ -406,6 +407,7 @@ function App() {
   const [pendingAutosaveEntry, setPendingAutosaveEntry] = useState<AutosaveEntry | null>(null);
   const [isExampleModalOpen, setIsExampleModalOpen] = useState(false);
   const [isOverwriteStationsConfirmOpen, setIsOverwriteStationsConfirmOpen] = useState(false);
+  const [isNewProjectConfirmOpen, setIsNewProjectConfirmOpen] = useState(false);
   const [isYamlImportConfirmOpen, setIsYamlImportConfirmOpen] = useState(false);
   const [pendingRailmapImport, setPendingRailmapImport] = useState<RailmapYamlImport | null>(null);
   const [yamlImportError, setYamlImportError] = useState<string | null>(null);
@@ -476,6 +478,11 @@ function App() {
       const target = event.target;
 
       if (event.key === 'Escape') {
+        if (isNewProjectConfirmOpen) {
+          setIsNewProjectConfirmOpen(false);
+          return;
+        }
+
         if (isOverwriteStationsConfirmOpen) {
           setIsOverwriteStationsConfirmOpen(false);
           return;
@@ -546,6 +553,7 @@ function App() {
     canRedo,
     canUndo,
     dispatch,
+    isNewProjectConfirmOpen,
     isOverwriteStationsConfirmOpen,
     isYamlImportConfirmOpen,
     builtinUnavailableNotice,
@@ -880,6 +888,17 @@ function App() {
     setIsAutosaveRestoreConfirmOpen(true);
   };
 
+  const confirmNewProject = () => {
+    setIsNewProjectConfirmOpen(false);
+    const nextState = getEmptyGeneratorState();
+    syncControlDraftsFromGenerator(nextState);
+
+    startTransition(() => {
+      dispatch(restoreGeneratorState(nextState));
+      dispatch(UndoActionCreators.clearHistory());
+    });
+  };
+
   const confirmAutosaveRestore = () => {
     if (!pendingAutosaveEntry) {
       return;
@@ -1115,6 +1134,13 @@ function App() {
                 <h2>站点列表</h2>
                 <div className="station-list-heading-end">
                   <div className="station-list-yaml-tools" role="group" aria-label="站点列表 YAML">
+                    <button
+                      type="button"
+                      className="secondary-button"
+                      onClick={() => setIsNewProjectConfirmOpen(true)}
+                    >
+                      新建
+                    </button>
                     <StationYamlExportMenu
                       rmgToolConfigured={Boolean(KYURI_RMG_IFRAME_ORIGIN)}
                       onDownloadYaml={handleExportStationYaml}
@@ -1230,6 +1256,35 @@ function App() {
           }}
         />
       ) : null}
+
+      <ConfirmDialogOverlay
+        open={isNewProjectConfirmOpen}
+        overlayId={OVERLAY_IDS.newProjectConfirm}
+        onDismiss={() => setIsNewProjectConfirmOpen(false)}
+      >
+        <div
+          className="confirm-dialog"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="new-project-confirm-title"
+          aria-describedby="new-project-confirm-desc"
+        >
+          <h2 id="new-project-confirm-title" className="confirm-dialog-title">
+            确认新建
+          </h2>
+          <p id="new-project-confirm-desc" className="confirm-dialog-body">
+            新建将创建空白线路图（无站点，保留默认线路编号与生成设置），覆盖当前编辑内容，并清空撤销历史，无法撤销至操作前。
+          </p>
+          <div className="confirm-dialog-actions">
+            <button type="button" className="secondary-button" onClick={() => setIsNewProjectConfirmOpen(false)}>
+              取消
+            </button>
+            <button type="button" className="primary-button" onClick={confirmNewProject}>
+              新建
+            </button>
+          </div>
+        </div>
+      </ConfirmDialogOverlay>
 
       <ConfirmDialogOverlay
         open={isYamlImportConfirmOpen}

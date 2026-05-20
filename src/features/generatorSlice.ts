@@ -67,6 +67,26 @@ const initialState: GeneratorState = {
   showStationTypeIcons: false,
 };
 
+export const getDefaultGeneratorState = (): GeneratorState => ({
+  ...initialState,
+  stnList: initialState.stnList.map((station) => ({
+    ...station,
+    transfer: station.transfer.map((line) => ({ ...line })),
+  })),
+});
+
+/** 空白线路图：默认生成参数，站点列表为空。 */
+export const getEmptyGeneratorState = (): GeneratorState => ({
+  stnList: [],
+  currentStnId: '',
+  totalLength: initialState.totalLength,
+  direction: initialState.direction,
+  lineId: initialState.lineId,
+  idColor: initialState.idColor,
+  idTextColor: initialState.idTextColor,
+  showStationTypeIcons: initialState.showStationTypeIcons,
+});
+
 const fallbackCurrentId = (stations: StationItem[], currentId: string) => {
   if (stations.some((station) => station.id === currentId)) {
     return currentId;

@@ -6,6 +6,7 @@ export const OVERLAY_IDS = {
   builtinUnavailable: 'builtin-unavailable',
   exampleModal: 'example-modal',
   kyuriRmg: 'kyuri-rmg',
+  newProjectConfirm: 'new-project-confirm',
   overwriteStations: 'overwrite-stations',
   settings: 'settings',
   stationForm: 'station-form',
