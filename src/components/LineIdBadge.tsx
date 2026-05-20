@@ -1,4 +1,8 @@
-import { generateLineIdBlockSvg, type NjMetroLineId } from '@kyuri-metro/njmetro-line-id-block-svg-generator';
+import {
+  generateLineIdBlockSvg,
+  getLineIdBlockWidth,
+  type NjMetroLineId,
+} from '@kyuri-metro/njmetro-line-id-block-svg-generator';
 
 import { lineIdFontStack } from '../fontStacks';
 
@@ -10,76 +14,43 @@ type LineIdBadgeProps = {
   height: number;
 };
 
-type SupportedBadgeTemplate =
-  | {
-      kind: 'n';
-      width: number;
-      digit: string;
-    }
-  | {
-      kind: '11';
-      width: number;
-    }
-  | {
-      kind: '1n';
-      width: number;
-      digit: string;
-    }
-  | {
-      kind: 'Sn';
-      width: number;
-      digit: string;
-    };
-
 const baseHeight = 1000;
 
-const resolveBadgeTemplate = (lineId: string): SupportedBadgeTemplate | null => {
-  if (/^[0-9]$/.test(lineId)) {
-    return { kind: 'n', width: 500, digit: lineId };
-  }
-
-  if (lineId === '11') {
-    return { kind: '11', width: 1000 };
-  }
-
-  if (/^1\d$/.test(lineId)) {
-    return { kind: '1n', width: 1000, digit: lineId[1] };
-  }
-
-  if (/^S[0-9]$/.test(lineId)) {
-    return { kind: 'Sn', width: 1000, digit: lineId[1] };
-  }
-
-  return null;
-};
-
+/** 与 @kyuri-metro/njmetro-line-id-block-svg-generator 支持的线路号一致（含 mn：20–99） */
 const resolveLineNumber = (lineId: string): NjMetroLineId | null => {
-  if (/^S[0-9]$/.test(lineId)) {
-    return lineId as `S${number}`;
+  const normalized = lineId.trim().toUpperCase();
+
+  if (/^S[0-9]$/.test(normalized)) {
+    return normalized as `S${number}`;
   }
 
-  if (/^[0-9]$/.test(lineId) || lineId === '11' || /^1\d$/.test(lineId)) {
-    return Number(lineId);
+  if (/^(?:[0-9]|1\d|[2-9]\d)$/.test(normalized)) {
+    return Number(normalized);
   }
 
   return null;
 };
 
 export const getLineIdBadgeWidth = (lineId: string, height: number) => {
-  const template = resolveBadgeTemplate(lineId);
+  const lineNumber = resolveLineNumber(lineId);
 
-  if (!template) {
+  if (lineNumber === null) {
     return null;
   }
 
-  return (template.width / baseHeight) * height;
+  return getLineIdBlockWidth(lineNumber, height);
 };
 
 export function LineIdBadge({ lineId, color, textColor = '#ffffff', height }: LineIdBadgeProps) {
-  const template = resolveBadgeTemplate(lineId);
   const lineNumber = resolveLineNumber(lineId);
 
-  if (!template || lineNumber === null) {
+  if (lineNumber === null) {
+    return null;
+  }
+
+  const logicalWidth = getLineIdBlockWidth(lineNumber, baseHeight);
+
+  if (logicalWidth === null) {
     return null;
   }
 
@@ -94,6 +65,6 @@ export function LineIdBadge({ lineId, color, textColor = '#ffffff', height }: Li
   const imageHref = `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
 
   return (
-    <image href={imageHref} width={template.width} height={baseHeight} transform={`scale(${scale})`} />
+    <image href={imageHref} width={logicalWidth} height={baseHeight} transform={`scale(${scale})`} />
   );
 }
