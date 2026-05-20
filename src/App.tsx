@@ -852,6 +852,7 @@ function App() {
 
     startTransition(() => {
       dispatch(restoreGeneratorState(nextState));
+      dispatch(UndoActionCreators.clearHistory());
     });
   };
 
@@ -870,6 +871,7 @@ function App() {
 
     startTransition(() => {
       dispatch(restoreGeneratorState(nextState));
+      dispatch(UndoActionCreators.clearHistory());
     });
   };
 
@@ -1249,7 +1251,7 @@ function App() {
               确认导入 YAML
             </h2>
             <p id="yaml-import-confirm-desc" className="confirm-dialog-body">
-              导入将覆盖当前站点列表、线路编号、标识色、线路编号字体色与生成设置（总长、方向等）。导入后仍可通过顶栏撤销恢复。
+              导入将覆盖当前站点列表、线路编号、标识色、线路编号字体色与生成设置（总长、方向等），并清空撤销历史，无法撤销至导入前。
             </p>
             <div className="confirm-dialog-actions">
               <button
@@ -1315,7 +1317,7 @@ function App() {
               确认覆盖站点列表
             </h2>
             <p id="overwrite-stations-confirm-desc" className="confirm-dialog-body">
-              此操作将会覆盖站点列表。完成后仍可通过顶栏撤销恢复。
+              此操作将会覆盖站点列表，并清空撤销历史，无法撤销至覆盖前。
             </p>
             <div className="confirm-dialog-actions">
               <button type="button" className="secondary-button" onClick={() => setIsOverwriteStationsConfirmOpen(false)}>
@@ -1423,7 +1425,7 @@ function App() {
           </h2>
           <p id="autosave-restore-confirm-desc" className="confirm-dialog-body">
             {pendingAutosaveEntry
-              ? `将用 ${pendingAutosaveEntry.summary}（${new Date(pendingAutosaveEntry.savedAt).toLocaleString('zh-CN')}）覆盖当前编辑内容。`
+              ? `将用 ${pendingAutosaveEntry.summary}（${new Date(pendingAutosaveEntry.savedAt).toLocaleString('zh-CN')}）覆盖当前编辑内容，并清空撤销历史。`
               : ''}
           </p>
           <div className="confirm-dialog-actions">
