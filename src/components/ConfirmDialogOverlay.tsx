@@ -7,6 +7,7 @@ type ConfirmDialogOverlayProps = {
   onDismiss: () => void;
   onExited?: () => void;
   children: ReactNode;
+  /** 默认居中；`bottom` 用于自底部上滑的移动端操作表。 */
   align?: SiteOverlayAlign;
   dismissOnEscape?: boolean;
 };

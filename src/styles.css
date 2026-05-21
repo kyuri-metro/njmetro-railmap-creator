@@ -95,6 +95,11 @@ h1 {
   overflow: visible;
 }
 
+/* 顶栏操作：宽屏展示设置/关于，窄屏改「更多」。阈值 TOPBAR_COMPACT_MAX_WIDTH_PX（720） */
+.app-topbar .app-topbar-icon-button.app-topbar-action--mobile-only {
+  display: none;
+}
+
 .app-topbar .app-topbar-info-button,
 .app-topbar .app-topbar-icon-button {
   display: inline-flex;
@@ -206,6 +211,20 @@ h1 {
     text-overflow: ellipsis;
     white-space: nowrap;
     max-width: 100%;
+  }
+
+  .app-topbar-title-wrap {
+    max-width: calc(100% - 168px);
+  }
+
+  .app-topbar .app-topbar-icon-button.app-topbar-action--mobile-only,
+  .app-topbar .app-topbar-more-button {
+    display: inline-flex;
+  }
+
+  .app-topbar .app-topbar-icon-button.app-topbar-action--desktop-only,
+  .app-topbar .app-topbar-info-button.app-topbar-action--desktop-only {
+    display: none;
   }
 }
 
@@ -761,12 +780,136 @@ html.dark .station-table th {
   box-sizing: border-box;
 }
 
+.site-overlay-backdrop--bottom {
+  display: flex;
+  align-items: flex-end;
+  justify-content: stretch;
+  padding: 0;
+  box-sizing: border-box;
+}
+
 .site-overlay-backdrop--centered.is-open > .confirm-dialog,
 .site-overlay-backdrop--centered.is-open > .modal-card,
 .site-overlay-backdrop--centered.is-open > .example-modal,
-.site-overlay-backdrop--top.is-open > .site-overlay-panel {
+.site-overlay-backdrop--top.is-open > .site-overlay-panel,
+.site-overlay-backdrop--bottom.is-open > .mobile-action-sheet {
   opacity: 1;
   transform: translateY(0);
+}
+
+.mobile-action-sheet {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-height: min(85dvh, 100%);
+  box-sizing: border-box;
+  border-top: 1px solid var(--site-border);
+  background: var(--site-surface);
+  color: var(--site-fg);
+  opacity: 0;
+  transform: translateY(100%);
+  transition:
+    transform var(--transition-overlay, 0.22s ease),
+    opacity var(--transition-overlay, 0.22s ease);
+  padding-bottom: max(12px, env(safe-area-inset-bottom, 0px));
+}
+
+.mobile-action-sheet-panels {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  /* 二级面板：translateX(-100%) 等，由后续 JS 驱动 */
+  transition: transform var(--transition-overlay, 0.22s ease);
+}
+
+.mobile-action-sheet-panel {
+  flex: 0 0 100%;
+  width: 100%;
+  min-width: 0;
+  overflow: auto;
+}
+
+.mobile-action-sheet-header {
+  padding: 14px 20px 10px;
+  font-size: 0.82rem;
+  color: var(--site-subtle-fg);
+  border-bottom: 1px solid var(--site-border);
+}
+
+.mobile-action-sheet-list {
+  margin: 0;
+  padding: 8px 0 0;
+  list-style: none;
+}
+
+.mobile-action-sheet-list-item {
+  margin: 0;
+}
+
+.mobile-action-sheet-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  min-height: 52px;
+  padding: 14px 20px;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 1rem;
+  line-height: 1.35;
+  text-align: left;
+  cursor: pointer;
+}
+
+.mobile-action-sheet-item:hover {
+  background: var(--site-hover-bg);
+}
+
+.mobile-action-sheet-item:active {
+  background: var(--site-active-bg);
+}
+
+.mobile-action-sheet-item-icon {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  color: var(--site-header-fg, var(--site-fg));
+}
+
+.mobile-action-sheet-item-icon .app-topbar-action-icon,
+.mobile-action-sheet-item-icon .app-info-circle-icon {
+  display: block;
+}
+
+.mobile-action-sheet-item-label {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.mobile-action-sheet-item-chevron {
+  flex-shrink: 0;
+  font-size: 1.25rem;
+  line-height: 1;
+  color: var(--site-subtle-fg);
+}
+
+.mobile-action-sheet-item--submenu .mobile-action-sheet-item-label {
+  flex: 1 1 auto;
+}
+
+.mobile-action-sheet-separator {
+  height: 0;
+  margin: 0 20px;
+  border: none;
+  border-top: 1px solid var(--site-border);
 }
 
 .svg-preview-zoom-dialog {
@@ -1294,6 +1437,11 @@ html.dark .station-table th {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .mobile-action-sheet,
+  .mobile-action-sheet-panels {
+    transition: none;
+  }
+
   .line-id-attribution-dot,
   .line-id-attribution-ripple {
     animation: none;

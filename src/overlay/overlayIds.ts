@@ -9,6 +9,7 @@ export const OVERLAY_IDS = {
   newProjectConfirm: 'new-project-confirm',
   overwriteStations: 'overwrite-stations',
   settings: 'settings',
+  topbarMoreMenu: 'topbar-more-menu',
   stationForm: 'station-form',
   yamlImportConfirm: 'yaml-import-confirm',
   yamlImportError: 'yaml-import-error',

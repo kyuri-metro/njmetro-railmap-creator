@@ -5,11 +5,12 @@ import { useOverlayPresence, withOverlayOpen } from '../hooks/useOverlayPresence
 import { useOverlayStackEntry } from './useOverlayStackEntry';
 
 /** 叠层内容在 backdrop 内的对齐方式（与 z-index 无关） */
-export type SiteOverlayAlign = 'centered' | 'top';
+export type SiteOverlayAlign = 'centered' | 'top' | 'bottom';
 
 const alignClassName: Record<SiteOverlayAlign, string> = {
   centered: 'site-overlay-backdrop site-overlay-backdrop--centered',
   top: 'site-overlay-backdrop site-overlay-backdrop--top',
+  bottom: 'site-overlay-backdrop site-overlay-backdrop--bottom',
 };
 
 export type SiteOverlayBackdropProps = {

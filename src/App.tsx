@@ -21,6 +21,7 @@ import { AutosaveListDialog } from './components/AutosaveListDialog';
 import { SettingsDialog } from './components/SettingsDialog';
 import { BadgeDownloadTrigger } from './components/BadgeDownloadTrigger';
 import { InfoCircleIcon } from './components/InfoCircleIcon';
+import { MobileActionSheet } from './components/MobileActionSheet';
 import { StationYamlExportMenu, StationYamlImportMenu } from './components/StationYamlIoMenus';
 import { KYURI_RMG_IFRAME_ORIGIN } from './config/kyuriRmgIframe';
 import { getBuiltinOpenedStationsByLineId } from './builtinOpenedLineStations';
@@ -49,6 +50,7 @@ import { detectTargetFonts, targetFontSignatures, type FontDetectionResult } fro
 import { getNjmetroLineForegroundColor } from './njmetroLinePalette';
 import { parseRailmapYaml, serializeRailmapYaml, type RailmapYamlImport } from './stationListYaml';
 import { useAppDispatch, useAppSelector, selectCanRedo, selectCanUndo, selectGeneratorPresent } from './hooks';
+import { topbarCompactMediaQuery } from './layout/topbarLayout';
 import { OVERLAY_IDS } from './overlay/overlayIds';
 import { SiteOverlayBackdrop } from './overlay/SiteOverlayBackdrop';
 import { store, UndoActionCreators } from './store';
@@ -229,6 +231,14 @@ const RedoIcon = () => (
   </svg>
 );
 
+const MoreIcon = () => (
+  <svg className="app-topbar-action-icon" viewBox="0 0 24 24" width="20" height="20" aria-hidden>
+    <circle cx="5" cy="12" r="1.75" fill="currentColor" />
+    <circle cx="12" cy="12" r="1.75" fill="currentColor" />
+    <circle cx="19" cy="12" r="1.75" fill="currentColor" />
+  </svg>
+);
+
 const SettingsIcon = () => (
   <svg className="app-topbar-action-icon" viewBox="0 0 24 24" width="20" height="20" aria-hidden>
     <path
@@ -402,6 +412,7 @@ function App() {
   const [themeMode, setThemeMode] = useState<ThemeMode>('light');
   const [isAboutOpen, setIsAboutOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isTopbarMoreMenuOpen, setIsTopbarMoreMenuOpen] = useState(false);
   const [isAutosaveListOpen, setIsAutosaveListOpen] = useState(false);
   const [isAutosaveRestoreConfirmOpen, setIsAutosaveRestoreConfirmOpen] = useState(false);
   const [pendingAutosaveEntry, setPendingAutosaveEntry] = useState<AutosaveEntry | null>(null);
@@ -471,6 +482,20 @@ function App() {
     return () => {
       cancelled = true;
     };
+  }, []);
+
+  useEffect(() => {
+    const mq = window.matchMedia(topbarCompactMediaQuery);
+
+    const onLayoutChange = () => {
+      if (!mq.matches) {
+        setIsTopbarMoreMenuOpen(false);
+      }
+    };
+
+    onLayoutChange();
+    mq.addEventListener('change', onLayoutChange);
+    return () => mq.removeEventListener('change', onLayoutChange);
   }, []);
 
   useEffect(() => {
@@ -961,7 +986,7 @@ function App() {
             </button>
             <button
               type="button"
-              className="icon-button app-topbar-icon-button"
+              className="icon-button app-topbar-icon-button app-topbar-action--desktop-only"
               aria-label="设置"
               onClick={() => setIsSettingsOpen(true)}
             >
@@ -969,7 +994,7 @@ function App() {
             </button>
             <button
               type="button"
-              className="icon-button app-topbar-info-button"
+              className="icon-button app-topbar-info-button app-topbar-action--desktop-only"
               aria-label="关于本生成器"
               onClick={() => setIsAboutOpen(true)}
             >
@@ -982,6 +1007,16 @@ function App() {
               aria-label={themeMode === 'dark' ? '切换到浅色模式' : '切换到深色模式'}
             >
               {themeMode === 'dark' ? <SunIcon /> : <MoonIcon />}
+            </button>
+            <button
+              type="button"
+              className="icon-button app-topbar-icon-button app-topbar-action--mobile-only app-topbar-more-button"
+              aria-label="更多"
+              aria-haspopup="dialog"
+              aria-expanded={isTopbarMoreMenuOpen}
+              onClick={() => setIsTopbarMoreMenuOpen(true)}
+            >
+              <MoreIcon />
             </button>
           </div>
         </div>
@@ -1493,6 +1528,29 @@ function App() {
           </div>
         </div>
       </ConfirmDialogOverlay>
+
+      <MobileActionSheet
+        open={isTopbarMoreMenuOpen}
+        overlayId={OVERLAY_IDS.topbarMoreMenu}
+        ariaLabel="顶栏更多"
+        onDismiss={() => setIsTopbarMoreMenuOpen(false)}
+        entries={[
+          {
+            kind: 'item',
+            id: 'settings',
+            label: '设置',
+            icon: <SettingsIcon />,
+            onSelect: () => setIsSettingsOpen(true),
+          },
+          {
+            kind: 'item',
+            id: 'about',
+            label: '关于',
+            icon: <InfoCircleIcon />,
+            onSelect: () => setIsAboutOpen(true),
+          },
+        ]}
+      />
 
       <AboutDialog open={isAboutOpen} onClose={() => setIsAboutOpen(false)} />
     </main>
