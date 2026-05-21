@@ -6,6 +6,7 @@ const appName = '南京地铁屏蔽门上方贴纸生成器';
 const appVersion = packageJson.version;
 const generatorUrl = 'https://njmetro-railmap-creator.umamichi.moe/';
 const githubUrl = 'https://github.com/kyuri-metro/njmetro-railmap-creator';
+const githubIssuesUrl = `${githubUrl}/issues`;
 const docsUrl = 'https://github.com/kyuri-metro/njmetro-railmap-creator/tree/main/docs';
 const copyrightYear = 2026;
 
@@ -56,6 +57,19 @@ export function AboutDialog({ open, onClose }: AboutDialogProps) {
             </p>
           </section>
 
+          <section className="about-dialog-section" aria-labelledby="about-dialog-feedback-title">
+            <h3 id="about-dialog-feedback-title" className="about-dialog-section-title">
+              反馈
+            </h3>
+            <p className="about-dialog-section-text">
+              欢迎通过{' '}
+              <a href={githubIssuesUrl} target="_blank" rel="noreferrer">
+                GitHub Issues
+              </a>{' '}
+              报告 bug、提出功能建议或分享使用体验！
+            </p>
+          </section>
+
           <dl className="about-dialog-meta">
             <div className="about-dialog-meta-row">
               <dt>网站</dt>
@@ -78,6 +92,14 @@ export function AboutDialog({ open, onClose }: AboutDialogProps) {
               <dd>
                 <a href={docsUrl} target="_blank" rel="noreferrer">
                   {docsUrl}
+                </a>
+              </dd>
+            </div>
+            <div className="about-dialog-meta-row">
+              <dt>问题反馈</dt>
+              <dd>
+                <a href={githubIssuesUrl} target="_blank" rel="noreferrer">
+                  {githubIssuesUrl}
                 </a>
               </dd>
             </div>

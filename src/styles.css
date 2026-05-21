@@ -1273,6 +1273,10 @@ html.dark .station-table th {
   border-top: 1px solid var(--site-border);
 }
 
+.about-dialog-section + .about-dialog-section {
+  margin-top: 14px;
+}
+
 .about-dialog-section-title {
   margin: 0 0 6px;
   font-size: 0.82rem;

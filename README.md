@@ -10,8 +10,13 @@
 
 - Cloudflare Pages：https://njmetro-railmap-creator.umamichi.moe
 - GitHub 仓库：https://github.com/kyuri-metro/njmetro-railmap-creator
+- GitHub Issues：https://github.com/kyuri-metro/njmetro-railmap-creator/issues
 - 个人网站：https://umamichi.moe/
 - 仓库文档：参见 [docs/](docs/)
+
+## 反馈
+
+欢迎通过 [GitHub Issues](https://github.com/kyuri-metro/njmetro-railmap-creator/issues) 报告 bug、提出功能建议或分享使用体验。
 
 ## 项目内容
 
