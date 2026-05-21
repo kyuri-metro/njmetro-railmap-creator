@@ -9,6 +9,10 @@
 
 ## [Unreleased]
 
+## [0.1.2] - 2026-05-22
+
+对应 `package.json` 中的 `0.1.2`。相对 0.1.1：顶栏与窄屏「更多」、离开确认、站点弹窗即时写入、新建空白线路图，以及 GitHub Issues 反馈入口。
+
 ### Added
 
 - README 与「关于」对话框增加 [GitHub Issues](https://github.com/kyuri-metro/njmetro-railmap-creator/issues) 链接，欢迎报告 bug、提出功能建议或分享使用体验；关于页元信息中增加「问题反馈」条目。
@@ -26,6 +30,7 @@
 - 新建 / 导入 / 导出自站点列表标题栏移至顶栏；顶栏标题区改为 flex 自适应宽度。
 - 新建文件图标改为无「+」的空白文档轮廓；导出图标箭头路径修正。
 - `index.html` viewport 增加 `viewport-fit=cover`，配合底滑菜单底部内边距。
+- 「关于」等界面展示的版本号为 `0.1.2`。
 
 ### Fixed
 
@@ -78,6 +83,7 @@
 - 部署至 Cloudflare Pages（[njmetro-railmap-creator.umamichi.moe](https://njmetro-railmap-creator.umamichi.moe/)）。
 - 基于 [@umamichi-ui/common-css](https://www.npmjs.com/package/@umamichi-ui/common-css) 的界面样式与弹层交互。
 
-[Unreleased]: https://github.com/kyuri-metro/njmetro-railmap-creator/compare/v0.1.1...HEAD
+[Unreleased]: https://github.com/kyuri-metro/njmetro-railmap-creator/compare/v0.1.2...HEAD
+[0.1.2]: https://github.com/kyuri-metro/njmetro-railmap-creator/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/kyuri-metro/njmetro-railmap-creator/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/kyuri-metro/njmetro-railmap-creator/releases/tag/v0.1.0
