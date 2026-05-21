@@ -59,6 +59,7 @@ import { store, UndoActionCreators } from './store';
 type ModalState =
   | {
       kind: 'create';
+      stationId: string;
       position: 'before' | 'after' | 'start' | 'end';
       basisId?: string;
     }
@@ -786,15 +787,34 @@ function App() {
   };
 
   const openInsertModal = (position: 'before' | 'after' | 'start' | 'end') => {
+    const nextId = `station-${crypto.randomUUID()}`;
+    const basisId = position === 'before' || position === 'after' ? generator.currentStnId : undefined;
+
+    dispatch(
+      insertStation({
+        position,
+        basisId,
+        station: toStationItem(stationToDraft(), nextId),
+      }),
+    );
     setModalState({
       kind: 'create',
+      stationId: nextId,
       position,
-      basisId: position === 'before' || position === 'after' ? generator.currentStnId : undefined,
+      basisId,
     });
     setStationModalVisible(true);
   };
 
   const closeStationModal = () => {
+    if (modalState?.kind === 'create') {
+      const station = generator.stnList.find((item) => item.id === modalState.stationId);
+
+      if (station && station.chName.trim() === '' && station.enName.trim() === '') {
+        dispatch(deleteStation(modalState.stationId));
+      }
+    }
+
     setStationModalVisible(false);
   };
 
@@ -802,23 +822,15 @@ function App() {
     setModalState(null);
   };
 
-  const handleModalSubmit = (draft: StationFormDraft) => {
+  const handleStationDraftChange = (draft: StationFormDraft) => {
     if (modalState?.kind === 'edit') {
       dispatch(updateStation(toStationItem(draft, modalState.station.id)));
+      return;
     }
 
     if (modalState?.kind === 'create') {
-      const nextId = `station-${crypto.randomUUID()}`;
-      dispatch(
-        insertStation({
-          position: modalState.position,
-          basisId: modalState.basisId,
-          station: toStationItem(draft, nextId),
-        }),
-      );
+      dispatch(updateStation(toStationItem(draft, modalState.stationId)));
     }
-
-    closeStationModal();
   };
 
   const handleThemeToggle = () => {
@@ -1270,6 +1282,7 @@ function App() {
 
       {modalState ? (
         <StationFormModal
+          key={modalState.kind === 'edit' ? modalState.station.id : modalState.stationId}
           allowDelete={modalState.kind === 'edit'}
           initialValue={modalState.kind === 'edit' ? stationToDraft(modalState.station) : stationToDraft()}
           modeLabel={modalState.kind === 'edit' ? '编辑站点' : '新增站点'}
@@ -1284,7 +1297,7 @@ function App() {
                 }
               : undefined
           }
-          onSubmit={handleModalSubmit}
+          onChange={handleStationDraftChange}
         />
       ) : null}
 

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import type { StationItem, StationType, TransferLine } from '../features/generatorSlice';
 import { OVERLAY_IDS } from '../overlay/overlayIds';
 import { SiteOverlayBackdrop } from '../overlay/SiteOverlayBackdrop';
@@ -31,7 +31,7 @@ type StationFormModalProps = {
   onClose: () => void;
   onExited?: () => void;
   onDelete?: () => void;
-  onSubmit: (draft: StationFormDraft) => void;
+  onChange: (draft: StationFormDraft) => void;
 };
 
 export function StationFormModal({
@@ -42,12 +42,20 @@ export function StationFormModal({
   onClose,
   onExited,
   onDelete,
-  onSubmit,
+  onChange,
 }: StationFormModalProps) {
   const [draft, setDraft] = useState(initialValue);
 
+  const patchDraft = (updater: (current: StationFormDraft) => StationFormDraft) => {
+    setDraft((current) => {
+      const next = updater(current);
+      onChange(next);
+      return next;
+    });
+  };
+
   const updateTransferLine = (index: number, field: keyof TransferLine, value: string) => {
-    setDraft((current) => ({
+    patchDraft((current) => ({
       ...current,
       transfer: current.transfer.map((line, lineIndex) => {
         if (lineIndex !== index) {
@@ -76,14 +84,14 @@ export function StationFormModal({
   };
 
   const addTransferLine = () => {
-    setDraft((current) => ({
+    patchDraft((current) => ({
       ...current,
       transfer: [...current.transfer, createEmptyTransferLine()],
     }));
   };
 
   const removeTransferLine = (index: number) => {
-    setDraft((current) => ({
+    patchDraft((current) => ({
       ...current,
       transfer: current.transfer.filter((_, lineIndex) => lineIndex !== index),
     }));
@@ -119,19 +127,13 @@ export function StationFormModal({
           </button>
         </div>
 
-        <form
-          className="modal-form form-scope"
-          onSubmit={(event) => {
-            event.preventDefault();
-            onSubmit(draft);
-          }}
-        >
+        <div className="modal-form form-scope">
           <label className="field-label">
             <span>chName（中文名）</span>
             <input
               className="text-input"
               value={draft.chName}
-              onChange={(event) => setDraft((current) => ({ ...current, chName: event.target.value }))}
+              onChange={(event) => patchDraft((current) => ({ ...current, chName: event.target.value }))}
               placeholder="例如：新街口"
               required
             />
@@ -141,7 +143,7 @@ export function StationFormModal({
             <input
               className="text-input"
               value={draft.enName}
-              onChange={(event) => setDraft((current) => ({ ...current, enName: event.target.value }))}
+              onChange={(event) => patchDraft((current) => ({ ...current, enName: event.target.value }))}
               placeholder="例如：Xinjiekou"
               required
             />
@@ -151,7 +153,7 @@ export function StationFormModal({
             <select
               className="select-input"
               value={draft.type}
-              onChange={(event) => setDraft((current) => ({ ...current, type: event.target.value as StationType }))}
+              onChange={(event) => patchDraft((current) => ({ ...current, type: event.target.value as StationType }))}
             >
               {stationTypeOptions.map((option) => (
                 <option key={option.value} value={option.value}>
@@ -236,15 +238,7 @@ export function StationFormModal({
               </div>
             </div>
           </label>
-          <div className="modal-actions">
-            <button type="button" className="secondary-button" onClick={onClose}>
-              取消
-            </button>
-            <button type="submit" className="primary-button">
-              保存
-            </button>
-          </div>
-        </form>
+        </div>
       </div>
     </SiteOverlayBackdrop>
   );
