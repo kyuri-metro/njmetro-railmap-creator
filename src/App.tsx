@@ -27,6 +27,7 @@ import { KYURI_RMG_IFRAME_ORIGIN } from './config/kyuriRmgIframe';
 import { getBuiltinOpenedStationsByLineId } from './builtinOpenedLineStations';
 import type { AutosaveEntry } from './autosaveStorage';
 import { markAutosaveDirty } from './features/autosaveScheduler';
+import { markSavedExempt, shouldWarnOnLeave } from './features/leaveGuard';
 import { builtinLineToGeneratorState, railmapImportToGeneratorState } from './features/generatorImport';
 import {
   deleteStation,
@@ -500,7 +501,7 @@ function App() {
 
   useEffect(() => {
     const onBeforeUnload = (event: BeforeUnloadEvent) => {
-      if (!canUndo) {
+      if (!shouldWarnOnLeave(store.getState())) {
         return;
       }
 
@@ -510,7 +511,7 @@ function App() {
 
     window.addEventListener('beforeunload', onBeforeUnload);
     return () => window.removeEventListener('beforeunload', onBeforeUnload);
-  }, [canUndo]);
+  }, []);
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -850,6 +851,7 @@ function App() {
     downloadLink.click();
     downloadLink.remove();
     window.URL.revokeObjectURL(objectUrl);
+    markSavedExempt();
   };
 
   const applyYamlTextForImport = (text: string) => {

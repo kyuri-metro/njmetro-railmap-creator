@@ -1,8 +1,9 @@
-import { configureStore, createListenerMiddleware } from '@reduxjs/toolkit';
-import undoable, { ActionCreators as UndoActionCreators, groupByActionTypes } from 'redux-undo';
+import { configureStore, createListenerMiddleware, type UnknownAction } from '@reduxjs/toolkit';
+import undoable, { ActionCreators as UndoActionCreators, ActionTypes, groupByActionTypes } from 'redux-undo';
 import { markAutosaveDirty } from './features/autosaveScheduler';
 import generatorReducer from './features/generatorSlice';
 import { generatorUndoGroupByTypes, isGeneratorMutationAction } from './features/generatorUndoConfig';
+import { clearSavedExempt } from './features/leaveGuard';
 
 const undoableGeneratorReducer = undoable(generatorReducer, {
   limit: 50,
@@ -18,12 +19,27 @@ autosaveListener.startListening({
   },
 });
 
+const clearsSaveExempt = (action: UnknownAction) =>
+  isGeneratorMutationAction(action) ||
+  action.type === ActionTypes.UNDO ||
+  action.type === ActionTypes.REDO ||
+  action.type === ActionTypes.CLEAR_HISTORY;
+
+const leaveGuardListener = createListenerMiddleware();
+
+leaveGuardListener.startListening({
+  predicate: clearsSaveExempt,
+  effect: () => {
+    clearSavedExempt();
+  },
+});
+
 export const store = configureStore({
   reducer: {
     generator: undoableGeneratorReducer,
   },
   middleware: (getDefaultMiddleware) =>
-    getDefaultMiddleware().concat(autosaveListener.middleware),
+    getDefaultMiddleware().concat(autosaveListener.middleware, leaveGuardListener.middleware),
 });
 
 export type RootState = ReturnType<typeof store.getState>;
