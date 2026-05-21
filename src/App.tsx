@@ -22,7 +22,7 @@ import { SettingsDialog } from './components/SettingsDialog';
 import { BadgeDownloadTrigger } from './components/BadgeDownloadTrigger';
 import { InfoCircleIcon } from './components/InfoCircleIcon';
 import { MobileActionSheet } from './components/MobileActionSheet';
-import { StationYamlExportMenu, StationYamlImportMenu } from './components/StationYamlIoMenus';
+import { TopbarFileCommands, ExportIcon, ImportIcon, NewFileIcon } from './components/topbar/TopbarFileCommands';
 import { KYURI_RMG_IFRAME_ORIGIN } from './config/kyuriRmgIframe';
 import { getBuiltinOpenedStationsByLineId } from './builtinOpenedLineStations';
 import type { AutosaveEntry } from './autosaveStorage';
@@ -965,6 +965,33 @@ function App() {
               Beta
             </span>
           </div>
+          <TopbarFileCommands
+            yamlFileInputRef={yamlFileInputRef}
+            rmgToolConfigured={Boolean(KYURI_RMG_IFRAME_ORIGIN)}
+            onNew={() => setIsNewProjectConfirmOpen(true)}
+            onDownloadYaml={handleExportStationYaml}
+            onOpenRmgImport={() => {
+              setKyuriRmgModal({ mode: 'import' });
+              setKyuriRmgOpen(true);
+            }}
+            onOpenRmgExport={() => {
+              setKyuriRmgModal({ mode: 'export' });
+              setKyuriRmgOpen(true);
+            }}
+          />
+          <div
+            className="app-topbar-divider app-topbar-action--desktop-only"
+            role="separator"
+            aria-orientation="vertical"
+            aria-hidden="true"
+          />
+          <input
+            ref={yamlFileInputRef}
+            type="file"
+            accept=".yml,.yaml,text/yaml,application/yaml"
+            className="visually-hidden"
+            onChange={handleYamlFileChange}
+          />
           <div className="app-topbar-actions">
             <button
               type="button"
@@ -1168,38 +1195,6 @@ function App() {
               <div className="station-list-heading">
                 <h2>站点列表</h2>
                 <div className="station-list-heading-end">
-                  <div className="station-list-yaml-tools" role="group" aria-label="站点列表 YAML">
-                    <button
-                      type="button"
-                      className="secondary-button"
-                      onClick={() => setIsNewProjectConfirmOpen(true)}
-                    >
-                      新建
-                    </button>
-                    <StationYamlExportMenu
-                      rmgToolConfigured={Boolean(KYURI_RMG_IFRAME_ORIGIN)}
-                      onDownloadYaml={handleExportStationYaml}
-                      onOpenRmgExport={() => {
-                        setKyuriRmgModal({ mode: 'export' });
-                        setKyuriRmgOpen(true);
-                      }}
-                    />
-                    <StationYamlImportMenu
-                      yamlFileInputRef={yamlFileInputRef}
-                      rmgToolConfigured={Boolean(KYURI_RMG_IFRAME_ORIGIN)}
-                      onOpenRmgImport={() => {
-                        setKyuriRmgModal({ mode: 'import' });
-                        setKyuriRmgOpen(true);
-                      }}
-                    />
-                    <input
-                      ref={yamlFileInputRef}
-                      type="file"
-                      accept=".yml,.yaml,text/yaml,application/yaml"
-                      className="visually-hidden"
-                      onChange={handleYamlFileChange}
-                    />
-                  </div>
                   <button type="button" className="primary-button" onClick={handleFillStationsByLineId}>
                     按线路填充已开通站点
                   </button>
@@ -1535,6 +1530,64 @@ function App() {
         ariaLabel="顶栏更多"
         onDismiss={() => setIsTopbarMoreMenuOpen(false)}
         entries={[
+          {
+            kind: 'item',
+            id: 'new',
+            label: '新建',
+            icon: <NewFileIcon />,
+            onSelect: () => setIsNewProjectConfirmOpen(true),
+          },
+          {
+            kind: 'submenu',
+            id: 'import',
+            label: '导入',
+            icon: <ImportIcon />,
+            items: [
+              {
+                kind: 'item',
+                id: 'import-yaml',
+                label: '从 YAML 文件导入…',
+                onSelect: () => yamlFileInputRef.current?.click(),
+              },
+              {
+                kind: 'item',
+                id: 'import-rmg',
+                label: '导入 RMG JSON 存档',
+                disabled: !KYURI_RMG_IFRAME_ORIGIN,
+                title: !KYURI_RMG_IFRAME_ORIGIN ? 'RMG 转换窗口未配置，无法使用此选项' : undefined,
+                onSelect: () => {
+                  setKyuriRmgModal({ mode: 'import' });
+                  setKyuriRmgOpen(true);
+                },
+              },
+            ],
+          },
+          {
+            kind: 'submenu',
+            id: 'export',
+            label: '导出',
+            icon: <ExportIcon />,
+            items: [
+              {
+                kind: 'item',
+                id: 'export-yaml',
+                label: '下载 YAML',
+                onSelect: handleExportStationYaml,
+              },
+              {
+                kind: 'item',
+                id: 'export-rmg',
+                label: '导出 RMG JSON 存档',
+                disabled: !KYURI_RMG_IFRAME_ORIGIN,
+                title: !KYURI_RMG_IFRAME_ORIGIN ? 'RMG 转换窗口未配置，无法使用此选项' : undefined,
+                onSelect: () => {
+                  setKyuriRmgModal({ mode: 'export' });
+                  setKyuriRmgOpen(true);
+                },
+              },
+            ],
+          },
+          { kind: 'separator', id: 'topbar-file-separator' },
           {
             kind: 'item',
             id: 'settings',

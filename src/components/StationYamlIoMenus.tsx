@@ -1,7 +1,8 @@
-import { useEffect, useId, useLayoutEffect, useRef, useState, type RefObject } from 'react';
+import { useEffect, useId, useLayoutEffect, useRef, useState, type ReactNode, type RefObject } from 'react';
 import { createPortal } from 'react-dom';
 import { mergeOverlayRefs, useOverlayPresence, withOverlayOpen } from '../hooks/useOverlayPresence';
 import { DropdownMenuChevron } from './DropdownMenuChevron';
+import { ExportIcon, ImportIcon } from './topbar/FileCommandIcons';
 
 type FloatingMenuGeometry = {
   top: number;
@@ -79,13 +80,32 @@ function useYamlIoMenuGeometry(menuOpen: boolean, menuMounted: boolean) {
   return { menuPanelRef, triggerRef, menuGeometry };
 }
 
+type YamlIoMenuTriggerVariant = 'labeled' | 'icon';
+
+function IconDropdownTriggerContent({ icon }: { icon: ReactNode }) {
+  return (
+    <>
+      {icon}
+      <span className="dropdown-menu-trigger-caret" aria-hidden="true">
+        <DropdownMenuChevron />
+      </span>
+    </>
+  );
+}
+
 type StationYamlImportMenuProps = {
   yamlFileInputRef: RefObject<HTMLInputElement | null>;
   rmgToolConfigured: boolean;
   onOpenRmgImport: () => void;
+  triggerVariant?: YamlIoMenuTriggerVariant;
 };
 
-export function StationYamlImportMenu({ yamlFileInputRef, rmgToolConfigured, onOpenRmgImport }: StationYamlImportMenuProps) {
+export function StationYamlImportMenu({
+  yamlFileInputRef,
+  rmgToolConfigured,
+  onOpenRmgImport,
+  triggerVariant = 'labeled',
+}: StationYamlImportMenuProps) {
   const wrapRef = useRef<HTMLDivElement | null>(null);
   const menuId = useId();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -171,18 +191,24 @@ export function StationYamlImportMenu({ yamlFileInputRef, rmgToolConfigured, onO
     </ul>
   ) : null;
 
+  const triggerClassName =
+    triggerVariant === 'icon'
+      ? 'icon-button app-topbar-icon-button dropdown-menu-trigger dropdown-menu-trigger--icon'
+      : 'secondary-button dropdown-menu-trigger';
+
   return (
     <div className="dropdown-menu" ref={wrapRef}>
       <button
         ref={triggerRef}
         type="button"
-        className="secondary-button dropdown-menu-trigger"
+        className={triggerClassName}
+        aria-label={triggerVariant === 'icon' ? '导入' : undefined}
         aria-expanded={menuOpen}
         aria-haspopup="menu"
         aria-controls={menuId}
         onClick={() => setMenuOpen((o) => !o)}
       >
-        导入 <DropdownMenuChevron />
+        {triggerVariant === 'icon' ? <IconDropdownTriggerContent icon={<ImportIcon />} /> : <>导入 <DropdownMenuChevron /></>}
       </button>
       {menuPanel ? createPortal(menuPanel, document.body) : null}
     </div>
@@ -193,9 +219,15 @@ type StationYamlExportMenuProps = {
   rmgToolConfigured: boolean;
   onDownloadYaml: () => void;
   onOpenRmgExport: () => void;
+  triggerVariant?: YamlIoMenuTriggerVariant;
 };
 
-export function StationYamlExportMenu({ rmgToolConfigured, onDownloadYaml, onOpenRmgExport }: StationYamlExportMenuProps) {
+export function StationYamlExportMenu({
+  rmgToolConfigured,
+  onDownloadYaml,
+  onOpenRmgExport,
+  triggerVariant = 'labeled',
+}: StationYamlExportMenuProps) {
   const wrapRef = useRef<HTMLDivElement | null>(null);
   const menuId = useId();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -281,18 +313,24 @@ export function StationYamlExportMenu({ rmgToolConfigured, onDownloadYaml, onOpe
     </ul>
   ) : null;
 
+  const triggerClassName =
+    triggerVariant === 'icon'
+      ? 'icon-button app-topbar-icon-button dropdown-menu-trigger dropdown-menu-trigger--icon'
+      : 'secondary-button dropdown-menu-trigger';
+
   return (
     <div className="dropdown-menu" ref={wrapRef}>
       <button
         ref={triggerRef}
         type="button"
-        className="secondary-button dropdown-menu-trigger"
+        className={triggerClassName}
+        aria-label={triggerVariant === 'icon' ? '导出' : undefined}
         aria-expanded={menuOpen}
         aria-haspopup="menu"
         aria-controls={menuId}
         onClick={() => setMenuOpen((o) => !o)}
       >
-        导出 <DropdownMenuChevron />
+        {triggerVariant === 'icon' ? <IconDropdownTriggerContent icon={<ExportIcon />} /> : <>导出 <DropdownMenuChevron /></>}
       </button>
       {menuPanel ? createPortal(menuPanel, document.body) : null}
     </div>

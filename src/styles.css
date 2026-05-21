@@ -48,10 +48,30 @@ h1 {
   position: relative;
   display: inline-block;
   /* 不要 flex-grow：否则块会被顶栏拉满，Beta 的 left:% 会相对整块算，飘到很靠右 */
-  flex: 0 1 auto;
+  flex: 1 1 auto;
   min-width: 0;
-  max-width: calc(100% - 220px);
+  max-width: none;
   vertical-align: middle;
+}
+
+.app-topbar-file-commands {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 4px;
+}
+
+.app-topbar-file-commands .dropdown-menu {
+  display: inline-flex;
+}
+
+.app-topbar-divider {
+  flex-shrink: 0;
+  align-self: center;
+  width: 1px;
+  height: 24px;
+  margin: 0;
+  background: var(--site-border);
 }
 
 .app-topbar-title {
@@ -220,6 +240,11 @@ h1 {
   .app-topbar .app-topbar-icon-button.app-topbar-action--mobile-only,
   .app-topbar .app-topbar-more-button {
     display: inline-flex;
+  }
+
+  .app-topbar-file-commands,
+  .app-topbar-divider {
+    display: none;
   }
 
   .app-topbar .app-topbar-icon-button.app-topbar-action--desktop-only,
@@ -448,20 +473,28 @@ h3 {
   flex-shrink: 0;
 }
 
-.station-list-yaml-tools {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding-inline-end: 2px;
-}
-
-.station-list-yaml-tools .dropdown-menu {
-  flex-shrink: 0;
-}
-
 .dropdown-menu-chevron {
   display: block;
   flex-shrink: 0;
+}
+
+/* 顶栏图标下拉：主图标仍居中，右下角小号 v 仅作提示 */
+.app-topbar .dropdown-menu-trigger--icon {
+  position: relative;
+}
+
+.dropdown-menu-trigger-caret {
+  position: absolute;
+  right: 4px;
+  bottom: 6px;
+  line-height: 0;
+  pointer-events: none;
+  color: inherit;
+}
+
+.dropdown-menu-trigger-caret .dropdown-menu-chevron {
+  width: 8px;
+  height: 8px;
 }
 
 .kyuri-rmg-tool-dialog {
@@ -811,7 +844,7 @@ html.dark .station-table th {
   transition:
     transform var(--transition-overlay, 0.22s ease),
     opacity var(--transition-overlay, 0.22s ease);
-  padding-bottom: max(12px, env(safe-area-inset-bottom, 0px));
+  padding-bottom: max(1rem, calc(env(safe-area-inset-bottom, 0px) + 2.5rem));
 }
 
 .mobile-action-sheet-panels {
@@ -819,8 +852,17 @@ html.dark .station-table th {
   width: 100%;
   min-width: 0;
   overflow: hidden;
-  /* 二级面板：translateX(-100%) 等，由后续 JS 驱动 */
   transition: transform var(--transition-overlay, 0.22s ease);
+}
+
+.mobile-action-sheet-panels--slide {
+  /* 根面板 + 子菜单槽位：总宽 200%，滑一格为 50% 即一屏宽 */
+  width: 200%;
+}
+
+.mobile-action-sheet-panels--slide > .mobile-action-sheet-panel {
+  flex: 0 0 50%;
+  width: 50%;
 }
 
 .mobile-action-sheet-panel {
@@ -828,6 +870,7 @@ html.dark .station-table th {
   width: 100%;
   min-width: 0;
   overflow: auto;
+  box-sizing: border-box;
 }
 
 .mobile-action-sheet-header {
@@ -835,6 +878,45 @@ html.dark .station-table th {
   font-size: 0.82rem;
   color: var(--site-subtle-fg);
   border-bottom: 1px solid var(--site-border);
+}
+
+.mobile-action-sheet-subheader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 12px 10px 8px;
+  border-bottom: 1px solid var(--site-border);
+}
+
+.mobile-action-sheet-back {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  color: inherit;
+  line-height: 0;
+  cursor: pointer;
+}
+
+.mobile-action-sheet-back-chevron {
+  display: block;
+  flex-shrink: 0;
+}
+
+.mobile-action-sheet-back:hover {
+  background: var(--site-hover-bg);
+}
+
+.mobile-action-sheet-subheader-title {
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.35;
 }
 
 .mobile-action-sheet-list {
@@ -874,6 +956,16 @@ html.dark .station-table th {
   background: var(--site-active-bg);
 }
 
+.mobile-action-sheet-item:disabled {
+  opacity: 0.38;
+  cursor: not-allowed;
+}
+
+.mobile-action-sheet-item:disabled:hover,
+.mobile-action-sheet-item:disabled:active {
+  background: transparent;
+}
+
 .mobile-action-sheet-item-icon {
   display: inline-flex;
   flex-shrink: 0;
@@ -895,9 +987,8 @@ html.dark .station-table th {
 }
 
 .mobile-action-sheet-item-chevron {
+  display: block;
   flex-shrink: 0;
-  font-size: 1.25rem;
-  line-height: 1;
   color: var(--site-subtle-fg);
 }
 
