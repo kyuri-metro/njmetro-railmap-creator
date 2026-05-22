@@ -9,6 +9,17 @@
 
 ## [Unreleased]
 
+### Added
+
+- 全站叠层与浏览器 History 同步：打开任意 `SiteOverlayBackdrop` / `ConfirmDialogOverlay` 叠层时 `pushState`（`state.overlayStack`）；移动端与桌面浏览器的**返回**先关闭栈顶叠层，逐层返回后再离开本站。同一 overlay id 不重复入栈；UI（按钮、背景、Esc）关闭时 `history.back()` 并与 `popstate` 防重入配合。
+- `src/overlay/overlayHistory.ts`：`pushOverlayHistoryState` 与 history state 类型守卫。
+- 聊天记录：`docs/chat-transcript-overlay-history-back.md`。
+
+### Changed
+
+- `OverlayStackProvider` 增加 `popstate` 监听与 `pushOverlayHistory` / `syncOverlayHistoryOnUiClose` / `acknowledgeOverlayHistoryPop`；系统返回关闭栈顶时不受 `dismissOnEscape` 限制。
+- `useOverlayStackEntry` 在叠层打开/关闭时绑定 History；`queueMicrotask` + `openRef` 避免 React Strict Mode 假卸载时误触发 `history.back()`。
+
 ## [0.1.2] - 2026-05-22
 
 对应 `package.json` 中的 `0.1.2`。相对 0.1.1：顶栏与窄屏「更多」、离开确认、站点弹窗即时写入、新建空白线路图，以及 GitHub Issues 反馈入口。

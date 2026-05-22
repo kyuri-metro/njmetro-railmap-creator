@@ -14,9 +14,18 @@ export function useOverlayStackEntry({
   onDismiss,
   dismissOnEscape = true,
 }: UseOverlayStackEntryOptions) {
-  const { register, unregister, isTop, getZIndex } = useOverlayStack();
+  const {
+    register,
+    unregister,
+    isTop,
+    getZIndex,
+    pushOverlayHistory,
+    syncOverlayHistoryOnUiClose,
+  } = useOverlayStack();
   const onDismissRef = useRef(onDismiss);
+  const openRef = useRef(open);
   onDismissRef.current = onDismiss;
+  openRef.current = open;
 
   useEffect(() => {
     if (!open) {
@@ -33,6 +42,22 @@ export function useOverlayStackEntry({
       unregister(id);
     };
   }, [dismissOnEscape, id, open, register, unregister]);
+
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+
+    pushOverlayHistory(id);
+
+    return () => {
+      queueMicrotask(() => {
+        if (!openRef.current) {
+          syncOverlayHistoryOnUiClose(id);
+        }
+      });
+    };
+  }, [id, open, pushOverlayHistory, syncOverlayHistoryOnUiClose]);
 
   return {
     isBackdropActive: open && isTop(id),
