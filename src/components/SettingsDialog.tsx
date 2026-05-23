@@ -7,7 +7,7 @@ import {
 } from '../autosaveStorage';
 import { updateAutosaveSchedulerSettings } from '../features/autosaveScheduler';
 import { OVERLAY_IDS } from '../overlay/overlayIds';
-import { ConfirmDialogOverlay } from './ConfirmDialogOverlay';
+import { ConfirmDialogOverlay } from '@umamichi-ui/common-components/dialog';
 
 type SettingsDialogProps = {
   open: boolean;

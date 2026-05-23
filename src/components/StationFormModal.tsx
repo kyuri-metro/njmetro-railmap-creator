@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import type { StationItem, StationType, TransferLine } from '../features/generatorSlice';
 import { OVERLAY_IDS } from '../overlay/overlayIds';
-import { SiteOverlayBackdrop } from '../overlay/SiteOverlayBackdrop';
+import { SiteOverlayBackdrop } from '@umamichi-ui/common-components/overlay';
 import { getNjmetroLineBackgroundColor, getNjmetroLineForegroundColor } from '../njmetroLinePalette';
 
 export type StationFormDraft = {

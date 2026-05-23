@@ -10,7 +10,7 @@ import {
   type BadgeRasterFormat,
 } from '../badgeExport';
 import { OVERLAY_IDS } from '../overlay/overlayIds';
-import { ConfirmDialogOverlay } from './ConfirmDialogOverlay';
+import { ConfirmDialogOverlay } from '@umamichi-ui/common-components/dialog';
 
 export type BadgeDownloadFormat = 'svg' | BadgeRasterFormat;
 

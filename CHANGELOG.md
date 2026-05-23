@@ -11,14 +11,13 @@
 
 ### Added
 
-- 全站叠层与浏览器 History 同步：打开任意 `SiteOverlayBackdrop` / `ConfirmDialogOverlay` 叠层时 `pushState`（`state.overlayStack`）；移动端与桌面浏览器的**返回**先关闭栈顶叠层，逐层返回后再离开本站。同一 overlay id 不重复入栈；UI（按钮、背景、Esc）关闭时 `history.back()` 并与 `popstate` 防重入配合。
-- `src/overlay/overlayHistory.ts`：`pushOverlayHistoryState` 与 history state 类型守卫。
-- 聊天记录：`docs/chat-transcript-overlay-history-back.md`。
+- 依赖 npm 包 [`@umamichi-ui/common-components`](https://www.npmjs.com/package/@umamichi-ui/common-components) ^0.1.0（叠层栈、History 同步、对话框壳、`FloatingMenu`、`MobileActionSheet` 等）。
+- 聊天记录：`docs/chat-transcript-common-components-extraction.md`、`docs/chat-transcript-overlay-history-back.md`。
 
 ### Changed
 
-- `OverlayStackProvider` 增加 `popstate` 监听与 `pushOverlayHistory` / `syncOverlayHistoryOnUiClose` / `acknowledgeOverlayHistoryPop`；系统返回关闭栈顶时不受 `dismissOnEscape` 限制。
-- `useOverlayStackEntry` 在叠层打开/关闭时绑定 History；`queueMicrotask` + `openRef` 避免 React Strict Mode 假卸载时误触发 `history.back()`。
+- 移除本仓库内已迁入 `@umamichi-ui/common-components` 的 overlay、菜单、图标与 `ConfirmDialogOverlay` 源码；`main.tsx` 改为引入 `@umamichi-ui/common-components/styles.css` 与 `OverlayStackProvider`。
+- YAML 导入/导出顶栏菜单改用包内 `FloatingMenu`；「关于」改用包内 `AboutDialog` 模板。
 
 ## [0.1.2] - 2026-05-22
 

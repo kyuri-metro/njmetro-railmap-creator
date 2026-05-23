@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { KYURI_RMG_CHILD_SOURCE, KYURI_RMG_PARENT_SOURCE } from '../kyuriRmgProtocol';
 import { OVERLAY_IDS } from '../overlay/overlayIds';
-import { SiteOverlayBackdrop } from '../overlay/SiteOverlayBackdrop';
+import { SiteOverlayBackdrop } from '@umamichi-ui/common-components/overlay';
 
 type KyuriRmgToolModalProps = {
   open: boolean;

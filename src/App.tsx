@@ -8,7 +8,7 @@ import {
   type ChangeEvent,
   type ReactNode,
 } from 'react';
-import { ConfirmDialogOverlay } from './components/ConfirmDialogOverlay';
+import { ConfirmDialogOverlay } from '@umamichi-ui/common-components/dialog';
 import { usePreviewLoadingOverlay } from './hooks/usePreviewLoadingOverlay';
 import { CurrentStationBadge } from './components/CurrentStationBadge';
 import { DirectionBadge } from './components/DirectionBadge';
@@ -20,8 +20,8 @@ import { AboutDialog } from './components/AboutDialog';
 import { AutosaveListDialog } from './components/AutosaveListDialog';
 import { SettingsDialog } from './components/SettingsDialog';
 import { BadgeDownloadTrigger } from './components/BadgeDownloadTrigger';
-import { InfoCircleIcon } from './components/InfoCircleIcon';
-import { MobileActionSheet } from './components/MobileActionSheet';
+import { InfoCircleIcon } from '@umamichi-ui/common-components/icons';
+import { MobileActionSheet } from '@umamichi-ui/common-components/menu';
 import { TopbarFileCommands, ExportIcon, ImportIcon, NewFileIcon } from './components/topbar/TopbarFileCommands';
 import { KYURI_RMG_IFRAME_ORIGIN } from './config/kyuriRmgIframe';
 import { getBuiltinOpenedStationsByLineId } from './builtinOpenedLineStations';
@@ -53,7 +53,7 @@ import { parseRailmapYaml, serializeRailmapYaml, type RailmapYamlImport } from '
 import { useAppDispatch, useAppSelector, selectCanRedo, selectCanUndo, selectGeneratorPresent } from './hooks';
 import { topbarCompactMediaQuery } from './layout/topbarLayout';
 import { OVERLAY_IDS } from './overlay/overlayIds';
-import { SiteOverlayBackdrop } from './overlay/SiteOverlayBackdrop';
+import { SiteOverlayBackdrop } from '@umamichi-ui/common-components/overlay';
 import { store, UndoActionCreators } from './store';
 
 type ModalState =

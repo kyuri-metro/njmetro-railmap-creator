@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { readAutosaveEntries, type AutosaveEntry } from '../autosaveStorage';
 import { OVERLAY_IDS } from '../overlay/overlayIds';
-import { ConfirmDialogOverlay } from './ConfirmDialogOverlay';
+import { ConfirmDialogOverlay } from '@umamichi-ui/common-components/dialog';
 
 type AutosaveListDialogProps = {
   open: boolean;
