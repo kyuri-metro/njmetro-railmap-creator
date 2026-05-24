@@ -3,6 +3,7 @@ import {
   useDeferredValue,
   useEffect,
   useId,
+  useLayoutEffect,
   useRef,
   useState,
   type ChangeEvent,
@@ -283,11 +284,41 @@ type DownloadableBadgeCardProps = {
 
 const DownloadableBadgeCard = ({ title, fileName, children }: DownloadableBadgeCardProps) => {
   const badgeContainerRef = useRef<HTMLDivElement | null>(null);
+  const svgZoomBodyRef = useRef<HTMLDivElement | null>(null);
+  const svgZoomScrollLeftRef = useRef<number | null>(null);
   const svgZoomTitleId = useId();
   const [isSvgZoomOpen, setIsSvgZoomOpen] = useState(false);
   const svgZoomOverlayId = `${useId().replace(/:/g, '')}-svg-preview`;
   const [svgZoomMarkup, setSvgZoomMarkup] = useState('');
   const [svgZoomPercent, setSvgZoomPercent] = useState(100);
+
+  const setSvgZoomPercentAnchored = (nextPercent: number) => {
+    const body = svgZoomBodyRef.current;
+
+    if (body && nextPercent !== svgZoomPercent) {
+      const ratio = nextPercent / svgZoomPercent;
+      const viewportCenterX = body.scrollLeft + body.clientWidth / 2;
+      svgZoomScrollLeftRef.current = viewportCenterX * ratio - body.clientWidth / 2;
+    }
+
+    setSvgZoomPercent(nextPercent);
+  };
+
+  useLayoutEffect(() => {
+    if (!isSvgZoomOpen) {
+      return;
+    }
+
+    const body = svgZoomBodyRef.current;
+    const nextScrollLeft = svgZoomScrollLeftRef.current;
+
+    if (!body || nextScrollLeft === null) {
+      return;
+    }
+
+    body.scrollLeft = nextScrollLeft;
+    svgZoomScrollLeftRef.current = null;
+  }, [isSvgZoomOpen, svgZoomPercent]);
 
   const getBadgeSvgElement = () => {
     const candidate = badgeContainerRef.current?.querySelector('svg');
@@ -304,6 +335,7 @@ const DownloadableBadgeCard = ({ title, fileName, children }: DownloadableBadgeC
 
     const serializer = new XMLSerializer();
     setSvgZoomMarkup(serializer.serializeToString(svgElement));
+    svgZoomScrollLeftRef.current = 0;
     setSvgZoomPercent(100);
     setIsSvgZoomOpen(true);
   };
@@ -365,7 +397,7 @@ const DownloadableBadgeCard = ({ title, fileName, children }: DownloadableBadgeC
                       max={500}
                       step={1}
                       value={svgZoomPercent}
-                      onChange={(event) => setSvgZoomPercent(Number(event.target.value))}
+                      onChange={(event) => setSvgZoomPercentAnchored(Number(event.target.value))}
                     />
                     <span className="svg-preview-zoom-scale-value">{svgZoomPercent}%</span>
                   </label>
@@ -375,7 +407,7 @@ const DownloadableBadgeCard = ({ title, fileName, children }: DownloadableBadgeC
                     triggerClassName="svg-preview-zoom-download"
                   />
                 </div>
-                <div className="svg-preview-zoom-body">
+                <div ref={svgZoomBodyRef} className="svg-preview-zoom-body">
                   <div className="svg-preview-zoom-scaled" style={{ width: `${svgZoomPercent}%` }}>
                     <div dangerouslySetInnerHTML={{ __html: svgZoomMarkup }} />
                   </div>

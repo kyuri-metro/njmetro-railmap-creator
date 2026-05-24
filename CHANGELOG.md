@@ -11,6 +11,7 @@
 
 ### Added
 
+- 结果区 SVG 大图预览：拖动「缩放」滑块时围绕当前视口**水平中心**缩放，避免画面横向跳动。
 - 依赖 npm 包 [`@umamichi-ui/common-components`](https://www.npmjs.com/package/@umamichi-ui/common-components) ^0.1.0（叠层栈、History 同步、对话框壳、`FloatingMenu`、`MobileActionSheet` 等）。
 - 聊天记录：`docs/chat-transcript-common-components-extraction.md`、`docs/chat-transcript-overlay-history-back.md`。
 
