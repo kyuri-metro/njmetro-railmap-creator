@@ -1,4 +1,5 @@
 import type { CSSProperties, ReactElement } from 'react';
+import { getDirectionStationEnCondense, getDirectionStationZhCondense } from '../badgeTextCondense';
 import type { GeneratorState } from '../features/generatorSlice';
 import { sansLatinFontStack, sansZhFontStack } from '../fontStacks';
 import { getLineIdBadgeWidth, LineIdBadge } from './LineIdBadge';
@@ -38,6 +39,11 @@ const enTextStyle = (letterSpacing?: number): CSSProperties => ({
   letterSpacing: letterSpacing !== undefined ? `${letterSpacing}px` : undefined,
 });
 
+const defaultDirectionZhLetterSpacing = 11;
+const defaultDirectionEnLetterSpacing = 2;
+const defaultNextStationZhLetterSpacing = 10.5;
+const defaultNextStationEnLetterSpacing = 0.5;
+
 const Arrow = ({ direction }: { direction: 'l' | 'r' }) => {
   const rotation = direction === 'l' ? 0 : 180;
   const translateX = direction === 'l' ? 0 : 340;
@@ -62,12 +68,27 @@ const ToLabelBlock = () => (
 );
 
 const StationNameBlock = ({ enName, stationName }: { enName: string; stationName: string }) => {
+  const zhCondense = getDirectionStationZhCondense(stationName, defaultDirectionZhLetterSpacing);
+  const enCondense = getDirectionStationEnCondense(enName, defaultDirectionEnLetterSpacing);
+
   return (
     <g>
-      <text fontSize={stackedTextLayout1.zhFontSize} x="0" y={stackedTextLayout1.zhBaselineY} style={zhTextStyle(11)}>
+      <text
+        fontSize={stackedTextLayout1.zhFontSize}
+        x="0"
+        y={stackedTextLayout1.zhBaselineY}
+        style={zhTextStyle(zhCondense.letterSpacing)}
+        transform={zhCondense.transform}
+      >
         {stationName}
       </text>
-      <text fontSize={stackedTextLayout1.enFontSize} x="0" y={stackedTextLayout1.enBaselineY} style={enTextStyle(2)}>
+      <text
+        fontSize={stackedTextLayout1.enFontSize}
+        x="0"
+        y={stackedTextLayout1.enBaselineY}
+        style={enTextStyle(enCondense.letterSpacing)}
+        transform={enCondense.transform}
+      >
         {enName.toUpperCase()}
       </text>
     </g>
@@ -108,12 +129,27 @@ const NextLabelBlock = () => (
 );
 
 const NextStationNameBlock = ({ enName, stationName }: { enName: string; stationName: string }) => {
+  const zhCondense = getDirectionStationZhCondense(stationName, defaultNextStationZhLetterSpacing);
+  const enCondense = getDirectionStationEnCondense(enName, defaultNextStationEnLetterSpacing);
+
   return (
     <g>
-      <text fontSize={stackedTextLayout2.zhFontSize} x="0" y={stackedTextLayout2.zhBaselineY} style={zhTextStyle(10.5)}>
+      <text
+        fontSize={stackedTextLayout2.zhFontSize}
+        x="0"
+        y={stackedTextLayout2.zhBaselineY}
+        style={zhTextStyle(zhCondense.letterSpacing)}
+        transform={zhCondense.transform}
+      >
         {stationName}
       </text>
-      <text fontSize={stackedTextLayout2.enFontSize} x="0" y={stackedTextLayout2.enBaselineY} style={enTextStyle(0.5)}>
+      <text
+        fontSize={stackedTextLayout2.enFontSize}
+        x="0"
+        y={stackedTextLayout2.enBaselineY}
+        style={enTextStyle(enCondense.letterSpacing)}
+        transform={enCondense.transform}
+      >
         {enName.toUpperCase()}
       </text>
     </g>
