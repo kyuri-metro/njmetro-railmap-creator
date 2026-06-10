@@ -27,12 +27,17 @@ export const getDirectionSectionMaxTotalWidth = (direction: 'l' | 'r', lineBadge
     return directionBadgeWidth - directionBadgeRightMargin - sectionLeft;
   }
 
+  const sectionLeft =
+    directionBadgeLeftMargin +
+    directionBadgeArrowWidth +
+    directionBadgeArrowGap;
+
   return (
     directionBadgeWidth -
     directionBadgeRightMargin -
-    directionBadgeArrowWidth -
-    directionBadgeArrowGap -
-    directionBadgeLeftMargin
+    sectionLeft -
+    lineBadgeWidth -
+    directionBadgeLineBadgeGap
   );
 };
 
