@@ -9,10 +9,22 @@
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-06-10
+
+对应 `package.json` 中的 `0.2.0`。相对 0.1.3：当前站与方向吊板文字压缩（字数初档，以及方向吊板在仍超宽时的总宽贪心第二轮）。
+
+### Added
+
+- `badgeTextCondense` 方向吊板压缩 **tier** 体系（中文 0/1 档、英文 0/1/2 档）及按 tier 生成字距与水平缩放。
+- 方向吊板 **第二轮压缩**：在字数初档后若「往 / 下一站」区段总宽仍超布局上限，按总宽度贪心选择单线或成对进一步压缩（`directionBadgeCondense`、`directionBadgeLayout`、`measureBadgeText`）。
+- 开发模式下方向压缩调试日志 `[direction-condense]`（`directionCondenseDebug`）。
+- 文字水平缩放参考资料：`docs/text horizonal scaling/`。
+
 ### Changed
 
 - **CurrentStationBadge**（当前站吊板）：中文站名 ≥ 7 字时字距 0、水平缩放 0.885；英文站名 ≥ 23 字符时字距 0、水平缩放 0.855。
-- **DirectionBadge**（方向吊板）：「往」与「下一站」站名暂按同一规则处理——中文 ≥ 7 字时字距 12、水平缩放 0.825；英文 ≥ 23 字符时字距 0、水平缩放 0.815；英文 ≥ 26 字符时字距 0、水平缩放 0.8。
+- **DirectionBadge**（方向吊板）：站名按字数定初档——中文 ≥ 7 字时字距 12、水平缩放 0.825；英文 ≥ 23 字符时字距 0、水平缩放 0.815；英文 ≥ 26 字符时字距 0、水平缩放 0.8；仍超宽时接入第二轮贪心；水平缩放改为包在 `<g transform>` 内，测宽与 `getBBox` 一致。
+- 「关于」等界面展示的版本号为 `0.2.0`。
 
 ## [0.1.3] - 2026-06-10
 
@@ -108,7 +120,8 @@
 - 部署至 Cloudflare Pages（[njmetro-railmap-creator.umamichi.moe](https://njmetro-railmap-creator.umamichi.moe/)）。
 - 基于 [@umamichi-ui/common-css](https://www.npmjs.com/package/@umamichi-ui/common-css) 的界面样式与弹层交互。
 
-[Unreleased]: https://github.com/kyuri-metro/njmetro-railmap-creator/compare/v0.1.3...HEAD
+[Unreleased]: https://github.com/kyuri-metro/njmetro-railmap-creator/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/kyuri-metro/njmetro-railmap-creator/compare/v0.1.3...v0.2.0
 [0.1.3]: https://github.com/kyuri-metro/njmetro-railmap-creator/compare/v0.1.2...v0.1.3
 [0.1.2]: https://github.com/kyuri-metro/njmetro-railmap-creator/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/kyuri-metro/njmetro-railmap-creator/compare/v0.1.0...v0.1.1
