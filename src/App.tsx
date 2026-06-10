@@ -11,6 +11,7 @@ import {
 } from 'react';
 import { ConfirmDialogOverlay } from '@umamichi-ui/common-components/dialog';
 import { usePreviewLoadingOverlay } from './hooks/usePreviewLoadingOverlay';
+import { useLineThemePalette } from './hooks/useLineThemePalette';
 import { CurrentStationBadge } from './components/CurrentStationBadge';
 import { DirectionBadge } from './components/DirectionBadge';
 import { RouteBadge } from './components/RouteBadge';
@@ -421,6 +422,7 @@ const DownloadableBadgeCard = ({ title, fileName, children }: DownloadableBadgeC
 function App() {
   const dispatch = useAppDispatch();
   const generator = useAppSelector(selectGeneratorPresent);
+  useLineThemePalette(generator.idColor);
   const canUndo = useAppSelector(selectCanUndo);
   const canRedo = useAppSelector(selectCanRedo);
   const previewGenerator = useDeferredValue(generator);

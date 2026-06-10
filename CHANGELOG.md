@@ -9,6 +9,11 @@
 
 ## [Unreleased]
 
+### Added
+
+- 按线路标识色 `idColor` 的 OKLCH **hue** 运行时推导站点 `--theme-100`～`--theme-900`：Harmonizer 九档 APCA / even chroma（P3），经 `apcach` 生成；`useLineThemePalette` 监听 `generator.idColor` 写入文档根 CSS 变量。
+- `lineThemeHarmonizerLevels.ts`、`lineThemePalette.ts` 与 `apcach` 类型声明；不支持 `oklch()` 的浏览器降级为 `hex`（`CSS.supports('color', 'oklch(0% 0 0)')`）。
+
 ### Fixed
 
 - 方向吊板向右（`r`）时，第二轮文字压缩的可用总宽未扣除中间的线路号标识块；现从 `maxTotalWidth` 减去 `lineBadgeWidth` 与 `directionBadgeLineBadgeGap`，与「下一站—线路号—往」版式一致，避免如双「中国药科大学」等场景应压未压。
