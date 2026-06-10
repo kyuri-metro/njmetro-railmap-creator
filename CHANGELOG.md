@@ -9,16 +9,25 @@
 
 ## [Unreleased]
 
+## [0.1.3] - 2026-06-10
+
+对应 `package.json` 中的 `0.1.3`。相对 0.1.2：共用 UI 组件包迁移、预览缩放体验、叠层与浏览器后退同步，以及线路号标识块生成器依赖更新。
+
 ### Added
 
 - 结果区 SVG 大图预览：拖动「缩放」滑块时围绕当前视口**水平中心**缩放，避免画面横向跳动。
 - 依赖 npm 包 [`@umamichi-ui/common-components`](https://www.npmjs.com/package/@umamichi-ui/common-components) ^0.1.0（叠层栈、History 同步、对话框壳、`FloatingMenu`、`MobileActionSheet` 等）。
+- 叠层栈与浏览器后退键同步：在叠层打开时按后退可关闭最上层，而非直接离开页面。
 - 聊天记录：`docs/chat-transcript-common-components-extraction.md`、`docs/chat-transcript-overlay-history-back.md`。
+- 线路号标识块参考资料：`docs/lineid block/` 下 20260523 调整版 Sn 模板与说明（对应 `@kyuri-metro/njmetro-line-id-block-svg-generator@0.2.3`）。
 
 ### Changed
 
 - 移除本仓库内已迁入 `@umamichi-ui/common-components` 的 overlay、菜单、图标与 `ConfirmDialogOverlay` 源码；`main.tsx` 改为引入 `@umamichi-ui/common-components/styles.css` 与 `OverlayStackProvider`。
 - YAML 导入/导出顶栏菜单改用包内 `FloatingMenu`；「关于」改用包内 `AboutDialog` 模板。
+- 依赖 `@kyuri-metro/njmetro-line-id-block-svg-generator` 升级至 ^0.2.3。
+- README 增加 LLM 生成内容说明。
+- 「关于」等界面展示的版本号为 `0.1.3`。
 
 ## [0.1.2] - 2026-05-22
 
@@ -94,7 +103,8 @@
 - 部署至 Cloudflare Pages（[njmetro-railmap-creator.umamichi.moe](https://njmetro-railmap-creator.umamichi.moe/)）。
 - 基于 [@umamichi-ui/common-css](https://www.npmjs.com/package/@umamichi-ui/common-css) 的界面样式与弹层交互。
 
-[Unreleased]: https://github.com/kyuri-metro/njmetro-railmap-creator/compare/v0.1.2...HEAD
+[Unreleased]: https://github.com/kyuri-metro/njmetro-railmap-creator/compare/v0.1.3...HEAD
+[0.1.3]: https://github.com/kyuri-metro/njmetro-railmap-creator/compare/v0.1.2...v0.1.3
 [0.1.2]: https://github.com/kyuri-metro/njmetro-railmap-creator/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/kyuri-metro/njmetro-railmap-creator/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/kyuri-metro/njmetro-railmap-creator/releases/tag/v0.1.0
