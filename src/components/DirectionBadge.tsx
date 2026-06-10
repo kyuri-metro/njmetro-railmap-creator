@@ -1,5 +1,6 @@
 import type { CSSProperties, ReactElement } from 'react';
-import { getDirectionStationEnCondense, getDirectionStationZhCondense } from '../badgeTextCondense';
+import { getDirectionStationCondenseFromTier } from '../badgeTextCondense';
+import { directionBadgeDefaultLetterSpacing, resolveDirectionCondense } from '../directionBadgeCondense';
 import type { GeneratorState } from '../features/generatorSlice';
 import { sansLatinFontStack, sansZhFontStack } from '../fontStacks';
 import { getLineIdBadgeWidth, LineIdBadge } from './LineIdBadge';
@@ -39,10 +40,12 @@ const enTextStyle = (letterSpacing?: number): CSSProperties => ({
   letterSpacing: letterSpacing !== undefined ? `${letterSpacing}px` : undefined,
 });
 
-const defaultDirectionZhLetterSpacing = 11;
-const defaultDirectionEnLetterSpacing = 2;
-const defaultNextStationZhLetterSpacing = 10.5;
-const defaultNextStationEnLetterSpacing = 0.5;
+type StackedTextLayout = {
+  zhFontSize: string;
+  zhBaselineY: number;
+  enFontSize: string;
+  enBaselineY: number;
+};
 
 const Arrow = ({ direction }: { direction: 'l' | 'r' }) => {
   const rotation = direction === 'l' ? 0 : 180;
@@ -67,30 +70,52 @@ const ToLabelBlock = () => (
   </g>
 );
 
-const StationNameBlock = ({ enName, stationName }: { enName: string; stationName: string }) => {
-  const zhCondense = getDirectionStationZhCondense(stationName, defaultDirectionZhLetterSpacing);
-  const enCondense = getDirectionStationEnCondense(enName, defaultDirectionEnLetterSpacing);
+const StationNameBlock = ({
+  enName,
+  stationName,
+  zhTier,
+  enTier,
+  defaultZhLetterSpacing,
+  defaultEnLetterSpacing,
+  layout,
+}: {
+  enName: string;
+  stationName: string;
+  zhTier: number;
+  enTier: number;
+  defaultZhLetterSpacing: number;
+  defaultEnLetterSpacing: number;
+  layout: StackedTextLayout;
+}) => {
+  const zhCondense = getDirectionStationCondenseFromTier(defaultZhLetterSpacing, 'zh', zhTier);
+  const enCondense = getDirectionStationCondenseFromTier(defaultEnLetterSpacing, 'en', enTier);
+
+  const zhText = (
+    <text
+      fontSize={layout.zhFontSize}
+      x="0"
+      y={layout.zhBaselineY}
+      style={zhTextStyle(zhCondense.letterSpacing)}
+    >
+      {stationName}
+    </text>
+  );
+
+  const enText = (
+    <text
+      fontSize={layout.enFontSize}
+      x="0"
+      y={layout.enBaselineY}
+      style={enTextStyle(enCondense.letterSpacing)}
+    >
+      {enName.toUpperCase()}
+    </text>
+  );
 
   return (
     <g>
-      <text
-        fontSize={stackedTextLayout1.zhFontSize}
-        x="0"
-        y={stackedTextLayout1.zhBaselineY}
-        style={zhTextStyle(zhCondense.letterSpacing)}
-        transform={zhCondense.transform}
-      >
-        {stationName}
-      </text>
-      <text
-        fontSize={stackedTextLayout1.enFontSize}
-        x="0"
-        y={stackedTextLayout1.enBaselineY}
-        style={enTextStyle(enCondense.letterSpacing)}
-        transform={enCondense.transform}
-      >
-        {enName.toUpperCase()}
-      </text>
+      {zhCondense.transform ? <g transform={zhCondense.transform}>{zhText}</g> : zhText}
+      {enCondense.transform ? <g transform={enCondense.transform}>{enText}</g> : enText}
     </g>
   );
 };
@@ -128,33 +153,27 @@ const NextLabelBlock = () => (
   </g>
 );
 
-const NextStationNameBlock = ({ enName, stationName }: { enName: string; stationName: string }) => {
-  const zhCondense = getDirectionStationZhCondense(stationName, defaultNextStationZhLetterSpacing);
-  const enCondense = getDirectionStationEnCondense(enName, defaultNextStationEnLetterSpacing);
-
-  return (
-    <g>
-      <text
-        fontSize={stackedTextLayout2.zhFontSize}
-        x="0"
-        y={stackedTextLayout2.zhBaselineY}
-        style={zhTextStyle(zhCondense.letterSpacing)}
-        transform={zhCondense.transform}
-      >
-        {stationName}
-      </text>
-      <text
-        fontSize={stackedTextLayout2.enFontSize}
-        x="0"
-        y={stackedTextLayout2.enBaselineY}
-        style={enTextStyle(enCondense.letterSpacing)}
-        transform={enCondense.transform}
-      >
-        {enName.toUpperCase()}
-      </text>
-    </g>
-  );
-};
+const NextStationNameBlock = ({
+  enName,
+  stationName,
+  zhTier,
+  enTier,
+}: {
+  enName: string;
+  stationName: string;
+  zhTier: number;
+  enTier: number;
+}) => (
+  <StationNameBlock
+    enName={enName}
+    stationName={stationName}
+    zhTier={zhTier}
+    enTier={enTier}
+    defaultZhLetterSpacing={directionBadgeDefaultLetterSpacing.nextZh}
+    defaultEnLetterSpacing={directionBadgeDefaultLetterSpacing.nextEn}
+    layout={stackedTextLayout2}
+  />
+);
 
 export function DirectionBadge({ data }: DirectionBadgeProps) {
   const { stnList, currentStnId, direction, idColor, idTextColor, lineId } = data;
@@ -214,6 +233,13 @@ export function DirectionBadge({ data }: DirectionBadgeProps) {
     );
   }
 
+  const condenseTiers = resolveDirectionCondense({
+    direction,
+    lineId,
+    toStation: safeToStation,
+    nextStation: safeNextStation,
+  }).tiers;
+
   return wrapPreview(
     <svg viewBox={`0 0 ${width} ${height}`} className="badge-svg" role="img" aria-label="方向牌">
       <rect id="white-background" x="0" y="0" width={width} height={height} fill="white" />
@@ -229,7 +255,12 @@ export function DirectionBadge({ data }: DirectionBadgeProps) {
       {isRightward
         ? anchor(
             'next-station-name',
-            <NextStationNameBlock enName={safeNextStation.enName} stationName={safeNextStation.chName} />,
+            <NextStationNameBlock
+              enName={safeNextStation.enName}
+              stationName={safeNextStation.chName}
+              zhTier={condenseTiers.nextZh}
+              enTier={condenseTiers.nextEn}
+            />,
             {
               left: { to: 'next-label', edge: 'right', gap: nextSectionGap },
               top: 176.5,
@@ -255,6 +286,11 @@ export function DirectionBadge({ data }: DirectionBadgeProps) {
         <StationNameBlock
           enName={safeToStation.enName}
           stationName={safeToStation.chName}
+          zhTier={condenseTiers.toZh}
+          enTier={condenseTiers.toEn}
+          defaultZhLetterSpacing={directionBadgeDefaultLetterSpacing.toZh}
+          defaultEnLetterSpacing={directionBadgeDefaultLetterSpacing.toEn}
+          layout={stackedTextLayout1}
         />,
         isRightward
           ? {
@@ -281,7 +317,12 @@ export function DirectionBadge({ data }: DirectionBadgeProps) {
         ? anchor('arrow', <Arrow direction={direction} />, { right: rightMargin, top: 219 })
         : anchor(
             'next-station-name',
-            <NextStationNameBlock enName={safeNextStation.enName} stationName={safeNextStation.chName} />,
+            <NextStationNameBlock
+              enName={safeNextStation.enName}
+              stationName={safeNextStation.chName}
+              zhTier={condenseTiers.nextZh}
+              enTier={condenseTiers.nextEn}
+            />,
             {
               right: rightMargin,
               top: 176.5,
