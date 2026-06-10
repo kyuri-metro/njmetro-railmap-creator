@@ -7,6 +7,7 @@ const appVersion = packageJson.version;
 const generatorUrl = 'https://njmetro-railmap-creator.umamichi.moe/';
 const githubUrl = 'https://github.com/kyuri-metro/njmetro-railmap-creator';
 const githubIssuesUrl = `${githubUrl}/issues`;
+const changelogUrl = `${githubUrl}/blob/main/CHANGELOG.md`;
 const docsUrl = 'https://github.com/kyuri-metro/njmetro-railmap-creator/tree/main/docs';
 
 type AboutDialogProps = {
@@ -56,6 +57,7 @@ export function AboutDialog({ open, onClose }: AboutDialogProps) {
       links={[
         { label: '网站', href: generatorUrl },
         { label: '源代码', href: githubUrl },
+        { label: '变更日志', href: changelogUrl },
         { label: '参考资料', href: docsUrl },
         { label: '问题反馈', href: githubIssuesUrl },
       ]}
