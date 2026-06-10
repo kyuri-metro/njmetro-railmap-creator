@@ -13,6 +13,10 @@
 
 - 方向吊板向右（`r`）时，第二轮文字压缩的可用总宽未扣除中间的线路号标识块；现从 `maxTotalWidth` 减去 `lineBadgeWidth` 与 `directionBadgeLineBadgeGap`，与「下一站—线路号—往」版式一致，避免如双「中国药科大学」等场景应压未压。
 
+### Changed
+
+- `directionBadgeLayout.ts` 升格为方向吊板 SVG 几何规格的单一来源：画布、边距、间距、箭头、线路号块、终点站版式、锚点、标签与站名文字布局及 tier 0 默认字距等常量分组导出；`DirectionBadge`、`measureBadgeText`、`directionBadgeCondense` 改为从此引用，消除组件与测宽逻辑中的魔法数字。
+
 ## [0.2.0] - 2026-06-10
 
 对应 `package.json` 中的 `0.2.0`。相对 0.1.3：当前站与方向吊板文字压缩（字数初档，以及方向吊板在仍超宽时的总宽贪心第二轮）。

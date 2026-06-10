@@ -12,6 +12,7 @@ import {
   directionBadgeLineBadgeHeight,
   directionBadgeNextSectionGap,
   directionBadgeStationLabelGap,
+  directionBadgeStationNameDefaultLetterSpacing,
   getDirectionSectionMaxTotalWidthForLineId,
   type DirectionLayoutConstraintSnapshot,
 } from './directionBadgeLayout';
@@ -23,12 +24,7 @@ import {
   measureDirectionToLabelWidth,
 } from './measureBadgeText';
 
-export const directionBadgeDefaultLetterSpacing = {
-  toZh: 11,
-  toEn: 2,
-  nextZh: 10.5,
-  nextEn: 0.5,
-} as const;
+export const directionBadgeDefaultLetterSpacing = directionBadgeStationNameDefaultLetterSpacing;
 
 const directionLineKeys: DirectionLineKey[] = ['toZh', 'toEn', 'nextZh', 'nextEn'];
 

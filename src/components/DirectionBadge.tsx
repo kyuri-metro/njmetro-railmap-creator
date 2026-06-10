@@ -1,6 +1,20 @@
 import type { CSSProperties, ReactElement } from 'react';
 import { getDirectionStationCondenseFromTier } from '../badgeTextCondense';
-import { directionBadgeDefaultLetterSpacing, resolveDirectionCondense } from '../directionBadgeCondense';
+import { resolveDirectionCondense } from '../directionBadgeCondense';
+import {
+  directionBadgeAnchors,
+  directionBadgeArrow,
+  directionBadgeCanvas,
+  directionBadgeChrome,
+  directionBadgeGaps,
+  directionBadgeLabelText,
+  directionBadgeLineBadge,
+  directionBadgeMargins,
+  directionBadgeStationNameDefaultLetterSpacing,
+  directionBadgeStationNameTextLayout,
+  directionBadgeTerminusLayout,
+  type DirectionBadgeStackedTextLayout,
+} from '../directionBadgeLayout';
 import type { GeneratorState } from '../features/generatorSlice';
 import { sansLatinFontStack, sansZhFontStack } from '../fontStacks';
 import { getLineIdBadgeWidth, LineIdBadge } from './LineIdBadge';
@@ -10,23 +24,6 @@ import { useSvgPositioner } from './svgPositioning';
 type DirectionBadgeProps = {
   data: GeneratorState;
 };
-
-const width = 3972;
-const height = 800;
-const stackedTextLayout1 = {
-  zhFontSize: '195.5px',
-  zhBaselineY: 103,
-  enFontSize: '82.5px',
-  enBaselineY: 238.5,
-};
-const stackedTextLayout2 = {
-  zhFontSize: '195.5px',
-  zhBaselineY: 104.5,
-  enFontSize: '82.5px',
-  enBaselineY: 240,
-};
-const lineBadgeHeight = 297.5;
-const lineBadgeGap = 82;
 
 const zhTextStyle = (letterSpacing?: number): CSSProperties => ({
   fontFamily: sansZhFontStack,
@@ -40,35 +37,32 @@ const enTextStyle = (letterSpacing?: number): CSSProperties => ({
   letterSpacing: letterSpacing !== undefined ? `${letterSpacing}px` : undefined,
 });
 
-type StackedTextLayout = {
-  zhFontSize: string;
-  zhBaselineY: number;
-  enFontSize: string;
-  enBaselineY: number;
-};
-
 const Arrow = ({ direction }: { direction: 'l' | 'r' }) => {
   const rotation = direction === 'l' ? 0 : 180;
-  const translateX = direction === 'l' ? 0 : 340;
-  const translateY = direction === 'l' ? 0 : 294.5;
+  const translateX = direction === 'l' ? 0 : directionBadgeArrow.width;
+  const translateY = direction === 'l' ? 0 : directionBadgeArrow.rightwardTranslateY;
 
   return (
     <g transform={`translate(${translateX} ${translateY}) rotate(${rotation})`}>
-      <path d="m 145.5,0 h 71 L 99.5,119 H 340 v 55 H 100 l 120.5,120.5 h -74 L 0,148 Z" fill="#000000" />
+      <path d={directionBadgeArrow.path} fill="#000000" />
     </g>
   );
 };
 
-const ToLabelBlock = () => (
-  <g>
-    <text fontSize="115.5px" x="0" y="155.5" style={zhTextStyle(6)}>
-      往
-    </text>
-    <text fontSize="55.5px" x="10" y="238.5" style={enTextStyle(3.5)}>
-      To
-    </text>
-  </g>
-);
+const ToLabelBlock = () => {
+  const { zh, en } = directionBadgeLabelText.to;
+
+  return (
+    <g>
+      <text fontSize={`${zh.fontSize}px`} x={zh.x} y={zh.y} style={zhTextStyle(zh.letterSpacing)}>
+        往
+      </text>
+      <text fontSize={`${en.fontSize}px`} x={en.x} y={en.y} style={enTextStyle(en.letterSpacing)}>
+        To
+      </text>
+    </g>
+  );
+};
 
 const StationNameBlock = ({
   enName,
@@ -85,7 +79,7 @@ const StationNameBlock = ({
   enTier: number;
   defaultZhLetterSpacing: number;
   defaultEnLetterSpacing: number;
-  layout: StackedTextLayout;
+  layout: DirectionBadgeStackedTextLayout;
 }) => {
   const zhCondense = getDirectionStationCondenseFromTier(defaultZhLetterSpacing, 'zh', zhTier);
   const enCondense = getDirectionStationCondenseFromTier(defaultEnLetterSpacing, 'en', enTier);
@@ -120,38 +114,64 @@ const StationNameBlock = ({
   );
 };
 
-const LineNameBlock = ({ lineId }: { lineId: string }) => (
-  <g>
-    <text fontSize={stackedTextLayout1.zhFontSize} x="0" y={stackedTextLayout1.zhBaselineY} style={zhTextStyle(11)}>
-      号线
-    </text>
-    <text fontSize={stackedTextLayout1.enFontSize} x="0" y={stackedTextLayout1.enBaselineY} style={enTextStyle(2)}>
-      {`Line ${lineId}`}
-    </text>
-  </g>
-);
+const LineNameBlock = ({ lineId }: { lineId: string }) => {
+  const layout = directionBadgeStationNameTextLayout.to;
+  const { zh, en } = directionBadgeLabelText.lineName;
 
-const TerminusLabelBlock = () => (
-  <g>
-    <text fontSize={stackedTextLayout1.zhFontSize} x="0" y={stackedTextLayout1.zhBaselineY} textAnchor="middle" style={zhTextStyle(10.5)}>
-      终点站
-    </text>
-    <text fontSize={stackedTextLayout1.enFontSize} x="0" y={stackedTextLayout1.enBaselineY} textAnchor="middle" style={enTextStyle(0.5)}>
-      Terminus
-    </text>
-  </g>
-);
+  return (
+    <g>
+      <text fontSize={layout.zhFontSize} x="0" y={layout.zhBaselineY} style={zhTextStyle(zh.letterSpacing)}>
+        号线
+      </text>
+      <text fontSize={layout.enFontSize} x="0" y={layout.enBaselineY} style={enTextStyle(en.letterSpacing)}>
+        {`Line ${lineId}`}
+      </text>
+    </g>
+  );
+};
 
-const NextLabelBlock = () => (
-  <g>
-    <text fontSize="115.5px" x="0" y="157.5" style={zhTextStyle(8)}>
-      下一站
-    </text>
-    <text fontSize="55.5px" x="11.5" y="241" style={enTextStyle(3.5)}>
-      Next Station
-    </text>
-  </g>
-);
+const TerminusLabelBlock = () => {
+  const layout = directionBadgeStationNameTextLayout.to;
+  const { zh, en } = directionBadgeLabelText.terminus;
+
+  return (
+    <g>
+      <text
+        fontSize={layout.zhFontSize}
+        x="0"
+        y={layout.zhBaselineY}
+        textAnchor="middle"
+        style={zhTextStyle(zh.letterSpacing)}
+      >
+        终点站
+      </text>
+      <text
+        fontSize={layout.enFontSize}
+        x="0"
+        y={layout.enBaselineY}
+        textAnchor="middle"
+        style={enTextStyle(en.letterSpacing)}
+      >
+        Terminus
+      </text>
+    </g>
+  );
+};
+
+const NextLabelBlock = () => {
+  const { zh, en } = directionBadgeLabelText.next;
+
+  return (
+    <g>
+      <text fontSize={`${zh.fontSize}px`} x={zh.x} y={zh.y} style={zhTextStyle(zh.letterSpacing)}>
+        下一站
+      </text>
+      <text fontSize={`${en.fontSize}px`} x={en.x} y={en.y} style={enTextStyle(en.letterSpacing)}>
+        Next Station
+      </text>
+    </g>
+  );
+};
 
 const NextStationNameBlock = ({
   enName,
@@ -169,18 +189,18 @@ const NextStationNameBlock = ({
     stationName={stationName}
     zhTier={zhTier}
     enTier={enTier}
-    defaultZhLetterSpacing={directionBadgeDefaultLetterSpacing.nextZh}
-    defaultEnLetterSpacing={directionBadgeDefaultLetterSpacing.nextEn}
-    layout={stackedTextLayout2}
+    defaultZhLetterSpacing={directionBadgeStationNameDefaultLetterSpacing.nextZh}
+    defaultEnLetterSpacing={directionBadgeStationNameDefaultLetterSpacing.nextEn}
+    layout={directionBadgeStationNameTextLayout.next}
   />
 );
 
 export function DirectionBadge({ data }: DirectionBadgeProps) {
   const { stnList, currentStnId, direction, idColor, idTextColor, lineId } = data;
-  const { anchor, resolvedBoxes } = useSvgPositioner(width, height);
+  const { anchor, resolvedBoxes } = useSvgPositioner(directionBadgeCanvas.width, directionBadgeCanvas.height);
 
   const lineBadgeBox = resolvedBoxes['line-badge'];
-  const lineIdBadgeSupported = getLineIdBadgeWidth(lineId, lineBadgeHeight) !== null;
+  const lineIdBadgeSupported = getLineIdBadgeWidth(lineId, directionBadgeLineBadge.height) !== null;
   const showLineIdAttribution =
     lineIdBadgeSupported && lineBadgeBox !== undefined && lineBadgeBox.width > 0.5;
 
@@ -188,17 +208,16 @@ export function DirectionBadge({ data }: DirectionBadgeProps) {
     <div className="direction-badge-preview-wrap">
       {svg}
       {showLineIdAttribution ? (
-        <LineIdBlockAttributionOverlay viewWidth={width} viewHeight={height} box={lineBadgeBox} />
+        <LineIdBlockAttributionOverlay
+          viewWidth={directionBadgeCanvas.width}
+          viewHeight={directionBadgeCanvas.height}
+          box={lineBadgeBox}
+        />
       ) : null}
     </div>
   );
 
   const isRightward = direction === 'r';
-  const leftMargin = 171;
-  const rightMargin = 167.5;
-  const arrowGap = 81;
-  const stationLabelGap = 92;
-  const nextSectionGap = 109;
 
   const currentIndex = stnList.findIndex((station) => station.id === currentStnId);
   const nextIndex = currentIndex === -1 ? -1 : direction === 'r' ? currentIndex + 1 : currentIndex - 1;
@@ -211,23 +230,35 @@ export function DirectionBadge({ data }: DirectionBadgeProps) {
 
   if (isTerminus) {
     return wrapPreview(
-      <svg viewBox={`0 0 ${width} ${height}`} className="badge-svg" role="img" aria-label="终点站方向牌">
-        <rect id="white-background" x="0" y="0" width={width} height={height} fill="white" />
-        <rect id="button-line" x="0" y={height - 157.5} width={width} height="157.5" fill={idColor} />
+      <svg
+        viewBox={`0 0 ${directionBadgeCanvas.width} ${directionBadgeCanvas.height}`}
+        className="badge-svg"
+        role="img"
+        aria-label="终点站方向牌"
+      >
+        <rect id="white-background" x="0" y="0" width={directionBadgeCanvas.width} height={directionBadgeCanvas.height} fill="white" />
+        <rect
+          id="button-line"
+          x="0"
+          y={directionBadgeCanvas.height - directionBadgeChrome.buttonLineHeight}
+          width={directionBadgeCanvas.width}
+          height={directionBadgeChrome.buttonLineHeight}
+          fill={idColor}
+        />
 
-        {anchor('line-badge', <LineIdBadge lineId={lineId} color={idColor} textColor={idTextColor} height={lineBadgeHeight} />, {
-          left: 539.5,
-          top: 218,
+        {anchor('line-badge', <LineIdBadge lineId={lineId} color={idColor} textColor={idTextColor} height={directionBadgeLineBadge.height} />, {
+          left: directionBadgeTerminusLayout.lineBadgeLeft,
+          top: directionBadgeLineBadge.top,
         })}
 
         {anchor('line-name', <LineNameBlock lineId={lineId} />, {
-          left: { to: 'line-badge', edge: 'right', gap: lineBadgeGap },
-          top: 176.5,
+          left: { to: 'line-badge', edge: 'right', gap: directionBadgeGaps.lineBadge },
+          top: directionBadgeTerminusLayout.lineNameTop,
         })}
 
         {anchor('terminus-label', <TerminusLabelBlock />, {
-          right: { edge: 'right', gap: 538.5 },
-          top: 174,
+          right: { edge: 'right', gap: directionBadgeTerminusLayout.terminusLabelRightGap },
+          top: directionBadgeTerminusLayout.terminusLabelTop,
         })}
       </svg>,
     );
@@ -241,16 +272,31 @@ export function DirectionBadge({ data }: DirectionBadgeProps) {
   }).tiers;
 
   return wrapPreview(
-    <svg viewBox={`0 0 ${width} ${height}`} className="badge-svg" role="img" aria-label="方向牌">
-      <rect id="white-background" x="0" y="0" width={width} height={height} fill="white" />
-      <rect id="button-line" x="0" y={height - 157.5} width={width} height="157.5" fill={idColor} />
+    <svg
+      viewBox={`0 0 ${directionBadgeCanvas.width} ${directionBadgeCanvas.height}`}
+      className="badge-svg"
+      role="img"
+      aria-label="方向牌"
+    >
+      <rect id="white-background" x="0" y="0" width={directionBadgeCanvas.width} height={directionBadgeCanvas.height} fill="white" />
+      <rect
+        id="button-line"
+        x="0"
+        y={directionBadgeCanvas.height - directionBadgeChrome.buttonLineHeight}
+        width={directionBadgeCanvas.width}
+        height={directionBadgeChrome.buttonLineHeight}
+        fill={idColor}
+      />
 
       {isRightward
         ? anchor('next-label', <NextLabelBlock />, {
-            left: leftMargin,
-            top: 313.5,
+            left: directionBadgeMargins.left,
+            top: directionBadgeAnchors.nextLabelTop,
           })
-        : anchor('arrow', <Arrow direction={direction} />, { left: leftMargin, top: 219 })}
+        : anchor('arrow', <Arrow direction={direction} />, {
+            left: directionBadgeMargins.left,
+            top: directionBadgeAnchors.arrowTop,
+          })}
 
       {isRightward
         ? anchor(
@@ -262,23 +308,23 @@ export function DirectionBadge({ data }: DirectionBadgeProps) {
               enTier={condenseTiers.nextEn}
             />,
             {
-              left: { to: 'next-label', edge: 'right', gap: nextSectionGap },
-              top: 176.5,
+              left: { to: 'next-label', edge: 'right', gap: directionBadgeGaps.nextSection },
+              top: directionBadgeAnchors.nextStationTop,
             },
           )
-        : anchor('line-badge', <LineIdBadge lineId={lineId} color={idColor} textColor={idTextColor} height={lineBadgeHeight} />, {
-            left: { to: 'arrow', edge: 'right', gap: arrowGap },
-            top: 218,
+        : anchor('line-badge', <LineIdBadge lineId={lineId} color={idColor} textColor={idTextColor} height={directionBadgeLineBadge.height} />, {
+            left: { to: 'arrow', edge: 'right', gap: directionBadgeGaps.arrow },
+            top: directionBadgeLineBadge.top,
           })}
 
       {isRightward
-        ? anchor('line-badge', <LineIdBadge lineId={lineId} color={idColor} textColor={idTextColor} height={lineBadgeHeight} />, {
-            right: { to: 'to-label', edge: 'left', gap: lineBadgeGap },
-            top: 218,
+        ? anchor('line-badge', <LineIdBadge lineId={lineId} color={idColor} textColor={idTextColor} height={directionBadgeLineBadge.height} />, {
+            right: { to: 'to-label', edge: 'left', gap: directionBadgeGaps.lineBadge },
+            top: directionBadgeLineBadge.top,
           })
         : anchor('to-label', <ToLabelBlock />, {
-            left: { to: 'line-badge', edge: 'right', gap: lineBadgeGap },
-            top: 311.5,
+            left: { to: 'line-badge', edge: 'right', gap: directionBadgeGaps.lineBadge },
+            top: directionBadgeAnchors.toLabelTop,
           })}
 
       {anchor(
@@ -288,33 +334,33 @@ export function DirectionBadge({ data }: DirectionBadgeProps) {
           stationName={safeToStation.chName}
           zhTier={condenseTiers.toZh}
           enTier={condenseTiers.toEn}
-          defaultZhLetterSpacing={directionBadgeDefaultLetterSpacing.toZh}
-          defaultEnLetterSpacing={directionBadgeDefaultLetterSpacing.toEn}
-          layout={stackedTextLayout1}
+          defaultZhLetterSpacing={directionBadgeStationNameDefaultLetterSpacing.toZh}
+          defaultEnLetterSpacing={directionBadgeStationNameDefaultLetterSpacing.toEn}
+          layout={directionBadgeStationNameTextLayout.to}
         />,
         isRightward
           ? {
-              right: { to: 'arrow', edge: 'left', gap: arrowGap },
-              top: 174,
+              right: { to: 'arrow', edge: 'left', gap: directionBadgeGaps.arrow },
+              top: directionBadgeAnchors.toStationTop,
             }
           : {
-              left: { to: 'to-label', edge: 'right', gap: stationLabelGap },
-              top: 174,
+              left: { to: 'to-label', edge: 'right', gap: directionBadgeGaps.stationLabel },
+              top: directionBadgeAnchors.toStationTop,
             },
       )}
 
       {isRightward
         ? anchor('to-label', <ToLabelBlock />, {
-            right: { to: 'to-station-name', edge: 'left', gap: stationLabelGap },
-            top: 311.5,
+            right: { to: 'to-station-name', edge: 'left', gap: directionBadgeGaps.stationLabel },
+            top: directionBadgeAnchors.toLabelTop,
           })
         : anchor('next-label', <NextLabelBlock />, {
-            right: { to: 'next-station-name', edge: 'left', gap: nextSectionGap },
-            top: 313.5,
+            right: { to: 'next-station-name', edge: 'left', gap: directionBadgeGaps.nextSection },
+            top: directionBadgeAnchors.nextLabelTop,
           })}
 
       {isRightward
-        ? anchor('arrow', <Arrow direction={direction} />, { right: rightMargin, top: 219 })
+        ? anchor('arrow', <Arrow direction={direction} />, { right: directionBadgeMargins.right, top: directionBadgeAnchors.arrowTop })
         : anchor(
             'next-station-name',
             <NextStationNameBlock
@@ -324,8 +370,8 @@ export function DirectionBadge({ data }: DirectionBadgeProps) {
               enTier={condenseTiers.nextEn}
             />,
             {
-              right: rightMargin,
-              top: 176.5,
+              right: directionBadgeMargins.right,
+              top: directionBadgeAnchors.nextStationTop,
             },
           )}
     </svg>,

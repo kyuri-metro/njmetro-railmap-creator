@@ -1,3 +1,4 @@
+import { directionBadgeLabelText, directionBadgeStationNameText } from './directionBadgeLayout';
 import { sansLatinFontStack, sansZhFontStack } from './fontStacks';
 
 let measureSvgRoot: SVGSVGElement | null = null;
@@ -89,50 +90,42 @@ export const measureBadgeTextWidth = (
   scaleX = 1,
 ) => measureSvgTextWidth(text, fontFamilyStack, fontSize, letterSpacing, scaleX);
 
-export const measureDirectionToLabelWidth = () =>
-  measureSvgGroupWidth((group) => {
-    const zh = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-    zh.setAttribute('font-size', '115.5px');
-    zh.setAttribute('x', '0');
-    zh.setAttribute('y', '155.5');
-    zh.setAttribute('font-family', sansZhFontStack);
-    zh.setAttribute('style', 'letter-spacing: 6px');
-    zh.textContent = '往';
+const appendMeasuredLabelLine = (
+  group: SVGGElement,
+  spec: { fontSize: number; x: number; y: number; letterSpacing: number },
+  fontFamily: string,
+  text: string,
+) => {
+  const textNode = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+  textNode.setAttribute('font-size', `${spec.fontSize}px`);
+  textNode.setAttribute('x', `${spec.x}`);
+  textNode.setAttribute('y', `${spec.y}`);
+  textNode.setAttribute('font-family', fontFamily);
+  textNode.setAttribute('style', `letter-spacing: ${spec.letterSpacing}px`);
+  textNode.textContent = text;
+  group.append(textNode);
+};
 
-    const en = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-    en.setAttribute('font-size', '55.5px');
-    en.setAttribute('x', '10');
-    en.setAttribute('y', '238.5');
-    en.setAttribute('font-family', sansLatinFontStack);
-    en.setAttribute('style', 'letter-spacing: 3.5px');
-    en.textContent = 'To';
+export const measureDirectionToLabelWidth = () => {
+  const { zh, en } = directionBadgeLabelText.to;
 
-    group.append(zh, en);
+  return measureSvgGroupWidth((group) => {
+    appendMeasuredLabelLine(group, zh, sansZhFontStack, '往');
+    appendMeasuredLabelLine(group, en, sansLatinFontStack, 'To');
   });
+};
 
-export const measureDirectionNextLabelWidth = () =>
-  measureSvgGroupWidth((group) => {
-    const zh = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-    zh.setAttribute('font-size', '115.5px');
-    zh.setAttribute('x', '0');
-    zh.setAttribute('y', '157.5');
-    zh.setAttribute('font-family', sansZhFontStack);
-    zh.setAttribute('style', 'letter-spacing: 8px');
-    zh.textContent = '下一站';
+export const measureDirectionNextLabelWidth = () => {
+  const { zh, en } = directionBadgeLabelText.next;
 
-    const en = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-    en.setAttribute('font-size', '55.5px');
-    en.setAttribute('x', '11.5');
-    en.setAttribute('y', '241');
-    en.setAttribute('font-family', sansLatinFontStack);
-    en.setAttribute('style', 'letter-spacing: 3.5px');
-    en.textContent = 'Next Station';
-
-    group.append(zh, en);
+  return measureSvgGroupWidth((group) => {
+    appendMeasuredLabelLine(group, zh, sansZhFontStack, '下一站');
+    appendMeasuredLabelLine(group, en, sansLatinFontStack, 'Next Station');
   });
+};
 
-export const directionStationZhFontSize = 195.5;
-export const directionStationEnFontSize = 82.5;
+export const directionStationZhFontSize = directionBadgeStationNameText.zhFontSize;
+export const directionStationEnFontSize = directionBadgeStationNameText.enFontSize;
 
 export const measureDirectionStationZhWidth = (text: string, letterSpacing: number, scaleX: number) =>
   measureBadgeTextWidth(text, sansZhFontStack, directionStationZhFontSize, letterSpacing, scaleX);
