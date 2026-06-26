@@ -1143,6 +1143,7 @@ function App() {
             <section className="panel">
               <h2>待办事项</h2>
               <ul>
+                <li>修复键盘操作下打开站点编辑窗口后 tab 焦点不在窗口上的问题</li>
                 <li>在火车站或机场是当前站时添加火车站或机场标识</li>
               </ul>
             </section>

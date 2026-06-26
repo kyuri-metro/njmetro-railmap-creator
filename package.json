@@ -14,7 +14,7 @@
     "@kyuri-metro/njmetro-palette": "^0.1.1",
     "@reduxjs/toolkit": "^2.9.1",
     "@umamichi-ui/common-components": "^0.1.0",
-    "@umamichi-ui/common-css": "^0.12.0",
+    "@umamichi-ui/common-css": "^0.15.0",
     "apcach": "^0.6.4",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
