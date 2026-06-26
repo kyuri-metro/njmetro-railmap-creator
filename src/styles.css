@@ -315,11 +315,6 @@ h1 {
   }
 }
 
-h2 {
-  margin-bottom: 14px;
-  font-size: 1.28rem;
-}
-
 h3 {
   margin-bottom: 10px;
   font-size: 1rem;
@@ -451,7 +446,7 @@ h3 {
   min-width: 0;
 }
 
-.station-list-heading h2 {
+.station-list-heading h2.site-content-heading {
   margin: 0;
   flex: 1 1 auto;
   min-width: 0;
@@ -809,9 +804,6 @@ html.dark .station-table th {
 
 .svg-preview-zoom-title {
   margin: 0;
-  font-size: 1.05rem;
-  font-weight: 600;
-  line-height: 1.35;
 }
 
 .svg-preview-zoom-toolbar {

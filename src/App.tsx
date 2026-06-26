@@ -381,7 +381,7 @@ const DownloadableBadgeCard = ({ title, fileName, children }: DownloadableBadgeC
           onClick={(event) => event.stopPropagation()}
         >
                 <header className="svg-preview-zoom-header">
-                  <h2 id={svgZoomTitleId} className="svg-preview-zoom-title">
+                  <h2 id={svgZoomTitleId} className="site-content-heading svg-preview-zoom-title">
                     预览：{title}
                   </h2>
                   <button type="button" className="icon-button" aria-label="关闭预览" onClick={closeSvgZoom}>
@@ -1141,7 +1141,7 @@ function App() {
             </section>
 
             <section className="panel">
-              <h2>待办事项</h2>
+              <h2 className="site-content-heading">待办事项</h2>
               <ul>
                 <li>修复键盘操作下打开站点编辑窗口后 tab 焦点不在窗口上的问题</li>
                 <li>在火车站或机场是当前站时添加火车站或机场标识</li>
@@ -1150,7 +1150,7 @@ function App() {
             </section>
 
             <section className="panel">
-              <h2>字体检测</h2>
+              <h2 className="site-content-heading">字体检测</h2>
               <p className="panel-subtitle">
                 通过浏览器测得的字形宽度检查目标字体是否存在，避免预览与导出在不同设备上静默回退。
               </p>
@@ -1170,7 +1170,7 @@ function App() {
             </section>
 
             <section className="panel">
-              <h2>生成设置</h2>
+              <h2 className="site-content-heading">生成设置</h2>
               <div className="form-scope form-grid generator-settings-grid">
                 <label className="field-label">
                   <span>总长（px）</span>
@@ -1257,7 +1257,7 @@ function App() {
 
             <section className="panel">
               <div className="station-list-heading">
-                <h2>站点列表</h2>
+                <h2 className="site-content-heading">站点列表</h2>
                 <div className="station-list-heading-end">
                   <button type="button" className="primary-button" onClick={handleFillStationsByLineId}>
                     按线路填充已开通站点
@@ -1297,7 +1297,7 @@ function App() {
                 </div>
               ) : null}
               <section className="panel result-panel">
-                <h2>结果</h2>
+                <h2 className="site-content-heading">结果</h2>
 
                 <DownloadableBadgeCard title="当前站吊板" fileName="current-station-badge.svg">
                   <CurrentStationBadge data={previewGenerator} />
@@ -1524,7 +1524,9 @@ function App() {
         >
           <div className="example-modal-header">
             <div>
-              <h2 id="example-modal-title">参考样例</h2>
+              <h2 id="example-modal-title" className="site-content-heading">
+                参考样例
+              </h2>
               <p className="panel-subtitle">以下图片来自 public/assets，仅用于版式参考，并非当前表单的实时输出。</p>
             </div>
             <button type="button" className="icon-button" aria-label="关闭示例浮窗" onClick={() => setIsExampleModalOpen(false)}>
