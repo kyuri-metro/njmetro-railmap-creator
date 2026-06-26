@@ -114,7 +114,7 @@ export function StationFormModal({
       >
         <div className="modal-header">
           <div>
-            <h3 id="station-modal-title" className="site-content-heading">{modeLabel}</h3>
+            <h2 id="station-modal-title" className="site-content-heading">{modeLabel}</h2>
           </div>
           <button type="button" className="icon-button" onClick={onClose} aria-label="关闭弹窗">
             x
