@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import type { StationItem, StationType, TransferLine } from '../features/generatorSlice';
 import { OVERLAY_IDS } from '../overlay/overlayIds';
 import { SiteOverlayBackdrop } from '@umamichi-ui/common-components/overlay';
@@ -45,6 +45,7 @@ export function StationFormModal({
   onChange,
 }: StationFormModalProps) {
   const [draft, setDraft] = useState(initialValue);
+  const chNameInputRef = useRef<HTMLInputElement>(null);
 
   const patchDraft = (updater: (current: StationFormDraft) => StationFormDraft) => {
     setDraft((current) => {
@@ -104,6 +105,7 @@ export function StationFormModal({
       align="centered"
       onDismiss={onClose}
       onExited={onExited}
+      initialFocusRef={chNameInputRef}
     >
       <div
         className="modal-card"
@@ -131,6 +133,7 @@ export function StationFormModal({
           <label className="field-label">
             <span>chName（中文名）</span>
             <input
+              ref={chNameInputRef}
               className="text-input"
               value={draft.chName}
               onChange={(event) => patchDraft((current) => ({ ...current, chName: event.target.value }))}

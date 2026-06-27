@@ -1144,7 +1144,6 @@ function App() {
             <section className="panel">
               <h2 className="site-content-heading">待办事项</h2>
               <ul>
-                <li>修复键盘操作下打开站点编辑窗口后 tab 焦点不在窗口上的问题</li>
                 <li>在火车站或机场是当前站时添加火车站或机场标识</li>
                 <li>比较方正黑体的数字是否比 Helvetica 更符合现实中南京地铁线路号方块实际</li>
               </ul>
