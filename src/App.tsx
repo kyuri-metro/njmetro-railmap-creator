@@ -49,6 +49,7 @@ import {
   type StationItem,
   type TransferLine,
 } from './features/generatorSlice';
+import { FontDetectionHubTiles } from './components/FontDetectionHubTiles';
 import { detectTargetFonts, targetFontSignatures, type FontDetectionResult } from './fontSignature';
 import { getNjmetroLineForegroundColor } from './njmetroLinePalette';
 import { parseRailmapYaml, serializeRailmapYaml, type RailmapYamlImport } from './stationListYaml';
@@ -1154,19 +1155,7 @@ function App() {
               <p className="panel-subtitle">
                 通过浏览器测得的字形宽度检查目标字体是否存在，避免预览与导出在不同设备上静默回退。
               </p>
-              {fontDetectionState === 'checking' && <p className="font-detection-summary">正在测量 Microsoft YaHei、FZHei-B01、Helvetica。</p>}
-              <div className="font-detection-list" role="list" aria-label="字体检测结果">
-                {fontDetectionResults.map((result) => (
-                  <article key={result.fontFamily} className="font-detection-card" role="listitem">
-                    <div className="font-detection-header">
-                      <strong>{result.fontFamily}</strong>
-                      <span className={`status-pill ${result.detected ? 'success' : fontDetectionState === 'checking' ? 'pending' : 'warning'}`}>
-                        {fontDetectionState === 'checking' ? '检测中' : result.detected ? '已检测到' : '未检测到'}
-                      </span>
-                    </div>
-                  </article>
-                ))}
-              </div>
+              <FontDetectionHubTiles results={fontDetectionResults} detectionState={fontDetectionState} />
             </section>
 
             <section className="panel">

@@ -9,13 +9,14 @@
 
 ## [Unreleased]
 
-相对 [0.2.0]：界面主题随线路标识色 hue 换肤、common-css 0.9.0，以及方向吊板布局集中与压缩修复。
+相对 [0.2.0]：界面主题随线路标识色 hue 换肤、common-css 0.9.0、方向吊板布局集中与压缩修复，以及字体检测 HubTile 化展示。
 
 ### Added
 
 - 按线路标识色 `idColor` 的 OKLCH **hue** 运行时推导站点 `--theme-100`～`--theme-900`（[Harmonizer](https://harmonizer.evilmartians.com/) 九档 APCA / even chroma、P3；[`apcach`](https://github.com/antiflasher/apcach) 生成）。
 - `useLineThemePalette`：监听 `generator.idColor`，于 `useLayoutEffect` 向文档根写入 `--theme-*`；换线、改色、导入与撤销同步更新顶栏与强调色。
 - `lineThemeHarmonizerLevels.ts`、`lineThemePalette.ts` 与 `src/apcach.d.ts` 类型声明。
+- `FontDetectionHubTiles`：字体检测结果以 Windows Phone HubTile 风格 120px 方形磁贴展示（Microsoft YaHei、FZHei-B01、Helvetica 各一块）。
 
 ### Fixed
 
@@ -27,6 +28,7 @@
 - 站点主题变量输出：支持 `oklch()` 的浏览器写入 `oklch(...)`，否则降级为 `hex`（`CSS.supports('color', 'oklch(0% 0 0)')`）。
 - `directionBadgeLayout.ts` 升格为方向吊板 SVG 几何规格的单一来源：画布、边距、间距、箭头、线路号块、终点站版式、锚点、标签与站名文字布局及 tier 0 默认字距等常量分组导出；`DirectionBadge`、`measureBadgeText`、`directionBadgeCondense` 改为从此引用，消除组件与测宽逻辑中的魔法数字。
 - 「关于」对话框链接区新增 [变更日志](https://github.com/kyuri-metro/njmetro-railmap-creator/blob/main/CHANGELOG.md) 入口。
+- 字体检测 UI：由卡片列表改为 HubTile 磁贴；检测完成后依次 flip 显示结果，成功/失败/检测中分别为绿（`#107c10`）/红（`#e81123`）/灰；「正在检测」与「已检测到 / 未检测到」共用同一状态槽位，移除磁贴外摘要文案以避免布局跳变。
 
 ## [0.2.0] - 2026-06-10
 
