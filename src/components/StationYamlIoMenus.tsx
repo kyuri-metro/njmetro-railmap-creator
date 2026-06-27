@@ -10,14 +10,18 @@ const labeledTriggerClassName = 'secondary-button dropdown-menu-trigger';
 type StationYamlImportMenuProps = {
   yamlFileInputRef: RefObject<HTMLInputElement | null>;
   rmgToolConfigured: boolean;
+  metroStudioToolConfigured: boolean;
   onOpenRmgImport: () => void;
+  onOpenMetroStudioImport: () => void;
   triggerVariant?: YamlIoMenuTriggerVariant;
 };
 
 export function StationYamlImportMenu({
   yamlFileInputRef,
   rmgToolConfigured,
+  metroStudioToolConfigured,
   onOpenRmgImport,
+  onOpenMetroStudioImport,
   triggerVariant = 'labeled',
 }: StationYamlImportMenuProps) {
   return (
@@ -44,6 +48,14 @@ export function StationYamlImportMenu({
           disabled: !rmgToolConfigured,
           title: !rmgToolConfigured ? 'RMG 转换窗口未配置，无法使用此选项' : undefined,
           onSelect: onOpenRmgImport,
+        },
+        {
+          kind: 'item',
+          id: 'metro-studio-import',
+          label: '导入 Metro Studio 工程',
+          disabled: !metroStudioToolConfigured,
+          title: !metroStudioToolConfigured ? 'Metro Studio 转换窗口未配置，无法使用此选项' : undefined,
+          onSelect: onOpenMetroStudioImport,
         },
       ]}
     />

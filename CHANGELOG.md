@@ -9,10 +9,11 @@
 
 ## [Unreleased]
 
-相对 [0.2.0]：界面主题随线路标识色 hue 换肤、common-css 0.9.0、方向吊板布局集中与压缩修复，以及字体检测 HubTile 化展示。
+相对 [0.2.0]：界面主题随线路标识色 hue 换肤、common-css 0.9.0、方向吊板布局集中与压缩修复、字体检测 HubTile 化展示，以及 Metro Studio 工程 iframe 导入。
 
 ### Added
 
+- Metro Studio 工程导入：通过 iframe 嵌入 [kyuri-naive-from-metro-studio](https://github.com/kyuri-metro/kyuri-naive-from-metro-studio)（`KyuriMetroStudioToolModal`），将 `.metro-studio.json` 转为 Kyuri naive YAML 后走既有 YAML 确认导入流程；配置方式与 RMG 相同（`VITE_KYURI_METRO_STUDIO_IFRAME_ORIGIN`，见 `.env.example`）。
 - 按线路标识色 `idColor` 的 OKLCH **hue** 运行时推导站点 `--theme-100`～`--theme-900`（[Harmonizer](https://harmonizer.evilmartians.com/) 九档 APCA / even chroma、P3；[`apcach`](https://github.com/antiflasher/apcach) 生成）。
 - `useLineThemePalette`：监听 `generator.idColor`，于 `useLayoutEffect` 向文档根写入 `--theme-*`；换线、改色、导入与撤销同步更新顶栏与强调色。
 - `lineThemeHarmonizerLevels.ts`、`lineThemePalette.ts` 与 `src/apcach.d.ts` 类型声明。

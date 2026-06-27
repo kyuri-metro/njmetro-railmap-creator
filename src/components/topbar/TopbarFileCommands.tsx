@@ -5,18 +5,22 @@ import { ExportIcon, ImportIcon, NewFileIcon } from './FileCommandIcons';
 type TopbarFileCommandsProps = {
   yamlFileInputRef: RefObject<HTMLInputElement | null>;
   rmgToolConfigured: boolean;
+  metroStudioToolConfigured: boolean;
   onNew: () => void;
   onDownloadYaml: () => void;
   onOpenRmgImport: () => void;
+  onOpenMetroStudioImport: () => void;
   onOpenRmgExport: () => void;
 };
 
 export function TopbarFileCommands({
   yamlFileInputRef,
   rmgToolConfigured,
+  metroStudioToolConfigured,
   onNew,
   onDownloadYaml,
   onOpenRmgImport,
+  onOpenMetroStudioImport,
   onOpenRmgExport,
 }: TopbarFileCommandsProps) {
   return (
@@ -28,7 +32,9 @@ export function TopbarFileCommands({
         triggerVariant="icon"
         yamlFileInputRef={yamlFileInputRef}
         rmgToolConfigured={rmgToolConfigured}
+        metroStudioToolConfigured={metroStudioToolConfigured}
         onOpenRmgImport={onOpenRmgImport}
+        onOpenMetroStudioImport={onOpenMetroStudioImport}
       />
       <StationYamlExportMenu
         triggerVariant="icon"

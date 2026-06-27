@@ -18,6 +18,7 @@ import { RouteBadge } from './components/RouteBadge';
 import { StationFormModal, stationToDraft, type StationFormDraft } from './components/StationFormModal';
 import { StationTable } from './components/StationTable';
 import { KyuriRmgToolModal } from './components/KyuriRmgToolModal';
+import { KyuriMetroStudioToolModal } from './components/KyuriMetroStudioToolModal';
 import { AboutDialog } from './components/AboutDialog';
 import { AutosaveListDialog } from './components/AutosaveListDialog';
 import { SettingsDialog } from './components/SettingsDialog';
@@ -26,6 +27,7 @@ import { InfoCircleIcon } from '@umamichi-ui/common-components/icons';
 import { MobileActionSheet } from '@umamichi-ui/common-components/menu';
 import { TopbarFileCommands, ExportIcon, ImportIcon, NewFileIcon } from './components/topbar/TopbarFileCommands';
 import { KYURI_RMG_IFRAME_ORIGIN } from './config/kyuriRmgIframe';
+import { KYURI_METRO_STUDIO_IFRAME_ORIGIN } from './config/kyuriMetroStudioIframe';
 import { getBuiltinOpenedStationsByLineId } from './builtinOpenedLineStations';
 import type { AutosaveEntry } from './autosaveStorage';
 import { markAutosaveDirty } from './features/autosaveScheduler';
@@ -461,6 +463,7 @@ function App() {
   const [yamlImportError, setYamlImportError] = useState<string | null>(null);
   const [kyuriRmgModal, setKyuriRmgModal] = useState<null | { mode: 'import' | 'export' }>(null);
   const [kyuriRmgOpen, setKyuriRmgOpen] = useState(false);
+  const [kyuriMetroStudioOpen, setKyuriMetroStudioOpen] = useState(false);
   const yamlFileInputRef = useRef<HTMLInputElement>(null);
   const [builtinUnavailableNotice, setBuiltinUnavailableNotice] = useState<string | null>(null);
   const [fontDetectionResults, setFontDetectionResults] = useState<FontDetectionResult[]>(fallbackFontDetectionResults);
@@ -1031,11 +1034,15 @@ function App() {
           <TopbarFileCommands
             yamlFileInputRef={yamlFileInputRef}
             rmgToolConfigured={Boolean(KYURI_RMG_IFRAME_ORIGIN)}
+            metroStudioToolConfigured={Boolean(KYURI_METRO_STUDIO_IFRAME_ORIGIN)}
             onNew={() => setIsNewProjectConfirmOpen(true)}
             onDownloadYaml={handleExportStationYaml}
             onOpenRmgImport={() => {
               setKyuriRmgModal({ mode: 'import' });
               setKyuriRmgOpen(true);
+            }}
+            onOpenMetroStudioImport={() => {
+              setKyuriMetroStudioOpen(true);
             }}
             onOpenRmgExport={() => {
               setKyuriRmgModal({ mode: 'export' });
@@ -1340,6 +1347,16 @@ function App() {
         />
       ) : null}
 
+      <KyuriMetroStudioToolModal
+        open={kyuriMetroStudioOpen}
+        baseUrl={KYURI_METRO_STUDIO_IFRAME_ORIGIN}
+        onClose={() => setKyuriMetroStudioOpen(false)}
+        onImportedYaml={(yaml) => {
+          applyYamlTextForImport(yaml);
+          setKyuriMetroStudioOpen(false);
+        }}
+      />
+
       <ConfirmDialogOverlay
         open={isNewProjectConfirmOpen}
         overlayId={OVERLAY_IDS.newProjectConfirm}
@@ -1613,6 +1630,18 @@ function App() {
                 onSelect: () => {
                   setKyuriRmgModal({ mode: 'import' });
                   setKyuriRmgOpen(true);
+                },
+              },
+              {
+                kind: 'item',
+                id: 'import-metro-studio',
+                label: '导入 Metro Studio 工程',
+                disabled: !KYURI_METRO_STUDIO_IFRAME_ORIGIN,
+                title: !KYURI_METRO_STUDIO_IFRAME_ORIGIN
+                  ? 'Metro Studio 转换窗口未配置，无法使用此选项'
+                  : undefined,
+                onSelect: () => {
+                  setKyuriMetroStudioOpen(true);
                 },
               },
             ],
