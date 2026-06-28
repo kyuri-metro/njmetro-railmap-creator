@@ -13,7 +13,6 @@ const FLIP_STAGGER_MS = 200;
 const FONT_TILE_TITLES: Record<DetectableFontFamily, string> = {
   'Microsoft YaHei': '微软雅黑',
   'FZHei-B01': '方正黑体',
-  Helvetica: 'Helvetica',
 };
 
 const getStatusLabel = (detectionState: FontDetectionState, detected: boolean) => {

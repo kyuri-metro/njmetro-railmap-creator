@@ -30,6 +30,7 @@
 - `directionBadgeLayout.ts` 升格为方向吊板 SVG 几何规格的单一来源：画布、边距、间距、箭头、线路号块、终点站版式、锚点、标签与站名文字布局及 tier 0 默认字距等常量分组导出；`DirectionBadge`、`measureBadgeText`、`directionBadgeCondense` 改为从此引用，消除组件与测宽逻辑中的魔法数字。
 - 「关于」对话框链接区新增 [变更日志](https://github.com/kyuri-metro/njmetro-railmap-creator/blob/main/CHANGELOG.md) 入口。
 - 字体检测 UI：由卡片列表改为 HubTile 磁贴；检测完成后依次 flip 显示结果，成功/失败/检测中分别为绿（`#107c10`）/红（`#e81123`）/灰；「正在检测」与「已检测到 / 未检测到」共用同一状态槽位，移除磁贴外摘要文案以避免布局跳变。
+- 现在线路号方块不再依赖 Helvetica，改为方正黑体。字体检测部分不再检测 Helvetica。
 
 ## [0.2.0] - 2026-06-10
 

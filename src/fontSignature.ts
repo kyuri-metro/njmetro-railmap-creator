@@ -6,7 +6,6 @@ const DEBUG_PREFIX = '[font-signature]';
 export const targetFontSignatures = {
   'Microsoft YaHei': [1201, 1201, 1201, 1201],
   'FZHei-B01': [1136, 1136, 1136, 1136],
-  Helvetica: [1139, 1139, 1139, 1139],
 } as const;
 
 export type DetectableFontFamily = keyof typeof targetFontSignatures;
