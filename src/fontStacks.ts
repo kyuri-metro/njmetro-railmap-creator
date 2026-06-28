@@ -20,6 +20,7 @@ export const sansLatinFontStack = [
 ].join(', ');
 
 export const lineIdFontStack = [
+  '"FZHei-B01"',
   'Helvetica',
   '"Helvetica Neue"',
   'Arial',
