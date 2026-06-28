@@ -12,10 +12,9 @@
       width="500"
       height="1e3"
       fill="#a6093d" />
-   <g transform="scale(0.73,1)">
-      <text
-         style="font-size:1000px;font-family:FZHei-B01;fill:#ffffff"
-         x="80.5"
-         y="850">2</text>
-   </g>
+   <text
+      style="font-size:1000px;font-family:FZHei-B01;fill:#ffffff"
+      x="80.5"
+      y="850"
+      transform="scale(0.73,1)">2</text>
 </svg>

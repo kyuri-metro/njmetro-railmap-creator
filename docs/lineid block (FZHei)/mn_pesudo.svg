@@ -12,16 +12,14 @@
       width="1e3"
       height="1e3"
       fill="#5F376F" />
-   <g transform="scale(0.77,1)">
-      <text
-         style="font-size:1000px;font-family:FZHei-B01;fill:#ffffff"
-         x="106.5"
-         y="850">2</text>
-   </g>
-   <g transform="scale(0.77,1)">
-      <text
-         style="font-size:1000px;font-family:FZHei-B01;fill:#ffffff"
-         x="657"
-         y="850">2</text>
-   </g>
+   <text
+      style="font-size:1000px;font-family:FZHei-B01;fill:#ffffff"
+      x="106.5"
+      y="850"
+      transform="scale(0.77,1)">2</text>
+   <text
+      style="font-size:1000px;font-family:FZHei-B01;fill:#ffffff"
+      x="657"
+      y="850"
+      transform="scale(0.77,1)">2</text>
 </svg>
