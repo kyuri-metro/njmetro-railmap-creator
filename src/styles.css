@@ -208,6 +208,8 @@ h1 {
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
+  container-type: inline-size;
+  container-name: app-layout;
 }
 
 @media (max-width: 720px) {
@@ -255,11 +257,19 @@ h1 {
 
 .app-columns {
   display: grid;
+  /* 桌面默认 1:1；右栏能分到 ≥540px 时再固定左栏 540px（见下方 @container） */
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 28px;
   align-items: start;
   flex: 1;
   min-height: 0;
+}
+
+/* 540 + gap 28 + 540：右栏至少也能拿到 540px 时固定左栏 */
+@container app-layout (min-width: 1108px) {
+  .app-columns {
+    grid-template-columns: 540px minmax(0, 1fr);
+  }
 }
 
 .app-column-main {
