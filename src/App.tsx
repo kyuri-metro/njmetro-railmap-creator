@@ -1022,7 +1022,7 @@ function App() {
         <div className="app-topbar-inner">
           <div className="app-topbar-title-wrap">
             <h1 className="app-topbar-title">
-              <span className="app-topbar-title-text">南京地铁屏蔽门上方贴纸生成器</span>
+              <span className="app-topbar-title-text">南京地铁屏蔽门吊板生成器</span>
               <span className="visually-hidden">（Beta 测试版）</span>
             </h1>
             <span className="app-topbar-beta-mark" aria-hidden="true">

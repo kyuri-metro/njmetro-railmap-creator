@@ -2,7 +2,7 @@
 
 [![React](https://img.shields.io/badge/React-19-222222?logo=react&logoColor=61DAFB)](https://react.dev/) [![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/) [![Vite](https://img.shields.io/badge/Vite-7.1-646CFF?logo=vite&logoColor=white)](https://vite.dev/) [![Cloudflare%20Pages](https://img.shields.io/badge/Deploy-Cloudflare%20Pages-F38020?logo=cloudflarepages&logoColor=white)](https://njmetro-railmap-creator.umamichi.moe)
 
-南京地铁屏蔽门上方贴纸生成器的原型项目。当前仓库主要用于编辑线路、站点与方向参数，并在页面中预览生成的 SVG 结果。
+南京地铁屏蔽门吊板生成器的原型项目。当前仓库主要用于编辑线路、站点与方向参数，并在页面中预览生成的 SVG 结果。
 
 本项目受到 [RMG](https://github.com/railmapgen/rmg) 项目的**启发**，在此表示感谢。
 

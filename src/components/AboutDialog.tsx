@@ -2,7 +2,7 @@ import { AboutDialog as AboutDialogTemplate } from '@umamichi-ui/common-componen
 import packageJson from '../../package.json';
 import { OVERLAY_IDS } from '../overlay/overlayIds';
 
-const appName = '南京地铁屏蔽门上方贴纸生成器';
+const appName = '南京地铁屏蔽门吊板生成器';
 const appVersion = packageJson.version;
 const generatorUrl = 'https://njmetro-railmap-creator.umamichi.moe/';
 const githubUrl = 'https://github.com/kyuri-metro/njmetro-railmap-creator';
