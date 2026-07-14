@@ -649,7 +649,7 @@ h3 {
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  background: var(--gray-200);
+  background: var(--theme-200);
   white-space: nowrap;
 }
 
@@ -659,7 +659,7 @@ h3 {
 
 html.dark .station-table th {
   color: var(--gray-300);
-  background: var(--gray-800);
+  background: var(--theme-800);
 }
 
 .station-table tbody td {

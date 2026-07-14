@@ -9,6 +9,10 @@
 
 ## [Unreleased]
 
+### Changed
+
+- 站点列表 / 换乘表表头由 `--gray-*` 改为 `--theme-*`（浅色底 `theme-200`；深色底 `theme-800`），随线路标识色换肤。
+
 ## [0.2.1] - 2026-07-15
 
 对应 `package.json` 中的 `0.2.1`。相对 [0.2.0]：界面主题随线路标识色 hue 换肤、common-css / common-components 依赖升级、方向吊板布局集中与压缩修复、字体检测 HubTile 化展示、Metro Studio 工程 iframe 导入，以及「按线路填充站点」双线网（现有开通 + 简办动态演示）与致谢。
