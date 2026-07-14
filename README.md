@@ -6,6 +6,10 @@
 
 本项目受到 [RMG](https://github.com/railmapgen/rmg) 项目的**启发**，在此表示感谢。
 
+「简办」内置站点模板来自 B 站「简办动态演示」[BV1Bw41127DF](https://www.bilibili.com/video/BV1Bw41127DF)（公开建设规划等为依据），经作者私信授权用于本站；并致谢 @纵横金陵、@萝铁杂谈、@油坊桥上的灯、@北落师门b0125 等对数据表、线路图等提出建议及修正的简办视频贡献者，以及私信或评论对简办动态演示提供信息的网友。详情见 [docs/builtin-jianban-attribution.md](docs/builtin-jianban-attribution.md)。
+
+**其中包含在建或规划研究中线路，站点设置与线路走向都有可能变化；请以市政府或地铁官方最终公布为准。**
+
 ## 项目入口
 
 - Cloudflare Pages：https://njmetro-railmap-creator.umamichi.moe

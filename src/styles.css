@@ -517,8 +517,22 @@ h3 {
   min-width: 0;
 }
 
-.station-list-heading-end .primary-button {
+.station-list-heading-end .primary-button,
+.station-list-heading-end .dropdown-menu {
   flex-shrink: 0;
+}
+
+.dropdown-menu-section-heading {
+  display: block;
+  font-size: 0.82rem;
+  font-weight: 600;
+  line-height: 1.35;
+  white-space: normal;
+}
+
+.dropdown-menu-item:disabled:has(.dropdown-menu-section-heading) {
+  opacity: 0.72;
+  cursor: default;
 }
 
 .dropdown-menu-chevron {
@@ -1268,4 +1282,12 @@ html.dark .station-table th {
 
 .line-id-attribution-tooltip a:hover {
   color: var(--site-accent-hover);
+}
+
+.about-dialog-section-text > p {
+  margin: 0;
+}
+
+.about-dialog-section-text > p + p {
+  margin-top: 0.75em;
 }

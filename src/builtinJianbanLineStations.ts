@@ -1,7 +1,11 @@
-import { getNjmetroLineBackgroundColor, getNjmetroLineForegroundColor } from './njmetroLinePalette';
+/**
+ * 简办动态演示线网内置站点。有不确定性；请以官方最终公布为准。
+ * 详见 docs/builtin-jianban-attribution.md（BV1Bw41127DF）。
+ */
+import { resolveJianbanLineBackgroundColor, resolveJianbanLineForegroundColor } from './jianbanLineColors';
 import type { StationItem } from './features/generatorSlice';
 
-type SupportedLineId = '1' | '2' | '3' | '4' | '5' | '6' | '7' | '10' | 'S1' | 'S2' | 'S3' | 'S4' | 'S6' | 'S7' | 'S8' | 'S9';
+type SupportedLineId = '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' | '10' | '11' | '16' | '18' | 'S1' | 'S2' | 'S3' | 'S4' | 'S5' | 'S6' | 'S7' | 'S8' | 'S9';
 type BuiltinStationSeed = { chName: string; enName: string };
 
 const builtinStationSeedsByLineId: Record<SupportedLineId, BuiltinStationSeed[]> = {
@@ -40,6 +44,7 @@ const builtinStationSeedsByLineId: Record<SupportedLineId, BuiltinStationSeed[]>
     { chName: '中国药科大学', enName: 'CPU' },
   ],
   '2': [
+    { chName: '仙林湖', enName: 'Xianlinhu' },
     { chName: '经天路', enName: 'Jingtianlu' },
     { chName: '南大仙林校区', enName: 'NJU Xianlin Campus' },
     { chName: '羊山公园', enName: 'Yangshangongyuan' },
@@ -72,6 +77,9 @@ const builtinStationSeedsByLineId: Record<SupportedLineId, BuiltinStationSeed[]>
     { chName: '鱼嘴', enName: 'Yuzui' },
   ],
   '3': [
+    { chName: '琥珀泉', enName: 'Hupoquan' },
+    { chName: '花旗营', enName: 'Huaqiying' },
+    { chName: '南京北站', enName: 'Nanjingbei Railway Station' },
     { chName: '林场', enName: 'Linchang' },
     { chName: '星火路', enName: 'Xinghuolu' },
     { chName: '东大成贤学院', enName: 'SEU Chengxian College' },
@@ -105,6 +113,10 @@ const builtinStationSeedsByLineId: Record<SupportedLineId, BuiltinStationSeed[]>
     { chName: '秣陵', enName: 'Moling' },
   ],
   '4': [
+    { chName: '华侨城东', enName: 'Huachengdong' },
+    { chName: '欢乐谷', enName: 'Happy Valley' },
+    { chName: '官窑山', enName: 'Guanyaoshan' },
+    { chName: '白象', enName: 'Baixiang' },
     { chName: '仙林湖', enName: 'Xianlinhu' },
     { chName: '西岗桦墅', enName: 'Xiganghuashu' },
     { chName: '孟北', enName: 'Mengbei' },
@@ -123,6 +135,17 @@ const builtinStationSeedsByLineId: Record<SupportedLineId, BuiltinStationSeed[]>
     { chName: '云南路', enName: 'Yunnanlu' },
     { chName: '草场门', enName: 'Caochangmen' },
     { chName: '龙江', enName: 'Longjiang' },
+    { chName: '江心洲尾', enName: 'Jiangxinzhouwei' },
+    { chName: '江北市民中心', enName: 'Jiangbeishiminzhongxin' },
+    { chName: '江北商务区', enName: 'Jiangbeishangwuqu' },
+    { chName: '定山大街', enName: 'Dingshandajie' },
+    { chName: '石佛寺', enName: 'Shifosi' },
+    { chName: '瑞龙郊野公园', enName: 'Ruilongjiaoyegongyuan' },
+    { chName: '珍珠泉东', enName: 'Zhenzhuanquandong' },
+    { chName: '龙之谷', enName: 'Longzhigu' },
+    { chName: '护国村', enName: 'Huguocun' },
+    { chName: '南京北站', enName: 'Nanjingbei Railway Station' },
+    { chName: '余家营', enName: 'Yujiaying' },
   ],
   '5': [
     { chName: '方家营', enName: 'Fangjiaying' },
@@ -207,7 +230,49 @@ const builtinStationSeedsByLineId: Record<SupportedLineId, BuiltinStationSeed[]>
     { chName: '尧化门', enName: 'Yaohuamen' },
     { chName: '仙新路', enName: 'Xianxinlu' },
   ],
+  '8': [
+    { chName: '十月广场', enName: 'Shiyueguangchang' },
+    { chName: '仙新路', enName: 'Xianxinlu' },
+    { chName: '仙林站', enName: 'Xianlin Railway Station' },
+    { chName: '文澜路', enName: 'Wenlanlu' },
+    { chName: '仙林中心', enName: 'Xianlinzhongxin' },
+    { chName: '灵山', enName: 'Lingshan' },
+    { chName: '麒麟门', enName: 'Qilinmen' },
+    { chName: '芝嘉路', enName: 'Zhijialu' },
+    { chName: '定林', enName: 'Dinglin' },
+    { chName: '智汇路', enName: 'Zhihuilu' },
+    { chName: '生态公园', enName: 'Shengtaigongyuan' },
+  ],
+  '9': [
+    { chName: '刘村', enName: 'Liucun' },
+    { chName: '足球小镇', enName: 'Zuqiuxiaozhen' },
+    { chName: '鱼嘴', enName: 'Yuzui' },
+    { chName: '保双街', enName: 'Baoshuangjie' },
+    { chName: '江桥路', enName: 'Jiangqiaolu' },
+    { chName: '淮河路', enName: 'Huaihelu' },
+    { chName: '黄河路', enName: 'Huanghelu' },
+    { chName: '青奥公园', enName: 'Qing\'aogongyuan' },
+    { chName: '棉花堤', enName: 'Mianhuadi' },
+    { chName: '江苏大剧院·宪法公园', enName: 'JSCPA/XIANFAGONGYUAN' },
+    { chName: '绿博园', enName: 'Lüboyuan' },
+    { chName: '上新河', enName: 'Shangxinhe' },
+    { chName: '清江南路', enName: 'Qingjiangnanlu' },
+    { chName: '江东门', enName: 'Jiangdongmen' },
+    { chName: '管子桥', enName: 'Guanziqiao' },
+    { chName: '龙江', enName: 'Longjiang' },
+    { chName: '三汊河', enName: 'Sanchahe' },
+    { chName: '白云寺', enName: 'Baiyunsi' },
+    { chName: '下关', enName: 'Xiaguan' },
+    { chName: '四平路广场', enName: 'Sipingluguangchang' },
+    { chName: '钟阜路', enName: 'Zhongfulu' },
+    { chName: '中央门', enName: 'Zhongyangmen' },
+    { chName: '南京站', enName: 'Nanjing Railway Station' },
+    { chName: '红山路', enName: 'Hongshanlu' },
+    { chName: '红山新城', enName: 'Hongshanxincheng' },
+  ],
   '10': [
+    { chName: '科工园', enName: 'Kegongyuan' },
+    { chName: '科工园东', enName: 'Kegongyuandong' },
     { chName: '雨山路', enName: 'Yushanlu' },
     { chName: '文德路', enName: 'Wendelu' },
     { chName: '龙华路', enName: 'Longhualu' },
@@ -232,6 +297,62 @@ const builtinStationSeedsByLineId: Record<SupportedLineId, BuiltinStationSeed[]>
     { chName: '杨庄', enName: 'Yangzhuang' },
     { chName: '石杨路', enName: 'Shiyanglu' },
     { chName: '东麒路', enName: 'Dongqilu' },
+  ],
+  '11': [
+    { chName: '浦洲路', enName:	'Puzhoulu' },
+    { chName: '柳洲东路', enName:	'Liuzhoudonglu' },
+    { chName: '明滨路', enName:	'Mingbinlu' },
+    { chName: '长江大桥北', enName:	'Changjiangdaqiaobei' },
+    { chName: '柳洲南路', enName:	'Liuzhounanlu' },
+    { chName: '浦东路', enName:	'Pudonglu' },
+    { chName: '新马路', enName:	'Xinmalu' },
+    { chName: '南京铁道学院', enName: 'NIRT' },
+    { chName: '广西梗大街', enName:	'Guangxiangengdajie' },
+    { chName: '江北商务区', enName: 'Jiangbeishangwuqu' },
+    { chName: '七里河', enName: 'Qilihe' },
+    { chName: '临滁街', enName: 'Linchujie' },
+    { chName: '浦口万汇城', enName: 'Pukouwanhuicheng' },
+    { chName: '城南河', enName: 'Chengnanhe' },
+    { chName: '江淼路', enName: 'Jiangmiaolu' },
+    { chName: '卓越路', enName: 'Zhuoyuelu' },
+    { chName: '行知路', enName: 'Xingzhilu' },
+    { chName: '绿水湾路', enName: 'Lvshuiwanlu' },
+    { chName: '西江口', enName: 'Xijiangkou' },
+    { chName: '马骡圩', enName: 'Maluowei' },
+  ],
+  '16': [
+    { chName: '板桥南', enName: 'Banqiaonan' },
+    { chName: '绿洲', enName: 'Lüzhou' },
+    { chName: '板桥东', enName: 'Banqiaodong' },
+    { chName: '新亭大街', enName: 'Xintingdajie' },
+    { chName: '新城大街', enName: 'Xinchengdajie' },
+    { chName: '华兴大街', enName: 'Huaxingdajie' },
+    { chName: '西善花苑', enName: 'Xishanhuayuan' },
+    { chName: '梅欣路', enName: 'Meixinlu' },
+    { chName: '梅苑南路', enName: 'Meiyuananlu' },
+    { chName: '大定坊', enName: 'Dadingfang' },
+    { chName: '银杏山庄', enName: 'Yinxingshanzhuang' },
+    { chName: '铁心桥', enName: 'Tiexinqiao' },
+    { chName: '软件大道', enName: 'Ruanjiandadao' },
+    { chName: '玉兰路', enName: 'Yulanlu' },
+    { chName: '大明路', enName: 'Daminglu' },
+    { chName: '机场跑道旧址', enName: 'Jichangpaodaojiuzhi' },
+  ],
+  '18': [
+    { chName: '北斗产业园', enName: 'Beidouchanyeyuan' },
+    { chName: '南京北站', enName: 'Nanjingbei Railway Station' },
+    { chName: '南京铁道学院', enName: 'NIRT' },
+    { chName: '新华街', enName: 'Xinhuajie' },
+    { chName: '古平岗', enName: 'Gupinggang' },
+    { chName: '鼓楼', enName: 'Gulou' },
+    { chName: '新街口', enName: 'Xinjiekou' },
+    { chName: '中华门', enName: 'Zhonghuamen' },
+    { chName: '南京南站', enName: 'Nanjingnan Railway Station' },
+    { chName: '河海大学·佛城西路', enName: 'HHU/Fochengxilu' },
+    { chName: '禄口新城东', enName: 'Lukouxinchengdong' },
+    { chName: '翔宇路南', enName: 'Xiangyulunan' },
+    { chName: '禄口机场3号航站楼', enName: 'T3 of Lukou International Airport' },
+    { chName: '禄口机场', enName: 'Lukou International Airport' },
   ],
   'S1': [
     { chName: '南京南站', enName: 'Nanjingnan Railway Station' },
@@ -263,6 +384,20 @@ const builtinStationSeedsByLineId: Record<SupportedLineId, BuiltinStationSeed[]>
     { chName: '西善桥', enName: 'Xishanqiao' },
   ],
   'S3': [
+    { chName: '仙林站', enName: 'Xianlin Railway Station' },
+    { chName: '江苏广电', enName: 'JSBC' },
+    { chName: '南大仙林校区', enName: 'NJU Xianlin Campus' },
+    { chName: '三阳路', enName: 'Sanyanglu' },
+    { chName: '东流', enName: 'Dongliu' },
+    { chName: '东郊小镇', enName: 'Dongjiaoxiaozhen' },
+    { chName: '中科院', enName: 'UCASNJ' },
+    { chName: '泉水路', enName: 'Quanshuilu' },
+    { chName: '生态公园', enName: 'Shengtaigongyuan' },
+    { chName: '石杨路', enName: 'Shiyanglu' },
+    { chName: '上坊工业园', enName: 'Shangfanggongyeyuan' },
+    { chName: '湖西路', enName: 'Huxilu' },
+    { chName: '东山香樟园', enName: 'Dongshanxiangzhangyuan' },
+    { chName: '金盛路', enName: 'Jinshenglu' },
     { chName: '南京南站', enName: 'Nanjingnan Railway Station' },
     { chName: '景明佳园', enName: 'Jingmingjiayuan' },
     { chName: '铁心桥', enName: 'Tiexinqiao' },
@@ -294,6 +429,27 @@ const builtinStationSeedsByLineId: Record<SupportedLineId, BuiltinStationSeed[]>
     { chName: '十二里半', enName: 'Shierliban' },
     { chName: '汊河新城', enName: 'Chahe New Town' },
     { chName: '汊河', enName: 'Chahe' },
+    { chName: '张堡', enName: 'Zhangbao' },
+    { chName: '北斗产业园', enName: 'Beidouchanyeyuan' },
+    { chName: '南京北站', enName: 'Nanjingbei Railway Station' },
+  ],
+  'S5': [
+    { chName: '仙林湖', enName: 'Xianlinhu' },
+    { chName: '栖霞', enName: 'Qixia' },
+    { chName: '东阳街', enName: 'Dongyangjie' },
+    { chName: '港城路', enName: 'Gangchenglu' },
+    { chName: '花园', enName: 'Huayuan' },
+    { chName: '龙潭', enName: 'Longtan' },
+    { chName: '龙潭东', enName: 'Longtandong' },
+    { chName: '靖安', enName: 'Jing\'an' },
+    { chName: '万年路', enName: 'Wannianlu' },
+    { chName: '工农路', enName: 'Gongnonglu' },
+    { chName: '天宁大道', enName: 'Tianningdadao' },
+    { chName: '仪征开发区', enName: 'Yizheng Development Zone' },
+    { chName: '朴席', enName: 'Puxi' },
+    { chName: '扬州汊河', enName: 'Yangzhouchahe' },
+    { chName: '站南路', enName: 'Zhannanlu' },
+    { chName: '扬州西站', enName: 'Yangzhou West Railway Station' },
   ],
   'S6': [
     { chName: '句容', enName: 'Jurong' },
@@ -352,9 +508,9 @@ const builtinStationSeedsByLineId: Record<SupportedLineId, BuiltinStationSeed[]>
   ],
 };
 
-export const builtinOpenedLineIds = Object.keys(builtinStationSeedsByLineId) as SupportedLineId[];
-const supportedLineIds = new Set<SupportedLineId>(builtinOpenedLineIds);
-const toBuiltinStationId = (lineId: SupportedLineId, index: number) => `${lineId.toLowerCase()}-builtin-${String(index + 1).padStart(2, '0')}`;
+export const builtinJianbanLineIds = Object.keys(builtinStationSeedsByLineId) as SupportedLineId[];
+const supportedLineIds = new Set<SupportedLineId>(builtinJianbanLineIds);
+const toBuiltinStationId = (lineId: SupportedLineId, index: number) => `${lineId.toLowerCase()}-jianban-${String(index + 1).padStart(2, '0')}`;
 
 const collectTransferIdsByStationName = () => {
   const transferMap = new Map<string, Set<SupportedLineId>>();
@@ -371,8 +527,8 @@ const collectTransferIdsByStationName = () => {
 
 const transferIdsByStationName = collectTransferIdsByStationName();
 
-const builtinRailwayStationChNames = new Set(['南京站', '南京南站', '句容', '姑孰', '滁州高铁站']);
-const builtinAirportStationChNames = new Set(['禄口机场']);
+const builtinRailwayStationChNames = new Set(['南京站', '南京南站', '南京北站', '仙林站', '句容', '姑孰', '滁州高铁站', '扬州西站', '禄口机场3号航站楼']);
+const builtinAirportStationChNames = new Set(['禄口机场', '禄口机场3号航站楼']);
 
 const builtinStationTypeFromChName = (chName: string): StationItem['type'] => {
   if (builtinAirportStationChNames.has(chName)) {
@@ -386,7 +542,7 @@ const builtinStationTypeFromChName = (chName: string): StationItem['type'] => {
   return 'none';
 };
 
-export const getBuiltinOpenedStationsByLineId = (lineIdRaw: string): StationItem[] | null => {
+export const getBuiltinJianbanStationsByLineId = (lineIdRaw: string): StationItem[] | null => {
   const lineId = lineIdRaw.trim().toUpperCase();
   if (!supportedLineIds.has(lineId as SupportedLineId)) {
     return null;
@@ -401,8 +557,8 @@ export const getBuiltinOpenedStationsByLineId = (lineIdRaw: string): StationItem
       type: builtinStationTypeFromChName(seedItem.chName),
       transfer: transferIds.map((id) => ({
         id,
-        color: getNjmetroLineBackgroundColor(id) ?? '#8c989f',
-        textColor: getNjmetroLineForegroundColor(id) ?? '#ffffff',
+        color: resolveJianbanLineBackgroundColor(id) ?? '#8c989f',
+        textColor: resolveJianbanLineForegroundColor(id) ?? '#ffffff',
       })),
     };
   });

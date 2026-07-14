@@ -9,7 +9,9 @@
 
 ## [Unreleased]
 
-相对 [0.2.0]：界面主题随线路标识色 hue 换肤、common-css 0.9.0、方向吊板布局集中与压缩修复、字体检测 HubTile 化展示，以及 Metro Studio 工程 iframe 导入。
+## [0.2.1] - 2026-07-15
+
+对应 `package.json` 中的 `0.2.1`。相对 [0.2.0]：界面主题随线路标识色 hue 换肤、common-css / common-components 依赖升级、方向吊板布局集中与压缩修复、字体检测 HubTile 化展示、Metro Studio 工程 iframe 导入，以及「按线路填充站点」双线网（现有开通 + 简办动态演示）与致谢。
 
 ### Added
 
@@ -18,6 +20,8 @@
 - `useLineThemePalette`：监听 `generator.idColor`，于 `useLayoutEffect` 向文档根写入 `--theme-*`；换线、改色、导入与撤销同步更新顶栏与强调色。
 - `lineThemeHarmonizerLevels.ts`、`lineThemePalette.ts` 与 `src/apcach.d.ts` 类型声明。
 - `FontDetectionHubTiles`：字体检测结果以 Windows Phone HubTile 风格 120px 方形磁贴展示（Microsoft YaHei、FZHei-B01、Helvetica 各一块）。
+- 「按线路填充站点」下拉菜单：分组填充 **南京地铁现有线网（截止 2026.6）** 与 **简办动态演示线网（BV1Bw41127DF）** 内置站表（`FillStationsByLineMenu`、`builtinJianbanLineStations`）。
+- 简办数据来源与致谢文档：`docs/builtin-jianban-attribution.md`（含授权私信截图、片尾原文转录）；「关于」与 README 同步致谢与「在建/规划可能变化、以官方最终公布为准」警告。
 
 ### Fixed
 
@@ -25,12 +29,14 @@
 
 ### Changed
 
-- 依赖 `@umamichi-ui/common-css` ^0.9.0：主题原语改为 oklch 源码 + PostCSS 构建的 sRGB / Display P3 / OKLCH 回退层（npm 发布 `dist/`）。
+- 依赖 `@umamichi-ui/common-css` 升至 ^0.19.0：主题原语改为 oklch 源码 + PostCSS 构建的 sRGB / Display P3 / OKLCH 回退层（npm 发布 `dist/`）等后续样式包更新。
+- 依赖 `@umamichi-ui/common-components` 升至 ^0.3.3（含 `FloatingMenu` 长列表几何与滚动稳定性修复）。
 - 站点主题变量输出：支持 `oklch()` 的浏览器写入 `oklch(...)`，否则降级为 `hex`（`CSS.supports('color', 'oklch(0% 0 0)')`）。
 - `directionBadgeLayout.ts` 升格为方向吊板 SVG 几何规格的单一来源：画布、边距、间距、箭头、线路号块、终点站版式、锚点、标签与站名文字布局及 tier 0 默认字距等常量分组导出；`DirectionBadge`、`measureBadgeText`、`directionBadgeCondense` 改为从此引用，消除组件与测宽逻辑中的魔法数字。
 - 「关于」对话框链接区新增 [变更日志](https://github.com/kyuri-metro/njmetro-railmap-creator/blob/main/CHANGELOG.md) 入口。
 - 字体检测 UI：由卡片列表改为 HubTile 磁贴；检测完成后依次 flip 显示结果，成功/失败/检测中分别为绿（`#107c10`）/红（`#e81123`）/灰；「正在检测」与「已检测到 / 未检测到」共用同一状态槽位，移除磁贴外摘要文案以避免布局跳变。
 - 现在线路号方块不再依赖 Helvetica，改为方正黑体。字体检测部分不再检测 Helvetica。
+- 「关于」等界面展示的版本号为 `0.2.1`。
 
 ## [0.2.0] - 2026-06-10
 
@@ -143,7 +149,8 @@
 - 部署至 Cloudflare Pages（[njmetro-railmap-creator.umamichi.moe](https://njmetro-railmap-creator.umamichi.moe/)）。
 - 基于 [@umamichi-ui/common-css](https://www.npmjs.com/package/@umamichi-ui/common-css) 的界面样式与弹层交互。
 
-[Unreleased]: https://github.com/kyuri-metro/njmetro-railmap-creator/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/kyuri-metro/njmetro-railmap-creator/compare/v0.2.1...HEAD
+[0.2.1]: https://github.com/kyuri-metro/njmetro-railmap-creator/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/kyuri-metro/njmetro-railmap-creator/compare/v0.1.3...v0.2.0
 [0.1.3]: https://github.com/kyuri-metro/njmetro-railmap-creator/compare/v0.1.2...v0.1.3
 [0.1.2]: https://github.com/kyuri-metro/njmetro-railmap-creator/compare/v0.1.1...v0.1.2

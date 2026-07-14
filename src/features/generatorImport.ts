@@ -1,4 +1,5 @@
 import { getNjmetroLineBackgroundColor, getNjmetroLineForegroundColor } from '../njmetroLinePalette';
+import { resolveJianbanLineBackgroundColor, resolveJianbanLineForegroundColor } from '../jianbanLineColors';
 import type { RailmapYamlImport } from '../stationListYaml';
 import type { GeneratorState } from './generatorSlice';
 
@@ -24,13 +25,18 @@ export const railmapImportToGeneratorState = (
   showStationTypeIcons: data.njMetroSettings.showStationTypeIcons,
 });
 
+export type BuiltinLineFillNetwork = 'opened' | 'jianban';
+
 export const builtinLineToGeneratorState = (
   lineId: string,
   stations: GeneratorState['stnList'],
   previous: GeneratorState,
+  network: BuiltinLineFillNetwork = 'opened',
 ): GeneratorState => {
-  const paletteColor = getNjmetroLineBackgroundColor(lineId);
-  const paletteText = getNjmetroLineForegroundColor(lineId);
+  const paletteColor =
+    network === 'jianban' ? resolveJianbanLineBackgroundColor(lineId) : getNjmetroLineBackgroundColor(lineId);
+  const paletteText =
+    network === 'jianban' ? resolveJianbanLineForegroundColor(lineId) : getNjmetroLineForegroundColor(lineId);
 
   return {
     ...previous,

@@ -3,7 +3,6 @@ export const OVERLAY_IDS = {
   autosaveList: 'autosave-list',
   autosaveRestore: 'autosave-restore',
   badgeDownload: 'badge-download',
-  builtinUnavailable: 'builtin-unavailable',
   exampleModal: 'example-modal',
   kyuriRmg: 'kyuri-rmg',
   kyuriMetroStudio: 'kyuri-metro-studio',

@@ -29,6 +29,8 @@ import { TopbarFileCommands, ExportIcon, ImportIcon, NewFileIcon } from './compo
 import { KYURI_RMG_IFRAME_ORIGIN } from './config/kyuriRmgIframe';
 import { KYURI_METRO_STUDIO_IFRAME_ORIGIN } from './config/kyuriMetroStudioIframe';
 import { getBuiltinOpenedStationsByLineId } from './builtinOpenedLineStations';
+import { getBuiltinJianbanStationsByLineId } from './builtinJianbanLineStations';
+import { FillStationsByLineMenu, type BuiltinStationNetwork } from './components/FillStationsByLineMenu';
 import type { AutosaveEntry } from './autosaveStorage';
 import { markAutosaveDirty } from './features/autosaveScheduler';
 import { markSavedExempt, shouldWarnOnLeave } from './features/leaveGuard';
@@ -107,8 +109,6 @@ const hexColorsEqual = (a: string, b: string) => a.trim().toLowerCase() === b.tr
 const themeStorageKey = 'site-theme';
 const themeTransitionLockClassName = 'theme-transition-lock';
 const docsReferenceUrl = 'https://github.com/kyuri-metro/njmetro-railmap-creator/tree/main/docs';
-const builtinLineUnavailableMessage =
-  '当前线路编号未内置已开通站点列表。支持：1、2、3、4、5、6、7、10、S1、S2、S3、S4、S6、S7、S8、S9。';
 const fallbackFontDetectionResults: FontDetectionResult[] = Object.entries(targetFontSignatures).map(([fontFamily, expectedWidths]) => ({
   fontFamily: fontFamily as FontDetectionResult['fontFamily'],
   widths: null,
@@ -457,6 +457,7 @@ function App() {
   const [pendingAutosaveEntry, setPendingAutosaveEntry] = useState<AutosaveEntry | null>(null);
   const [isExampleModalOpen, setIsExampleModalOpen] = useState(false);
   const [isOverwriteStationsConfirmOpen, setIsOverwriteStationsConfirmOpen] = useState(false);
+  const [pendingBuiltinFill, setPendingBuiltinFill] = useState<{ network: BuiltinStationNetwork; lineId: string } | null>(null);
   const [isNewProjectConfirmOpen, setIsNewProjectConfirmOpen] = useState(false);
   const [isYamlImportConfirmOpen, setIsYamlImportConfirmOpen] = useState(false);
   const [pendingRailmapImport, setPendingRailmapImport] = useState<RailmapYamlImport | null>(null);
@@ -465,7 +466,6 @@ function App() {
   const [kyuriRmgOpen, setKyuriRmgOpen] = useState(false);
   const [kyuriMetroStudioOpen, setKyuriMetroStudioOpen] = useState(false);
   const yamlFileInputRef = useRef<HTMLInputElement>(null);
-  const [builtinUnavailableNotice, setBuiltinUnavailableNotice] = useState<string | null>(null);
   const [fontDetectionResults, setFontDetectionResults] = useState<FontDetectionResult[]>(fallbackFontDetectionResults);
   const [fontDetectionState, setFontDetectionState] = useState<'idle' | 'checking' | 'done'>('idle');
 
@@ -564,6 +564,7 @@ function App() {
 
         if (isOverwriteStationsConfirmOpen) {
           setIsOverwriteStationsConfirmOpen(false);
+          setPendingBuiltinFill(null);
           return;
         }
 
@@ -575,11 +576,6 @@ function App() {
 
         if (yamlImportError) {
           setYamlImportError(null);
-          return;
-        }
-
-        if (builtinUnavailableNotice) {
-          setBuiltinUnavailableNotice(null);
           return;
         }
 
@@ -635,7 +631,6 @@ function App() {
     isNewProjectConfirmOpen,
     isOverwriteStationsConfirmOpen,
     isYamlImportConfirmOpen,
-    builtinUnavailableNotice,
     yamlImportError,
   ]);
 
@@ -878,14 +873,8 @@ function App() {
     applyThemeMode(nextThemeMode, true);
   };
 
-  const handleFillStationsByLineId = () => {
-    const targetLineId = normalizeLineIdDraft(lineIdDraftRef.current);
-
-    if (!getBuiltinOpenedStationsByLineId(targetLineId)) {
-      setBuiltinUnavailableNotice(builtinLineUnavailableMessage);
-      return;
-    }
-
+  const handleFillStationsByLineId = (network: BuiltinStationNetwork, lineId: string) => {
+    setPendingBuiltinFill({ network, lineId });
     setIsOverwriteStationsConfirmOpen(true);
   };
 
@@ -957,15 +946,24 @@ function App() {
 
   const confirmBuiltinStationOverwrite = () => {
     setIsOverwriteStationsConfirmOpen(false);
-    const targetLineId = normalizeLineIdDraft(lineIdDraftRef.current);
-    const builtinStations = getBuiltinOpenedStationsByLineId(targetLineId);
 
-    if (!builtinStations) {
-      setBuiltinUnavailableNotice(builtinLineUnavailableMessage);
+    if (!pendingBuiltinFill) {
       return;
     }
 
-    const nextState = builtinLineToGeneratorState(targetLineId, builtinStations, generator);
+    const { network, lineId } = pendingBuiltinFill;
+    setPendingBuiltinFill(null);
+
+    const builtinStations =
+      network === 'opened'
+        ? getBuiltinOpenedStationsByLineId(lineId)
+        : getBuiltinJianbanStationsByLineId(lineId);
+
+    if (!builtinStations) {
+      return;
+    }
+
+    const nextState = builtinLineToGeneratorState(lineId, builtinStations, generator, network);
     syncControlDraftsFromGenerator(nextState);
 
     startTransition(() => {
@@ -1253,9 +1251,7 @@ function App() {
               <div className="station-list-heading">
                 <h2 className="site-content-heading">站点列表</h2>
                 <div className="station-list-heading-end">
-                  <button type="button" className="primary-button" onClick={handleFillStationsByLineId}>
-                    按线路填充已开通站点
-                  </button>
+                  <FillStationsByLineMenu onSelectLine={handleFillStationsByLineId} />
                 </div>
               </div>
 
@@ -1457,7 +1453,10 @@ function App() {
       <ConfirmDialogOverlay
         open={isOverwriteStationsConfirmOpen}
         overlayId={OVERLAY_IDS.overwriteStations}
-        onDismiss={() => setIsOverwriteStationsConfirmOpen(false)}
+        onDismiss={() => {
+          setIsOverwriteStationsConfirmOpen(false);
+          setPendingBuiltinFill(null);
+        }}
       >
         <div
           className="confirm-dialog"
@@ -1474,7 +1473,14 @@ function App() {
               此操作将会覆盖站点列表，并清空撤销历史，无法撤销至覆盖前。
             </p>
             <div className="confirm-dialog-actions">
-              <button type="button" className="secondary-button" onClick={() => setIsOverwriteStationsConfirmOpen(false)}>
+              <button
+                type="button"
+                className="secondary-button"
+                onClick={() => {
+                  setIsOverwriteStationsConfirmOpen(false);
+                  setPendingBuiltinFill(null);
+                }}
+              >
                 取消
               </button>
               <button type="button" className="primary-button" onClick={confirmBuiltinStationOverwrite}>
@@ -1482,35 +1488,6 @@ function App() {
               </button>
             </div>
         </div>
-      </ConfirmDialogOverlay>
-
-      <ConfirmDialogOverlay
-        open={builtinUnavailableNotice !== null}
-        overlayId={OVERLAY_IDS.builtinUnavailable}
-        onDismiss={() => setBuiltinUnavailableNotice(null)}
-      >
-        {builtinUnavailableNotice ? (
-          <div
-            className="confirm-dialog"
-            role="alertdialog"
-            aria-modal="true"
-            aria-labelledby="builtin-unavailable-title"
-            aria-describedby="builtin-unavailable-desc"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <h2 id="builtin-unavailable-title" className="confirm-dialog-title">
-              暂无内置站点列表
-            </h2>
-            <p id="builtin-unavailable-desc" className="confirm-dialog-body">
-              {builtinUnavailableNotice}
-            </p>
-            <div className="confirm-dialog-actions">
-              <button type="button" className="primary-button" onClick={() => setBuiltinUnavailableNotice(null)}>
-                知道了
-              </button>
-            </div>
-          </div>
-        ) : null}
       </ConfirmDialogOverlay>
 
       <SiteOverlayBackdrop
