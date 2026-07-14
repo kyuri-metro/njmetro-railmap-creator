@@ -535,6 +535,19 @@ h3 {
   cursor: default;
 }
 
+.fill-line-menu-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.fill-line-menu-item__swatch {
+  flex-shrink: 0;
+  width: 0.625rem;
+  height: 0.625rem;
+  border-radius: 9999px;
+}
+
 .dropdown-menu-chevron {
   display: block;
   flex-shrink: 0;

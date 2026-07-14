@@ -1,6 +1,8 @@
 import { FloatingMenu, type FloatingMenuEntry } from '@umamichi-ui/common-components/menu';
 import { builtinOpenedLineIds } from '../builtinOpenedLineStations';
 import { builtinJianbanLineIds } from '../builtinJianbanLineStations';
+import { resolveJianbanLineBackgroundColor } from '../jianbanLineColors';
+import { getNjmetroLineBackgroundColor } from '../njmetroLinePalette';
 
 export type BuiltinStationNetwork = 'opened' | 'jianban';
 
@@ -8,7 +10,28 @@ type FillStationsByLineMenuProps = {
   onSelectLine: (network: BuiltinStationNetwork, lineId: string) => void;
 };
 
+const FALLBACK_LINE_SWATCH = '#8c989f';
+
+const resolveLineSwatch = (network: BuiltinStationNetwork, lineId: string) => {
+  const color =
+    network === 'jianban'
+      ? resolveJianbanLineBackgroundColor(lineId)
+      : getNjmetroLineBackgroundColor(lineId);
+  return color ?? FALLBACK_LINE_SWATCH;
+};
+
 const sectionHeading = (label: string) => <span className="dropdown-menu-section-heading">{label}</span>;
+
+const lineMenuLabel = (network: BuiltinStationNetwork, lineId: string) => (
+  <span className="fill-line-menu-item">
+    <span
+      className="fill-line-menu-item__swatch"
+      style={{ background: resolveLineSwatch(network, lineId) }}
+      aria-hidden="true"
+    />
+    <span>{lineId}</span>
+  </span>
+);
 
 const buildLineItems = (
   network: BuiltinStationNetwork,
@@ -18,7 +41,7 @@ const buildLineItems = (
   lineIds.map((lineId) => ({
     kind: 'item' as const,
     id: `${network}-${lineId}`,
-    label: lineId,
+    label: lineMenuLabel(network, lineId),
     onSelect: () => onSelectLine(network, lineId),
   }));
 
