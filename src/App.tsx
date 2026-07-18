@@ -1018,7 +1018,7 @@ function App() {
 
   return (
     <main className="app-layout">
-      <header className="app-topbar">
+      <header className="app-topbar" data-lens-border="bottom" data-lens-depth="0.9">
         <div className="app-topbar-inner">
           <div className="app-topbar-title-wrap">
             <h1 className="app-topbar-title">

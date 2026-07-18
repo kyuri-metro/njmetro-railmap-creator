@@ -28,7 +28,9 @@ h1 {
   flex-shrink: 0;
   width: 100%;
   margin: 0;
-  overflow: visible;
+  /* overflow-x: clip keeps lens hairline ghosts; y stays visible for Beta mark */
+  overflow-x: clip;
+  overflow-y: visible;
   background: var(--site-header-bg);
   color: var(--site-header-fg);
   box-sizing: border-box;
@@ -1313,4 +1315,23 @@ html.dark .station-table th {
 
 .about-dialog-section-text > p + p {
   margin-top: 0.75em;
+}
+
+/* Chromatic fringe: app tokens and chrome exclusions (@umamichi-ui/chromatic-fringe). */
+.outline-button.chromatic-fringe-box--fade-border {
+  --chromatic-fringe-border: var(--site-border);
+}
+
+/*
+ * Durable guard: package sets position:relative on .chromatic-fringe-box.
+ * Portaled floating menus must stay fixed (misplaced panel + horizontal scroll).
+ */
+.chromatic-fringe-box.chromatic-fringe-box--overlay {
+  position: fixed;
+}
+
+/* Topbar controls: no box fringe (also skipped in initAppChromaticFringe). */
+.app-topbar .chromatic-fringe-box::before,
+.app-topbar .chromatic-fringe-box::after {
+  content: none;
 }
