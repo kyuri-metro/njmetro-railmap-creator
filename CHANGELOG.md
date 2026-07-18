@@ -11,6 +11,7 @@
 
 ### Added
 
+- `@umamichi-ui/chromatic-fringe`：指针驱动色差描边（顶栏底边、页面按钮与打开中的 `FloatingMenu` 面板）；顶栏控件跳过 box fringe。
 - 「按线路填充站点」下拉：线路号左侧显示标志色圆点（开通线网用官方色，简办用 `resolveJianbanLine*`，含 16/18 虚拟参考色）。
 
 ### Changed
