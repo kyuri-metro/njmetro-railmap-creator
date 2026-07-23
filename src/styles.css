@@ -1433,6 +1433,34 @@ html.dark .station-table th {
   margin-top: 0.75em;
 }
 
+/*
+ * AboutDialog ships as ConfirmDialogOverlay size=compact (400px). Package only
+ * sets max-width, so the panel stays narrow and long nowrap URLs force a
+ * horizontal scrollbar inside the scrollable body.
+ */
+@media (min-width: 721px) {
+  .fullscreen-overlay.about-dialog {
+    width: min(100%, 48rem);
+    max-width: min(calc(100vw - 48px), 48rem);
+  }
+}
+
+.fullscreen-overlay.about-dialog .fullscreen-overlay__body {
+  overflow-x: clip;
+}
+
+.about-dialog-section-text,
+.about-dialog-meta dd,
+.about-dialog-meta dd a {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.about-dialog-meta-row dd a,
+.about-dialog-meta-row:first-child dd a {
+  white-space: normal;
+}
+
 /* Chromatic fringe: app tokens and chrome exclusions (@umamichi-ui/chromatic-fringe). */
 .outline-button.chromatic-fringe-box--fade-border {
   --chromatic-fringe-border: var(--site-border);
