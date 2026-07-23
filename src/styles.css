@@ -1414,6 +1414,16 @@ html.dark .station-table th {
   position: fixed;
 }
 
+/*
+ * Long FloatingMenus set overflow-y:auto and become scroll containers. Chromatic
+ * fringe ::before/::after then translate a few px outside the box and inflate
+ * scrollWidth, showing a spurious horizontal scrollbar (e.g. 按线路填充站点).
+ */
+.dropdown-menu-panel.chromatic-fringe-box--overlay,
+.download-format-menu-panel.chromatic-fringe-box--overlay {
+  overflow-x: clip;
+}
+
 /* Topbar controls: no box fringe (also skipped in initAppChromaticFringe). */
 .app-topbar .chromatic-fringe-box::before,
 .app-topbar .chromatic-fringe-box::after {
