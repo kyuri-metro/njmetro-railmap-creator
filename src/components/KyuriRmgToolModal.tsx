@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { KYURI_RMG_CHILD_SOURCE, KYURI_RMG_PARENT_SOURCE } from '../kyuriRmgProtocol';
 import { OVERLAY_IDS } from '../overlay/overlayIds';
-import { SiteOverlayBackdrop } from '@umamichi-ui/common-components/overlay';
+import { FullscreenOverlay } from '@umamichi-ui/common-components/overlay';
 
 type KyuriRmgToolModalProps = {
   open: boolean;
@@ -121,34 +121,29 @@ export function KyuriRmgToolModal({
   }
 
   return (
-    <SiteOverlayBackdrop
+    <FullscreenOverlay
       open={open}
       overlayId={OVERLAY_IDS.kyuriRmg}
       onDismiss={onClose}
       onExited={onExited}
+      title={mode === 'import' ? '导入 RMG JSON 存档' : '导出 RMG JSON 存档'}
+      titleId="kyuri-rmg-modal-title"
+      size="page"
+      fill
+      panelClassName="kyuri-rmg-tool-dialog"
+      bodyClassName="kyuri-rmg-tool-dialog-body"
     >
-      <div
-        className="confirm-dialog kyuri-rmg-tool-dialog"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="kyuri-rmg-modal-title"
-        onClick={(ev) => ev.stopPropagation()}
-      >
-        <h2 id="kyuri-rmg-modal-title" className="confirm-dialog-title">
-          {mode === 'import' ? '导入 RMG JSON 存档' : '导出 RMG JSON 存档'}
-        </h2>
-        <p className="confirm-dialog-body" style={{ marginBottom: 10 }}>
-          {mode === 'import'
-            ? '在下方粘贴 RMG 参数 JSON，点击「转换」。回到本站后确认即可更新线路。'
-            : '正在生成 RMG 参数 JSON，完成后将自动下载。'}
-        </p>
-        <iframe ref={iframeRef} title="Kyuri naive ↔ RMG" src={iframeSrc} className="kyuri-rmg-tool-iframe" />
-        <div className="confirm-dialog-actions">
-          <button type="button" className="secondary-button" onClick={onClose}>
-            关闭
-          </button>
-        </div>
+      <p className="confirm-dialog-body" style={{ marginBottom: 10 }}>
+        {mode === 'import'
+          ? '在下方粘贴 RMG 参数 JSON，点击「转换」。回到本站后确认即可更新线路。'
+          : '正在生成 RMG 参数 JSON，完成后将自动下载。'}
+      </p>
+      <iframe ref={iframeRef} title="Kyuri naive ↔ RMG" src={iframeSrc} className="kyuri-rmg-tool-iframe" />
+      <div className="confirm-dialog-actions">
+        <button type="button" className="secondary-button" onClick={onClose}>
+          关闭
+        </button>
       </div>
-    </SiteOverlayBackdrop>
+    </FullscreenOverlay>
   );
 }

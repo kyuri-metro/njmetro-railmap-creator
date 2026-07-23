@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { KYURI_METRO_STUDIO_CHILD_SOURCE } from '../kyuriMetroStudioProtocol';
 import { OVERLAY_IDS } from '../overlay/overlayIds';
-import { SiteOverlayBackdrop } from '@umamichi-ui/common-components/overlay';
+import { FullscreenOverlay } from '@umamichi-ui/common-components/overlay';
 
 type KyuriMetroStudioToolModalProps = {
   open: boolean;
@@ -68,36 +68,27 @@ export function KyuriMetroStudioToolModal({
   }
 
   return (
-    <SiteOverlayBackdrop
+    <FullscreenOverlay
       open={open}
       overlayId={OVERLAY_IDS.kyuriMetroStudio}
       onDismiss={onClose}
       onExited={onExited}
+      title="导入 Metro Studio 工程"
+      titleId="kyuri-metro-studio-modal-title"
+      size="page"
+      fill
+      panelClassName="kyuri-rmg-tool-dialog"
+      bodyClassName="kyuri-rmg-tool-dialog-body"
     >
-      <div
-        className="confirm-dialog kyuri-rmg-tool-dialog"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="kyuri-metro-studio-modal-title"
-        onClick={(ev) => ev.stopPropagation()}
-      >
-        <h2 id="kyuri-metro-studio-modal-title" className="confirm-dialog-title">
-          导入 Metro Studio 工程
-        </h2>
-        <p className="confirm-dialog-body" style={{ marginBottom: 10 }}>
-          在下方上传或粘贴 Metro Studio 工程 JSON（.metro-studio.json），选择线路后点击「转换」。回到本站后确认即可更新线路。
-        </p>
-        <iframe
-          title="Metro Studio → Kyuri naive"
-          src={iframeSrc}
-          className="kyuri-rmg-tool-iframe"
-        />
-        <div className="confirm-dialog-actions">
-          <button type="button" className="secondary-button" onClick={onClose}>
-            关闭
-          </button>
-        </div>
+      <p className="confirm-dialog-body" style={{ marginBottom: 10 }}>
+        在下方上传或粘贴 Metro Studio 工程 JSON（.metro-studio.json），选择线路后点击「转换」。回到本站后确认即可更新线路。
+      </p>
+      <iframe title="Metro Studio → Kyuri naive" src={iframeSrc} className="kyuri-rmg-tool-iframe" />
+      <div className="confirm-dialog-actions">
+        <button type="button" className="secondary-button" onClick={onClose}>
+          关闭
+        </button>
       </div>
-    </SiteOverlayBackdrop>
+    </FullscreenOverlay>
   );
 }

@@ -10,6 +10,7 @@ import {
   type ReactNode,
 } from 'react';
 import { ConfirmDialogOverlay } from '@umamichi-ui/common-components/dialog';
+import { FullscreenOverlay } from '@umamichi-ui/common-components/overlay';
 import { usePreviewLoadingOverlay } from './hooks/usePreviewLoadingOverlay';
 import { useLineThemePalette } from './hooks/useLineThemePalette';
 import { CurrentStationBadge } from './components/CurrentStationBadge';
@@ -60,7 +61,6 @@ import { parseRailmapYaml, serializeRailmapYaml, type RailmapYamlImport } from '
 import { useAppDispatch, useAppSelector, selectCanRedo, selectCanUndo, selectGeneratorPresent } from './hooks';
 import { topbarCompactMediaQuery } from './layout/topbarLayout';
 import { OVERLAY_IDS } from './overlay/overlayIds';
-import { SiteOverlayBackdrop } from '@umamichi-ui/common-components/overlay';
 import { store, UndoActionCreators } from './store';
 
 type ModalState =
@@ -370,54 +370,44 @@ const DownloadableBadgeCard = ({ title, fileName, children }: DownloadableBadgeC
         </div>
       </div>
 
-      <SiteOverlayBackdrop
+      <FullscreenOverlay
         open={isSvgZoomOpen}
         overlayId={svgZoomOverlayId}
-        align="top"
         onDismiss={closeSvgZoom}
+        title={`预览：${title}`}
+        titleId={svgZoomTitleId}
+        size="page"
+        fill
+        closeAriaLabel="关闭预览"
+        panelClassName="svg-preview-zoom-dialog"
+        bodyClassName="svg-preview-zoom-overlay-body"
       >
-        <section
-          className="site-overlay-panel svg-preview-zoom-dialog"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby={svgZoomTitleId}
-          onClick={(event) => event.stopPropagation()}
-        >
-                <header className="svg-preview-zoom-header">
-                  <h2 id={svgZoomTitleId} className="site-content-heading svg-preview-zoom-title">
-                    预览：{title}
-                  </h2>
-                  <button type="button" className="icon-button" aria-label="关闭预览" onClick={closeSvgZoom}>
-                    ×
-                  </button>
-                </header>
-                <div className="svg-preview-zoom-toolbar form-scope">
-                  <label className="svg-preview-zoom-scale-label">
-                    <span>缩放</span>
-                    <input
-                      type="range"
-                      className="svg-preview-zoom-range"
-                      min={100}
-                      max={500}
-                      step={1}
-                      value={svgZoomPercent}
-                      onChange={(event) => setSvgZoomPercentAnchored(Number(event.target.value))}
-                    />
-                    <span className="svg-preview-zoom-scale-value">{svgZoomPercent}%</span>
-                  </label>
-                  <BadgeDownloadTrigger
-                    fileName={fileName}
-                    getSvgElement={getBadgeSvgElement}
-                    triggerClassName="svg-preview-zoom-download"
-                  />
-                </div>
-                <div ref={svgZoomBodyRef} className="svg-preview-zoom-body">
-                  <div className="svg-preview-zoom-scaled" style={{ width: `${svgZoomPercent}%` }}>
-                    <div dangerouslySetInnerHTML={{ __html: svgZoomMarkup }} />
-                  </div>
-                </div>
-              </section>
-      </SiteOverlayBackdrop>
+        <div className="svg-preview-zoom-toolbar form-scope">
+          <label className="svg-preview-zoom-scale-label">
+            <span>缩放</span>
+            <input
+              type="range"
+              className="svg-preview-zoom-range"
+              min={100}
+              max={500}
+              step={1}
+              value={svgZoomPercent}
+              onChange={(event) => setSvgZoomPercentAnchored(Number(event.target.value))}
+            />
+            <span className="svg-preview-zoom-scale-value">{svgZoomPercent}%</span>
+          </label>
+          <BadgeDownloadTrigger
+            fileName={fileName}
+            getSvgElement={getBadgeSvgElement}
+            triggerClassName="svg-preview-zoom-download"
+          />
+        </div>
+        <div ref={svgZoomBodyRef} className="svg-preview-zoom-body">
+          <div className="svg-preview-zoom-scaled" style={{ width: `${svgZoomPercent}%` }}>
+            <div dangerouslySetInnerHTML={{ __html: svgZoomMarkup }} />
+          </div>
+        </div>
+      </FullscreenOverlay>
     </>
   );
 };
@@ -1356,28 +1346,19 @@ function App() {
         open={isNewProjectConfirmOpen}
         overlayId={OVERLAY_IDS.newProjectConfirm}
         onDismiss={() => setIsNewProjectConfirmOpen(false)}
+        title="确认新建"
+        titleId="new-project-confirm-title"
       >
-        <div
-          className="confirm-dialog"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="new-project-confirm-title"
-          aria-describedby="new-project-confirm-desc"
-        >
-          <h2 id="new-project-confirm-title" className="confirm-dialog-title">
-            确认新建
-          </h2>
-          <p id="new-project-confirm-desc" className="confirm-dialog-body">
-            新建将创建空白线路图（无站点，保留默认线路编号与生成设置），覆盖当前编辑内容，并清空撤销历史，无法撤销至操作前。
-          </p>
-          <div className="confirm-dialog-actions">
-            <button type="button" className="secondary-button" onClick={() => setIsNewProjectConfirmOpen(false)}>
-              取消
-            </button>
-            <button type="button" className="primary-button" onClick={confirmNewProject}>
-              新建
-            </button>
-          </div>
+        <p id="new-project-confirm-desc" className="confirm-dialog-body">
+          新建将创建空白线路图（无站点，保留默认线路编号与生成设置），覆盖当前编辑内容，并清空撤销历史，无法撤销至操作前。
+        </p>
+        <div className="confirm-dialog-actions">
+          <button type="button" className="secondary-button" onClick={() => setIsNewProjectConfirmOpen(false)}>
+            取消
+          </button>
+          <button type="button" className="primary-button" onClick={confirmNewProject}>
+            新建
+          </button>
         </div>
       </ConfirmDialogOverlay>
 
@@ -1388,36 +1369,26 @@ function App() {
           setIsYamlImportConfirmOpen(false);
           setPendingRailmapImport(null);
         }}
+        title="确认导入 YAML"
+        titleId="yaml-import-confirm-title"
       >
-        <div
-          className="confirm-dialog"
-          role="alertdialog"
-            aria-modal="true"
-            aria-labelledby="yaml-import-confirm-title"
-            aria-describedby="yaml-import-confirm-desc"
-            onClick={(event) => event.stopPropagation()}
+        <p id="yaml-import-confirm-desc" className="confirm-dialog-body">
+          导入将覆盖当前站点列表、线路编号、标识色、线路编号字体色与生成设置（总长、方向等），并清空撤销历史，无法撤销至导入前。
+        </p>
+        <div className="confirm-dialog-actions">
+          <button
+            type="button"
+            className="secondary-button"
+            onClick={() => {
+              setIsYamlImportConfirmOpen(false);
+              setPendingRailmapImport(null);
+            }}
           >
-            <h2 id="yaml-import-confirm-title" className="confirm-dialog-title">
-              确认导入 YAML
-            </h2>
-            <p id="yaml-import-confirm-desc" className="confirm-dialog-body">
-              导入将覆盖当前站点列表、线路编号、标识色、线路编号字体色与生成设置（总长、方向等），并清空撤销历史，无法撤销至导入前。
-            </p>
-            <div className="confirm-dialog-actions">
-              <button
-                type="button"
-                className="secondary-button"
-                onClick={() => {
-                  setIsYamlImportConfirmOpen(false);
-                  setPendingRailmapImport(null);
-                }}
-              >
-                取消
-              </button>
-              <button type="button" className="primary-button" onClick={confirmYamlStationImport}>
-                继续
-              </button>
-            </div>
+            取消
+          </button>
+          <button type="button" className="primary-button" onClick={confirmYamlStationImport}>
+            继续
+          </button>
         </div>
       </ConfirmDialogOverlay>
 
@@ -1425,19 +1396,11 @@ function App() {
         open={yamlImportError !== null}
         overlayId={OVERLAY_IDS.yamlImportError}
         onDismiss={() => setYamlImportError(null)}
+        title="YAML 导入失败"
+        titleId="yaml-import-error-title"
       >
         {yamlImportError ? (
-          <div
-            className="confirm-dialog"
-            role="alertdialog"
-            aria-modal="true"
-            aria-labelledby="yaml-import-error-title"
-            aria-describedby="yaml-import-error-desc"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <h2 id="yaml-import-error-title" className="confirm-dialog-title">
-              YAML 导入失败
-            </h2>
+          <>
             <p id="yaml-import-error-desc" className="confirm-dialog-body">
               {yamlImportError}
             </p>
@@ -1446,7 +1409,7 @@ function App() {
                 知道了
               </button>
             </div>
-          </div>
+          </>
         ) : null}
       </ConfirmDialogOverlay>
 
@@ -1457,76 +1420,53 @@ function App() {
           setIsOverwriteStationsConfirmOpen(false);
           setPendingBuiltinFill(null);
         }}
+        title="确认覆盖站点列表"
+        titleId="overwrite-stations-confirm-title"
       >
-        <div
-          className="confirm-dialog"
-            role="alertdialog"
-            aria-modal="true"
-            aria-labelledby="overwrite-stations-confirm-title"
-            aria-describedby="overwrite-stations-confirm-desc"
-            onClick={(event) => event.stopPropagation()}
+        <p id="overwrite-stations-confirm-desc" className="confirm-dialog-body">
+          此操作将会覆盖站点列表，并清空撤销历史，无法撤销至覆盖前。
+        </p>
+        <div className="confirm-dialog-actions">
+          <button
+            type="button"
+            className="secondary-button"
+            onClick={() => {
+              setIsOverwriteStationsConfirmOpen(false);
+              setPendingBuiltinFill(null);
+            }}
           >
-            <h2 id="overwrite-stations-confirm-title" className="confirm-dialog-title">
-              确认覆盖站点列表
-            </h2>
-            <p id="overwrite-stations-confirm-desc" className="confirm-dialog-body">
-              此操作将会覆盖站点列表，并清空撤销历史，无法撤销至覆盖前。
-            </p>
-            <div className="confirm-dialog-actions">
-              <button
-                type="button"
-                className="secondary-button"
-                onClick={() => {
-                  setIsOverwriteStationsConfirmOpen(false);
-                  setPendingBuiltinFill(null);
-                }}
-              >
-                取消
-              </button>
-              <button type="button" className="primary-button" onClick={confirmBuiltinStationOverwrite}>
-                继续
-              </button>
-            </div>
+            取消
+          </button>
+          <button type="button" className="primary-button" onClick={confirmBuiltinStationOverwrite}>
+            继续
+          </button>
         </div>
       </ConfirmDialogOverlay>
 
-      <SiteOverlayBackdrop
+      <FullscreenOverlay
         open={isExampleModalOpen}
         overlayId={OVERLAY_IDS.exampleModal}
-        align="centered"
         onDismiss={() => setIsExampleModalOpen(false)}
+        title="参考样例"
+        titleId="example-modal-title"
+        size="page"
+        closeAriaLabel="关闭示例浮窗"
+        panelClassName="example-modal-overlay"
+        bodyClassName="example-modal-overlay-body"
       >
-        <section
-          className="example-modal"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="example-modal-title"
-          onClick={(event) => event.stopPropagation()}
-        >
-          <div className="example-modal-header">
-            <div>
-              <h2 id="example-modal-title" className="site-content-heading">
-                参考样例
-              </h2>
-              <p className="panel-subtitle">以下图片来自 public/assets，仅用于版式参考，并非当前表单的实时输出。</p>
-            </div>
-            <button type="button" className="icon-button" aria-label="关闭示例浮窗" onClick={() => setIsExampleModalOpen(false)}>
-              ×
-            </button>
-          </div>
-          <div className="example-gallery">
-            {sampleImages.map((sample) => (
-              <figure key={sample.title} className="example-card">
-                <img src={sample.src} alt={sample.title} loading="lazy" />
-                <figcaption>
-                  <strong>{sample.title}</strong>
-                  <span>{sample.description}</span>
-                </figcaption>
-              </figure>
-            ))}
-          </div>
-        </section>
-      </SiteOverlayBackdrop>
+        <p className="panel-subtitle">以下图片来自 public/assets，仅用于版式参考，并非当前表单的实时输出。</p>
+        <div className="example-gallery">
+          {sampleImages.map((sample) => (
+            <figure key={sample.title} className="example-card">
+              <img src={sample.src} alt={sample.title} loading="lazy" />
+              <figcaption>
+                <strong>{sample.title}</strong>
+                <span>{sample.description}</span>
+              </figcaption>
+            </figure>
+          ))}
+        </div>
+      </FullscreenOverlay>
 
       <SettingsDialog
         open={isSettingsOpen}
@@ -1544,31 +1484,21 @@ function App() {
         open={isAutosaveRestoreConfirmOpen}
         overlayId={OVERLAY_IDS.autosaveRestore}
         onDismiss={dismissAutosaveRestoreConfirm}
+        title="恢复自动保存"
+        titleId="autosave-restore-confirm-title"
       >
-        <div
-          className="confirm-dialog"
-          role="alertdialog"
-          aria-modal="true"
-          aria-labelledby="autosave-restore-confirm-title"
-          aria-describedby="autosave-restore-confirm-desc"
-          onClick={(event) => event.stopPropagation()}
-        >
-          <h2 id="autosave-restore-confirm-title" className="confirm-dialog-title">
-            恢复自动保存
-          </h2>
-          <p id="autosave-restore-confirm-desc" className="confirm-dialog-body">
-            {pendingAutosaveEntry
-              ? `将用 ${pendingAutosaveEntry.summary}（${new Date(pendingAutosaveEntry.savedAt).toLocaleString('zh-CN')}）覆盖当前编辑内容，并清空撤销历史。`
-              : ''}
-          </p>
-          <div className="confirm-dialog-actions">
-            <button type="button" className="secondary-button" onClick={dismissAutosaveRestoreConfirm}>
-              取消
-            </button>
-            <button type="button" className="primary-button" onClick={confirmAutosaveRestore}>
-              继续
-            </button>
-          </div>
+        <p id="autosave-restore-confirm-desc" className="confirm-dialog-body">
+          {pendingAutosaveEntry
+            ? `将用 ${pendingAutosaveEntry.summary}（${new Date(pendingAutosaveEntry.savedAt).toLocaleString('zh-CN')}）覆盖当前编辑内容，并清空撤销历史。`
+            : ''}
+        </p>
+        <div className="confirm-dialog-actions">
+          <button type="button" className="secondary-button" onClick={dismissAutosaveRestoreConfirm}>
+            取消
+          </button>
+          <button type="button" className="primary-button" onClick={confirmAutosaveRestore}>
+            继续
+          </button>
         </div>
       </ConfirmDialogOverlay>
 

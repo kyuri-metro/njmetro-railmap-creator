@@ -82,74 +82,69 @@ export function BadgeDownloadDialog({ open, fileName, getSvgElement, onClose }: 
   };
 
   return (
-    <ConfirmDialogOverlay open={open} overlayId={OVERLAY_IDS.badgeDownload} onDismiss={onClose}>
-      <div
-        className="confirm-dialog badge-download-dialog form-scope"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby={titleId}
-        onClick={(event) => event.stopPropagation()}
-      >
-        <h2 id={titleId} className="confirm-dialog-title">
-          下载贴纸
-        </h2>
-        <div className="confirm-dialog-body badge-download-dialog-body">
-          <label className="field-label">
-            <span>高度（默认800）</span>
-            <input
-              className="text-input"
-              type="number"
-              inputMode="numeric"
-              min={1}
-              step={1}
-              placeholder={String(DEFAULT_EXPORT_HEIGHT)}
-              value={exportHeightDraft}
-              onChange={(event) => setExportHeightDraft(event.target.value)}
-            />
-          </label>
-          <label className="field-label">
-            <span>格式</span>
-            <select
-              className="select-input"
-              value={format}
-              onChange={(event) => setFormat(event.target.value as BadgeDownloadFormat)}
-            >
-              {formatOptions.map((option) => (
-                <option key={option.value} value={option.value} disabled={option.disabled}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="field-label field-label-checkbox badge-download-attribution">
-            <input
-              type="checkbox"
-              checked={publishAttributionAccepted}
-              onChange={(event) => setPublishAttributionAccepted(event.target.checked)}
-            />
-            <span>
-              下载后，我发布本图片时将会附上
-              <code>{PUBLISH_ATTRIBUTION_SNIPPET}</code>
-              ，并附上
-              <a href={GENERATOR_PUBLIC_URL} target="_blank" rel="noreferrer">
-                本生成器链接
-              </a>
-            </span>
-          </label>
-        </div>
-        <div className="confirm-dialog-actions">
-          <button type="button" className="secondary-button" onClick={onClose} disabled={isExporting}>
-            取消
-          </button>
-          <button
-            type="button"
-            className={publishAttributionAccepted ? 'primary-button' : 'secondary-button'}
-            disabled={!publishAttributionAccepted || isExporting}
-            onClick={() => void handleDownload()}
-          >
-            下载
-          </button>
-        </div>
+    <ConfirmDialogOverlay
+      open={open}
+      overlayId={OVERLAY_IDS.badgeDownload}
+      onDismiss={onClose}
+      title="下载贴纸"
+      titleId={titleId}
+      panelClassName="badge-download-dialog"
+      bodyClassName="badge-download-dialog-body form-scope"
+    >
+      <label className="field-label">
+        <span>高度（默认800）</span>
+        <input
+          className="text-input"
+          type="number"
+          inputMode="numeric"
+          min={1}
+          step={1}
+          placeholder={String(DEFAULT_EXPORT_HEIGHT)}
+          value={exportHeightDraft}
+          onChange={(event) => setExportHeightDraft(event.target.value)}
+        />
+      </label>
+      <label className="field-label">
+        <span>格式</span>
+        <select
+          className="select-input"
+          value={format}
+          onChange={(event) => setFormat(event.target.value as BadgeDownloadFormat)}
+        >
+          {formatOptions.map((option) => (
+            <option key={option.value} value={option.value} disabled={option.disabled}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+      </label>
+      <label className="field-label field-label-checkbox badge-download-attribution">
+        <input
+          type="checkbox"
+          checked={publishAttributionAccepted}
+          onChange={(event) => setPublishAttributionAccepted(event.target.checked)}
+        />
+        <span>
+          下载后，我发布本图片时将会附上
+          <code>{PUBLISH_ATTRIBUTION_SNIPPET}</code>
+          ，并附上
+          <a href={GENERATOR_PUBLIC_URL} target="_blank" rel="noreferrer">
+            本生成器链接
+          </a>
+        </span>
+      </label>
+      <div className="confirm-dialog-actions">
+        <button type="button" className="secondary-button" onClick={onClose} disabled={isExporting}>
+          取消
+        </button>
+        <button
+          type="button"
+          className={publishAttributionAccepted ? 'primary-button' : 'secondary-button'}
+          disabled={!publishAttributionAccepted || isExporting}
+          onClick={() => void handleDownload()}
+        >
+          下载
+        </button>
       </div>
     </ConfirmDialogOverlay>
   );

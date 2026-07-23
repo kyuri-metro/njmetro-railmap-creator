@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react';
 import type { StationItem, StationType, TransferLine } from '../features/generatorSlice';
 import { OVERLAY_IDS } from '../overlay/overlayIds';
-import { SiteOverlayBackdrop } from '@umamichi-ui/common-components/overlay';
+import { FullscreenOverlay } from '@umamichi-ui/common-components/overlay';
 import { getNjmetroLineBackgroundColor, getNjmetroLineForegroundColor } from '../njmetroLinePalette';
 
 export type StationFormDraft = {
@@ -99,38 +99,27 @@ export function StationFormModal({
   };
 
   return (
-    <SiteOverlayBackdrop
+    <FullscreenOverlay
       open={open}
       overlayId={OVERLAY_IDS.stationForm}
-      align="centered"
       onDismiss={onClose}
       onExited={onExited}
+      title={modeLabel}
+      titleId="station-modal-title"
+      size="page"
+      closeAriaLabel="关闭弹窗"
       initialFocusRef={chNameInputRef}
+      panelClassName="station-form-overlay"
+      bodyClassName="form-scope station-form-overlay-body"
     >
-      <div
-        className="modal-card"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="station-modal-title"
-        onClick={(event) => event.stopPropagation()}
-      >
-        <div className="modal-header">
-          <div>
-            <h2 id="station-modal-title" className="site-content-heading">{modeLabel}</h2>
-          </div>
-          <button type="button" className="icon-button" onClick={onClose} aria-label="关闭弹窗">
-            x
-          </button>
-        </div>
+      <div className="modal-toolbar">
+        <button type="button" className="danger-button" onClick={onDelete} disabled={!allowDelete}>
+          删除
+        </button>
+      </div>
 
-        <div className="modal-toolbar">
-          <button type="button" className="danger-button" onClick={onDelete} disabled={!allowDelete}>
-            删除
-          </button>
-        </div>
-
-        <div className="modal-form form-scope">
-          <label className="field-label">
+      <div className="modal-form">
+      <label className="field-label">
             <span>chName（中文名）</span>
             <input
               ref={chNameInputRef}
@@ -241,9 +230,8 @@ export function StationFormModal({
               </div>
             </div>
           </label>
-        </div>
       </div>
-    </SiteOverlayBackdrop>
+    </FullscreenOverlay>
   );
 }
 

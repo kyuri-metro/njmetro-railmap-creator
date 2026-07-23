@@ -584,20 +584,32 @@ h3 {
   height: 8px;
 }
 
-.kyuri-rmg-tool-dialog {
-  width: min(960px, 96vw);
-  max-width: 96vw;
-  max-height: 92vh;
-  overflow: auto;
+@media (min-width: 721px) {
+  .fullscreen-overlay.kyuri-rmg-tool-dialog {
+    max-width: min(960px, calc(100vw - 2rem));
+  }
+}
+
+.kyuri-rmg-tool-dialog-body {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .kyuri-rmg-tool-iframe {
   display: block;
   width: 100%;
+  flex: 1 1 auto;
+  min-height: 12rem;
   height: min(72vh, 720px);
   margin: 0;
   border: 1px solid var(--site-header-border);
   background: var(--site-bg);
+}
+
+.fullscreen-overlay--fill .kyuri-rmg-tool-iframe {
+  height: auto;
 }
 
 .station-yaml-tool-icon {
@@ -872,30 +884,19 @@ html.dark .station-table th {
   display: block;
 }
 
-.svg-preview-zoom-dialog {
+@media (min-width: 721px) {
+  .fullscreen-overlay.svg-preview-zoom-dialog {
+    max-width: min(96rem, calc(100vw - 2rem));
+    height: min(48rem, calc(100dvh - 2.5rem));
+  }
+}
+
+.svg-preview-zoom-overlay-body {
   display: flex;
   flex-direction: column;
-  width: calc(100vw - 32px);
-  max-width: 100%;
-  max-height: calc(100vh - 32px);
-  padding: 16px 18px 14px;
-  box-sizing: border-box;
-  border-radius: 0;
-  border: 1px solid var(--site-border-strong);
-  background: var(--site-surface);
-  color: var(--site-fg);
-}
-
-.svg-preview-zoom-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 12px;
-}
-
-.svg-preview-zoom-title {
-  margin: 0;
+  min-height: 0;
+  overflow: hidden;
+  padding-bottom: 0.75rem;
 }
 
 .svg-preview-zoom-toolbar {
@@ -975,6 +976,16 @@ html.dark .station-table th {
   display: grid;
   gap: 12px;
   margin-top: 10px;
+}
+
+.station-form-overlay-body {
+  gap: 12px;
+}
+
+.station-form-overlay-body > .modal-form {
+  margin-top: 0;
+  flex: 0 0 auto;
+  align-content: start;
 }
 
 .modal-transfer-editor {
@@ -1080,7 +1091,14 @@ html.dark .station-table th {
 }
 
 .settings-dialog {
-  width: min(100%, 26rem);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+@media (min-width: 721px) {
+  .settings-dialog {
+    max-width: 26rem;
+  }
 }
 
 .settings-dialog-body {
@@ -1163,6 +1181,20 @@ html.dark .station-table th {
 .modal-card,
 .example-modal {
   border-radius: 0;
+}
+
+@media (min-width: 721px) {
+  .fullscreen-overlay.station-form-overlay {
+    max-width: min(40rem, calc(100vw - 2rem));
+  }
+
+  .fullscreen-overlay.example-modal-overlay {
+    max-width: min(56rem, calc(100vw - 2rem));
+  }
+}
+
+.example-modal-overlay-body .panel-subtitle {
+  margin: 0 0 1rem;
 }
 
 /* DirectionBadge：预览包装 + 线路号方块 HTML 说明层（不进入序列化 SVG） */

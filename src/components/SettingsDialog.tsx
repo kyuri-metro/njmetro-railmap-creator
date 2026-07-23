@@ -60,47 +60,43 @@ export function SettingsDialog({ open, onClose, onOpenAutosaveList }: SettingsDi
   };
 
   return (
-    <ConfirmDialogOverlay open={open} overlayId={OVERLAY_IDS.settings} onDismiss={onClose}>
-      <form
-        className="confirm-dialog settings-dialog form-scope"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="settings-dialog-title"
-        onClick={(event) => event.stopPropagation()}
-        onSubmit={handleSubmit}
-      >
-        <h2 id="settings-dialog-title" className="confirm-dialog-title">
-          设置
-        </h2>
-        <div className="confirm-dialog-body settings-dialog-body">
-          <label className="settings-field" htmlFor={intervalFieldId}>
-            <span className="settings-field-label">自动保存间隔（秒）</span>
-            <input
-              id={intervalFieldId}
-              type="number"
-              min={30}
-              max={3600}
-              step={1}
-              value={intervalDraft}
-              onChange={(event) => setIntervalDraft(event.target.value)}
-            />
-          </label>
-          <label className="settings-field" htmlFor={maxEntriesFieldId}>
-            <span className="settings-field-label">最大自动保存项</span>
-            <input
-              id={maxEntriesFieldId}
-              type="number"
-              min={1}
-              max={50}
-              step={1}
-              value={maxEntriesDraft}
-              onChange={(event) => setMaxEntriesDraft(event.target.value)}
-            />
-          </label>
-          <button type="button" className="secondary-button settings-autosave-list-button" onClick={handleOpenAutosaveList}>
-            查看自动保存的内容
-          </button>
-        </div>
+    <ConfirmDialogOverlay
+      open={open}
+      overlayId={OVERLAY_IDS.settings}
+      onDismiss={onClose}
+      title="设置"
+      titleId="settings-dialog-title"
+      bodyClassName="form-scope"
+      panelClassName="settings-dialog-overlay"
+    >
+      <form className="settings-dialog settings-dialog-body" onSubmit={handleSubmit}>
+        <label className="settings-field" htmlFor={intervalFieldId}>
+          <span className="settings-field-label">自动保存间隔（秒）</span>
+          <input
+            id={intervalFieldId}
+            type="number"
+            min={30}
+            max={3600}
+            step={1}
+            value={intervalDraft}
+            onChange={(event) => setIntervalDraft(event.target.value)}
+          />
+        </label>
+        <label className="settings-field" htmlFor={maxEntriesFieldId}>
+          <span className="settings-field-label">最大自动保存项</span>
+          <input
+            id={maxEntriesFieldId}
+            type="number"
+            min={1}
+            max={50}
+            step={1}
+            value={maxEntriesDraft}
+            onChange={(event) => setMaxEntriesDraft(event.target.value)}
+          />
+        </label>
+        <button type="button" className="secondary-button settings-autosave-list-button" onClick={handleOpenAutosaveList}>
+          查看自动保存的内容
+        </button>
         <div className="confirm-dialog-actions">
           <button type="button" className="secondary-button" onClick={onClose}>
             取消
