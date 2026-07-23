@@ -1064,14 +1064,40 @@ html.dark .station-table th {
 
 @media (min-width: 721px) {
   .fullscreen-overlay.badge-download-dialog {
-    width: min(100%, 28rem);
+    width: min(100%, 30rem);
   }
 }
 
 .badge-download-dialog-body {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 16px;
+}
+
+.badge-download-export-fields {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr);
+  gap: 12px 14px;
+  align-items: start;
+}
+
+.badge-download-export-fields .field-label .text-input,
+.badge-download-export-fields .field-label .select-input {
+  width: 100%;
+  max-width: none;
+}
+
+.badge-download-section-rule {
+  height: 0;
+  margin: 0;
+  border: 0;
+  border-top: 1px solid var(--site-border);
+}
+
+.badge-download-attribution-block {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
 .badge-download-attribution {
@@ -1093,10 +1119,28 @@ html.dark .station-table th {
 }
 
 .badge-download-watermark-hint {
-  margin: -6px 0 0;
-  color: var(--site-muted-fg);
-  font-size: 0.88em;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  color: var(--site-content-fg);
+  font-size: 0.92rem;
   line-height: 1.45;
+}
+
+.badge-download-watermark-hint-icon {
+  flex-shrink: 0;
+  width: 1.15em;
+  height: 1.15em;
+  margin-top: 0.12em;
+  color: var(--site-accent);
+}
+
+@media (max-width: 420px) {
+  .badge-download-export-fields {
+    grid-template-columns: 1fr;
+  }
 }
 
 .settings-dialog {
