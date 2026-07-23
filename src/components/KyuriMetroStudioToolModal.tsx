@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { KYURI_METRO_STUDIO_CHILD_SOURCE } from '../kyuriMetroStudioProtocol';
 import { OVERLAY_IDS } from '../overlay/overlayIds';
 import { FullscreenOverlay } from '@umamichi-ui/common-components/overlay';
+import { InfoCircleIcon } from '@umamichi-ui/common-components/icons';
 
 type KyuriMetroStudioToolModalProps = {
   open: boolean;
@@ -80,10 +81,14 @@ export function KyuriMetroStudioToolModal({
       panelClassName="kyuri-rmg-tool-dialog"
       bodyClassName="kyuri-rmg-tool-dialog-body"
     >
-      <p className="confirm-dialog-body" style={{ marginBottom: 10 }}>
-        在下方上传或粘贴 Metro Studio 工程 JSON（.metro-studio.json），选择线路后点击「转换」。回到本站后确认即可更新线路。
+      <p className="dialog-note kyuri-tool-dialog-note">
+        <InfoCircleIcon className="dialog-note-icon" />
+        <span>
+          在下方上传或粘贴 Metro Studio 工程 JSON（.metro-studio.json），选择线路后点击「转换」。回到本站后确认即可更新线路。
+        </span>
       </p>
       <iframe title="Metro Studio → Kyuri naive" src={iframeSrc} className="kyuri-rmg-tool-iframe" />
+      <div className="dialog-section-rule" role="separator" />
       <div className="confirm-dialog-actions">
         <button type="button" className="secondary-button" onClick={onClose}>
           关闭

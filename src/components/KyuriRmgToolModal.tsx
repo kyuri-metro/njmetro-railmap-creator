@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import { KYURI_RMG_CHILD_SOURCE, KYURI_RMG_PARENT_SOURCE } from '../kyuriRmgProtocol';
 import { OVERLAY_IDS } from '../overlay/overlayIds';
 import { FullscreenOverlay } from '@umamichi-ui/common-components/overlay';
+import { InfoCircleIcon } from '@umamichi-ui/common-components/icons';
 
 type KyuriRmgToolModalProps = {
   open: boolean;
@@ -133,12 +134,16 @@ export function KyuriRmgToolModal({
       panelClassName="kyuri-rmg-tool-dialog"
       bodyClassName="kyuri-rmg-tool-dialog-body"
     >
-      <p className="confirm-dialog-body" style={{ marginBottom: 10 }}>
-        {mode === 'import'
-          ? '在下方粘贴 RMG 参数 JSON，点击「转换」。回到本站后确认即可更新线路。'
-          : '正在生成 RMG 参数 JSON，完成后将自动下载。'}
+      <p className="dialog-note kyuri-tool-dialog-note">
+        <InfoCircleIcon className="dialog-note-icon" />
+        <span>
+          {mode === 'import'
+            ? '在下方粘贴 RMG 参数 JSON，点击「转换」。回到本站后确认即可更新线路。'
+            : '正在生成 RMG 参数 JSON，完成后将自动下载。'}
+        </span>
       </p>
       <iframe ref={iframeRef} title="Kyuri naive ↔ RMG" src={iframeSrc} className="kyuri-rmg-tool-iframe" />
+      <div className="dialog-section-rule" role="separator" />
       <div className="confirm-dialog-actions">
         <button type="button" className="secondary-button" onClick={onClose}>
           关闭

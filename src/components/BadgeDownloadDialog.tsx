@@ -124,7 +124,7 @@ export function BadgeDownloadDialog({ open, fileName, getSvgElement, onClose }: 
         </label>
       </div>
 
-      <div className="badge-download-section-rule" role="separator" />
+      <div className="dialog-section-rule" role="separator" />
 
       <div className="badge-download-attribution-block">
         <label className="field-label field-label-checkbox badge-download-attribution">
@@ -143,8 +143,8 @@ export function BadgeDownloadDialog({ open, fileName, getSvgElement, onClose }: 
             </a>
           </span>
         </label>
-        <p id={watermarkHintId} className="badge-download-watermark-hint" role="note">
-          <InfoCircleIcon className="badge-download-watermark-hint-icon" />
+        <p id={watermarkHintId} className="dialog-note badge-download-watermark-hint" role="note">
+          <InfoCircleIcon className="dialog-note-icon" />
           <span>未勾选时，下载的图片将带生成器水印。</span>
         </p>
       </div>

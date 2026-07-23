@@ -118,8 +118,11 @@ export function StationFormModal({
         </button>
       </div>
 
+      <div className="dialog-section-rule" role="separator" />
+
       <div className="modal-form">
-      <label className="field-label">
+        <div className="dialog-field-row">
+          <label className="field-label">
             <span>chName（中文名）</span>
             <input
               ref={chNameInputRef}
@@ -140,96 +143,97 @@ export function StationFormModal({
               required
             />
           </label>
-          <label className="field-label">
-            <span>type（站点类型）</span>
-            <select
-              className="select-input"
-              value={draft.type}
-              onChange={(event) => patchDraft((current) => ({ ...current, type: event.target.value as StationType }))}
-            >
-              {stationTypeOptions.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="field-label">
-            <span>transfer（换乘线路）</span>
-            <div className="modal-transfer-editor">
-              <div className="table-wrap modal-transfer-table-wrap">
-                <table className="station-table modal-transfer-table">
-                  <colgroup>
-                    <col className="modal-transfer-col-id" />
-                    <col className="modal-transfer-col-color" />
-                    <col className="modal-transfer-col-text" />
-                    <col className="modal-transfer-col-action" />
-                  </colgroup>
-                  <thead>
-                    <tr>
-                      <th>线路编号</th>
-                      <th>标识色</th>
-                      <th>字体色</th>
-                      <th aria-label="删除换乘线路" />
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {draft.transfer.length > 0 ? (
-                      draft.transfer.map((line, index) => (
-                        <tr key={`transfer-line-${index}`}>
-                          <td>
-                            <input
-                              className="text-input"
-                              value={line.id}
-                              onChange={(event) => updateTransferLine(index, 'id', event.target.value)}
-                              placeholder="例如：2 或 S1"
-                            />
-                          </td>
-                          <td>
-                            <input
-                              type="color"
-                              value={line.color}
-                              onChange={(event) => updateTransferLine(index, 'color', event.target.value)}
-                              aria-label={`换乘线路 ${index + 1} 的标识色`}
-                            />
-                          </td>
-                          <td>
-                            <input
-                              type="color"
-                              value={line.textColor}
-                              onChange={(event) => updateTransferLine(index, 'textColor', event.target.value)}
-                              aria-label={`换乘线路 ${index + 1} 的字体色`}
-                            />
-                          </td>
-                          <td className="station-action-cell">
-                            <button
-                              type="button"
-                              className="icon-button"
-                              onClick={() => removeTransferLine(index)}
-                              aria-label={`删除第 ${index + 1} 条换乘线路`}
-                            >
-                              x
-                            </button>
-                          </td>
-                        </tr>
-                      ))
-                    ) : (
-                      <tr>
-                        <td colSpan={4} className="modal-transfer-empty">
-                          暂无换乘线路
+        </div>
+        <label className="field-label">
+          <span>type（站点类型）</span>
+          <select
+            className="select-input"
+            value={draft.type}
+            onChange={(event) => patchDraft((current) => ({ ...current, type: event.target.value as StationType }))}
+          >
+            {stationTypeOptions.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="field-label">
+          <span>transfer（换乘线路）</span>
+          <div className="modal-transfer-editor">
+            <div className="table-wrap modal-transfer-table-wrap">
+              <table className="station-table modal-transfer-table">
+                <colgroup>
+                  <col className="modal-transfer-col-id" />
+                  <col className="modal-transfer-col-color" />
+                  <col className="modal-transfer-col-text" />
+                  <col className="modal-transfer-col-action" />
+                </colgroup>
+                <thead>
+                  <tr>
+                    <th>线路编号</th>
+                    <th>标识色</th>
+                    <th>字体色</th>
+                    <th aria-label="删除换乘线路" />
+                  </tr>
+                </thead>
+                <tbody>
+                  {draft.transfer.length > 0 ? (
+                    draft.transfer.map((line, index) => (
+                      <tr key={`transfer-line-${index}`}>
+                        <td>
+                          <input
+                            className="text-input"
+                            value={line.id}
+                            onChange={(event) => updateTransferLine(index, 'id', event.target.value)}
+                            placeholder="例如：2 或 S1"
+                          />
+                        </td>
+                        <td>
+                          <input
+                            type="color"
+                            value={line.color}
+                            onChange={(event) => updateTransferLine(index, 'color', event.target.value)}
+                            aria-label={`换乘线路 ${index + 1} 的标识色`}
+                          />
+                        </td>
+                        <td>
+                          <input
+                            type="color"
+                            value={line.textColor}
+                            onChange={(event) => updateTransferLine(index, 'textColor', event.target.value)}
+                            aria-label={`换乘线路 ${index + 1} 的字体色`}
+                          />
+                        </td>
+                        <td className="station-action-cell">
+                          <button
+                            type="button"
+                            className="icon-button"
+                            onClick={() => removeTransferLine(index)}
+                            aria-label={`删除第 ${index + 1} 条换乘线路`}
+                          >
+                            x
+                          </button>
                         </td>
                       </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
-              <div className="modal-transfer-actions">
-                <button type="button" className="secondary-button" onClick={addTransferLine}>
-                  添加换乘线路
-                </button>
-              </div>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan={4} className="modal-transfer-empty">
+                        暂无换乘线路
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
             </div>
-          </label>
+            <div className="modal-transfer-actions">
+              <button type="button" className="secondary-button" onClick={addTransferLine}>
+                添加换乘线路
+              </button>
+            </div>
+          </div>
+        </label>
       </div>
     </FullscreenOverlay>
   );

@@ -593,8 +593,13 @@ h3 {
 .kyuri-rmg-tool-dialog-body {
   display: flex;
   flex-direction: column;
+  gap: 12px;
   min-height: 0;
   overflow: hidden;
+}
+
+.kyuri-tool-dialog-note {
+  flex-shrink: 0;
 }
 
 .kyuri-rmg-tool-iframe {
@@ -974,12 +979,14 @@ html.dark .station-table th {
 
 .modal-form {
   display: grid;
-  gap: 12px;
-  margin-top: 10px;
+  gap: 14px;
+  margin-top: 0;
 }
 
 .station-form-overlay-body {
-  gap: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
 }
 
 .station-form-overlay-body > .modal-form {
@@ -1068,6 +1075,52 @@ html.dark .station-table th {
   }
 }
 
+/* Shared dialog layout (download / settings / station / tool modals). */
+.dialog-section-rule {
+  height: 0;
+  margin: 0;
+  border: 0;
+  border-top: 1px solid var(--site-border);
+}
+
+.dialog-field-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px 14px;
+  align-items: start;
+}
+
+.dialog-field-row .field-label .text-input,
+.dialog-field-row .field-label .select-input {
+  width: 100%;
+  max-width: none;
+}
+
+.dialog-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  color: var(--site-content-fg);
+  font-size: 0.92rem;
+  line-height: 1.45;
+}
+
+.dialog-note-icon {
+  flex-shrink: 0;
+  width: 1.15em;
+  height: 1.15em;
+  margin-top: 0.12em;
+  color: var(--site-accent);
+}
+
+@media (max-width: 420px) {
+  .dialog-field-row {
+    grid-template-columns: 1fr;
+  }
+}
+
 .badge-download-dialog-body {
   display: flex;
   flex-direction: column;
@@ -1085,13 +1138,6 @@ html.dark .station-table th {
 .badge-download-export-fields .field-label .select-input {
   width: 100%;
   max-width: none;
-}
-
-.badge-download-section-rule {
-  height: 0;
-  margin: 0;
-  border: 0;
-  border-top: 1px solid var(--site-border);
 }
 
 .badge-download-attribution-block {
@@ -1118,25 +1164,6 @@ html.dark .station-table th {
   word-break: break-word;
 }
 
-.badge-download-watermark-hint {
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  margin: 0;
-  padding: 0;
-  color: var(--site-content-fg);
-  font-size: 0.92rem;
-  line-height: 1.45;
-}
-
-.badge-download-watermark-hint-icon {
-  flex-shrink: 0;
-  width: 1.15em;
-  height: 1.15em;
-  margin-top: 0.12em;
-  color: var(--site-accent);
-}
-
 @media (max-width: 420px) {
   .badge-download-export-fields {
     grid-template-columns: 1fr;
@@ -1148,28 +1175,19 @@ html.dark .station-table th {
 }
 
 @media (min-width: 721px) {
-  .fullscreen-overlay.settings-dialog {
-    width: min(100%, 26rem);
+  .fullscreen-overlay.settings-dialog-overlay {
+    width: min(100%, 28rem);
   }
 }
 
 .settings-dialog-body {
-  display: grid;
-  gap: 14px;
-}
-
-.settings-field {
-  display: grid;
-  gap: 6px;
-}
-
-.settings-field-label {
-  font-size: 0.9rem;
-  color: var(--site-content-fg);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 
 .settings-autosave-list-button {
-  justify-self: start;
+  align-self: start;
 }
 
 .autosave-list-dialog {
@@ -1177,6 +1195,14 @@ html.dark .station-table th {
 }
 
 .autosave-list-dialog-body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  overflow: hidden;
+}
+
+.autosave-list-scroll {
+  min-height: 0;
   max-height: min(52vh, 420px);
   overflow: auto;
 }
@@ -1245,8 +1271,14 @@ html.dark .station-table th {
   }
 }
 
-.example-modal-overlay-body .panel-subtitle {
-  margin: 0 0 1rem;
+.example-modal-overlay-body {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.example-modal-overlay-body .example-modal-note {
+  flex-shrink: 0;
 }
 
 /* DirectionBadge：预览包装 + 线路号方块 HTML 说明层（不进入序列化 SVG） */

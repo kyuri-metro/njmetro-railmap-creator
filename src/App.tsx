@@ -1454,7 +1454,10 @@ function App() {
         panelClassName="example-modal-overlay"
         bodyClassName="example-modal-overlay-body"
       >
-        <p className="panel-subtitle">以下图片来自 public/assets，仅用于版式参考，并非当前表单的实时输出。</p>
+        <p className="dialog-note example-modal-note">
+          <InfoCircleIcon className="dialog-note-icon" />
+          <span>以下图片来自 public/assets，仅用于版式参考，并非当前表单的实时输出。</span>
+        </p>
         <div className="example-gallery">
           {sampleImages.map((sample) => (
             <figure key={sample.title} className="example-card">

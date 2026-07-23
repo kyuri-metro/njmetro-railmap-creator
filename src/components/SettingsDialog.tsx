@@ -22,6 +22,7 @@ const parsePositiveInt = (raw: string, fallback: number) => {
 };
 
 export function SettingsDialog({ open, onClose, onOpenAutosaveList }: SettingsDialogProps) {
+  const titleId = useId();
   const intervalFieldId = useId();
   const maxEntriesFieldId = useId();
   const [intervalDraft, setIntervalDraft] = useState(String(DEFAULT_AUTOSAVE_SETTINGS.intervalSeconds));
@@ -65,38 +66,46 @@ export function SettingsDialog({ open, onClose, onOpenAutosaveList }: SettingsDi
       overlayId={OVERLAY_IDS.settings}
       onDismiss={onClose}
       title="设置"
-      titleId="settings-dialog-title"
+      titleId={titleId}
       bodyClassName="form-scope"
       panelClassName="settings-dialog-overlay"
     >
       <form className="settings-dialog settings-dialog-body" onSubmit={handleSubmit}>
-        <label className="settings-field" htmlFor={intervalFieldId}>
-          <span className="settings-field-label">自动保存间隔（秒）</span>
-          <input
-            id={intervalFieldId}
-            type="number"
-            min={30}
-            max={3600}
-            step={1}
-            value={intervalDraft}
-            onChange={(event) => setIntervalDraft(event.target.value)}
-          />
-        </label>
-        <label className="settings-field" htmlFor={maxEntriesFieldId}>
-          <span className="settings-field-label">最大自动保存项</span>
-          <input
-            id={maxEntriesFieldId}
-            type="number"
-            min={1}
-            max={50}
-            step={1}
-            value={maxEntriesDraft}
-            onChange={(event) => setMaxEntriesDraft(event.target.value)}
-          />
-        </label>
+        <div className="dialog-field-row">
+          <label className="field-label" htmlFor={intervalFieldId}>
+            <span>自动保存间隔（秒）</span>
+            <input
+              id={intervalFieldId}
+              className="text-input"
+              type="number"
+              min={30}
+              max={3600}
+              step={1}
+              value={intervalDraft}
+              onChange={(event) => setIntervalDraft(event.target.value)}
+            />
+          </label>
+          <label className="field-label" htmlFor={maxEntriesFieldId}>
+            <span>最大自动保存项</span>
+            <input
+              id={maxEntriesFieldId}
+              className="text-input"
+              type="number"
+              min={1}
+              max={50}
+              step={1}
+              value={maxEntriesDraft}
+              onChange={(event) => setMaxEntriesDraft(event.target.value)}
+            />
+          </label>
+        </div>
+
+        <div className="dialog-section-rule" role="separator" />
+
         <button type="button" className="secondary-button settings-autosave-list-button" onClick={handleOpenAutosaveList}>
           查看自动保存的内容
         </button>
+
         <div className="confirm-dialog-actions">
           <button type="button" className="secondary-button" onClick={onClose}>
             取消
