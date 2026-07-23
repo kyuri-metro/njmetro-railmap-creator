@@ -886,7 +886,7 @@ html.dark .station-table th {
 
 @media (min-width: 721px) {
   .fullscreen-overlay.svg-preview-zoom-dialog {
-    max-width: min(96rem, calc(100vw - 2rem));
+    width: min(100%, 96rem);
     height: min(48rem, calc(100dvh - 2.5rem));
   }
 }
@@ -1062,8 +1062,10 @@ html.dark .station-table th {
   }
 }
 
-.badge-download-dialog {
-  width: min(100%, 28rem);
+@media (min-width: 721px) {
+  .fullscreen-overlay.badge-download-dialog {
+    width: min(100%, 28rem);
+  }
 }
 
 .badge-download-dialog-body {
@@ -1090,14 +1092,20 @@ html.dark .station-table th {
   word-break: break-word;
 }
 
+.badge-download-watermark-hint {
+  margin: -6px 0 0;
+  color: var(--site-muted-fg);
+  font-size: 0.88em;
+  line-height: 1.45;
+}
+
 .settings-dialog {
-  width: 100%;
   box-sizing: border-box;
 }
 
 @media (min-width: 721px) {
-  .settings-dialog {
-    max-width: 26rem;
+  .fullscreen-overlay.settings-dialog {
+    width: min(100%, 26rem);
   }
 }
 
@@ -1185,11 +1193,11 @@ html.dark .station-table th {
 
 @media (min-width: 721px) {
   .fullscreen-overlay.station-form-overlay {
-    max-width: min(40rem, calc(100vw - 2rem));
+    width: min(100%, 40rem);
   }
 
   .fullscreen-overlay.example-modal-overlay {
-    max-width: min(56rem, calc(100vw - 2rem));
+    width: min(100%, 56rem);
   }
 }
 
