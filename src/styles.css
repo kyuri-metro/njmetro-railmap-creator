@@ -301,7 +301,13 @@ h1 {
   top: 12px;
   align-self: start;
   max-height: calc(100vh - 24px);
-  overflow: auto;
+  /*
+   * Chromatic fringe on result actions (下载 / 放大) translates a few px past the
+   * button box; overflow:auto would inflate scrollWidth and show a horizontal bar.
+   * clip (not hidden) lets overflow-y stay independent per CSS Overflow L3.
+   */
+  overflow-x: clip;
+  overflow-y: auto;
   min-width: 0;
 }
 
@@ -317,7 +323,8 @@ h1 {
   .app-column-preview {
     position: static;
     max-height: none;
-    overflow: visible;
+    overflow-x: clip;
+    overflow-y: visible;
   }
 
   .app-column-preview .panel:first-of-type {
