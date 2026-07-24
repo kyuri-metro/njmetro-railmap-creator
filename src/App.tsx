@@ -1127,8 +1127,8 @@ function App() {
                 <a href={docsReferenceUrl} target="_blank" rel="noreferrer">
                   参考资料（docs/）
                 </a>
-                <a href="https://umamichi.moe/" target="_blank" rel="noreferrer">
-                  个人网站
+                <a href="https://umamichi.moe/tools/" target="_blank" rel="noreferrer">
+                  更多工具
                 </a>
                 <button type="button" className="ghost-button example-trigger" onClick={() => setIsExampleModalOpen(true)}>
                   查看示例
