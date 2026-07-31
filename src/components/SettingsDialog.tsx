@@ -25,8 +25,12 @@ export function SettingsDialog({ open, onClose, onOpenAutosaveList }: SettingsDi
   const titleId = useId();
   const intervalFieldId = useId();
   const maxEntriesFieldId = useId();
+  const autoFillColorFieldId = useId();
   const [intervalDraft, setIntervalDraft] = useState(String(DEFAULT_AUTOSAVE_SETTINGS.intervalSeconds));
   const [maxEntriesDraft, setMaxEntriesDraft] = useState(String(DEFAULT_AUTOSAVE_SETTINGS.maxEntries));
+  const [autoFillNjmetroLineColor, setAutoFillNjmetroLineColor] = useState(
+    DEFAULT_AUTOSAVE_SETTINGS.autoFillNjmetroLineColor,
+  );
 
   useEffect(() => {
     if (!open) {
@@ -36,17 +40,20 @@ export function SettingsDialog({ open, onClose, onOpenAutosaveList }: SettingsDi
     const settings = readAutosaveSettings();
     setIntervalDraft(String(settings.intervalSeconds));
     setMaxEntriesDraft(String(settings.maxEntries));
+    setAutoFillNjmetroLineColor(settings.autoFillNjmetroLineColor);
   }, [open]);
 
   const persistSettings = () => {
     const next: AutosaveSettings = {
       intervalSeconds: parsePositiveInt(intervalDraft, DEFAULT_AUTOSAVE_SETTINGS.intervalSeconds),
       maxEntries: parsePositiveInt(maxEntriesDraft, DEFAULT_AUTOSAVE_SETTINGS.maxEntries),
+      autoFillNjmetroLineColor,
     };
     const normalized = writeAutosaveSettings(next);
     updateAutosaveSchedulerSettings(normalized);
     setIntervalDraft(String(normalized.intervalSeconds));
     setMaxEntriesDraft(String(normalized.maxEntries));
+    setAutoFillNjmetroLineColor(normalized.autoFillNjmetroLineColor);
   };
 
   const handleSubmit = (event: FormEvent) => {
@@ -99,6 +106,16 @@ export function SettingsDialog({ open, onClose, onOpenAutosaveList }: SettingsDi
             />
           </label>
         </div>
+
+        <label className="field-label field-label-checkbox" htmlFor={autoFillColorFieldId}>
+          <input
+            id={autoFillColorFieldId}
+            type="checkbox"
+            checked={autoFillNjmetroLineColor}
+            onChange={(event) => setAutoFillNjmetroLineColor(event.target.checked)}
+          />
+          <span>输入线路号后自动填充南京地铁线路色</span>
+        </label>
 
         <div className="dialog-section-rule" role="separator" />
 

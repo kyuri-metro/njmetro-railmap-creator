@@ -1,5 +1,6 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 import { getBuiltinOpenedStationsByLineId } from '../builtinOpenedLineStations';
+import { readAutosaveSettings } from '../autosaveStorage';
 import { getNjmetroLineBackgroundColor, getNjmetroLineForegroundColor } from '../njmetroLinePalette';
 
 export type TransferLine = {
@@ -108,6 +109,11 @@ const generatorSlice = createSlice({
     setLineId(state, action: PayloadAction<string>) {
       const lineId = action.payload;
       state.lineId = lineId;
+
+      if (!readAutosaveSettings().autoFillNjmetroLineColor) {
+        return;
+      }
+
       const paletteColor = getNjmetroLineBackgroundColor(lineId);
       const paletteText = getNjmetroLineForegroundColor(lineId);
 

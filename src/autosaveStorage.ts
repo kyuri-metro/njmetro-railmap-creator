@@ -1,6 +1,7 @@
 export type AutosaveSettings = {
   intervalSeconds: number;
   maxEntries: number;
+  autoFillNjmetroLineColor: boolean;
 };
 
 export type AutosaveEntry = {
@@ -16,6 +17,7 @@ const ENTRIES_KEY = 'njmetro-railmap-autosave-entries';
 export const DEFAULT_AUTOSAVE_SETTINGS: AutosaveSettings = {
   intervalSeconds: 300,
   maxEntries: 10,
+  autoFillNjmetroLineColor: true,
 };
 
 const clampIntervalSeconds = (value: number) => {
@@ -53,6 +55,10 @@ export const readAutosaveSettings = (): AutosaveSettings => {
         parsed.intervalSeconds ?? DEFAULT_AUTOSAVE_SETTINGS.intervalSeconds,
       ),
       maxEntries: clampMaxEntries(parsed.maxEntries ?? DEFAULT_AUTOSAVE_SETTINGS.maxEntries),
+      autoFillNjmetroLineColor:
+        typeof parsed.autoFillNjmetroLineColor === 'boolean'
+          ? parsed.autoFillNjmetroLineColor
+          : DEFAULT_AUTOSAVE_SETTINGS.autoFillNjmetroLineColor,
     };
   } catch {
     return DEFAULT_AUTOSAVE_SETTINGS;
@@ -63,6 +69,7 @@ export const writeAutosaveSettings = (settings: AutosaveSettings) => {
   const normalized: AutosaveSettings = {
     intervalSeconds: clampIntervalSeconds(settings.intervalSeconds),
     maxEntries: clampMaxEntries(settings.maxEntries),
+    autoFillNjmetroLineColor: settings.autoFillNjmetroLineColor,
   };
 
   window.localStorage.setItem(SETTINGS_KEY, JSON.stringify(normalized));

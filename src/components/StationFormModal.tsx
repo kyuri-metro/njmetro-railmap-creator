@@ -2,6 +2,7 @@ import { useRef, useState } from 'react';
 import type { StationItem, StationType, TransferLine } from '../features/generatorSlice';
 import { OVERLAY_IDS } from '../overlay/overlayIds';
 import { FullscreenOverlay } from '@umamichi-ui/common-components/overlay';
+import { readAutosaveSettings } from '../autosaveStorage';
 import { getNjmetroLineBackgroundColor, getNjmetroLineForegroundColor } from '../njmetroLinePalette';
 
 export type StationFormDraft = {
@@ -65,7 +66,7 @@ export function StationFormModal({
 
         const next = { ...line, [field]: value };
 
-        if (field === 'id') {
+        if (field === 'id' && readAutosaveSettings().autoFillNjmetroLineColor) {
           const upper = value.trim().toUpperCase();
           const paletteColor = getNjmetroLineBackgroundColor(upper);
           const paletteText = getNjmetroLineForegroundColor(upper);

@@ -11,6 +11,7 @@
 
 ### Added
 
+- 设置项「输入线路号后自动填充南京地铁线路色」（默认开启）：关闭后改主线路号或换乘线路号时不再自动套用官方色板底色 / 字色。
 - `@umamichi-ui/chromatic-fringe`：指针驱动色差描边（顶栏底边、页面按钮与打开中的 `FloatingMenu` 面板）；顶栏控件跳过 box fringe。
 - 「按线路填充站点」下拉：线路号左侧显示标志色圆点（开通线网用官方色，简办用 `resolveJianbanLine*`，含 16/18 虚拟参考色）。
 - 依赖 `@umamichi-ui/windows-phone-motion`：为全屏浮层提供与 umamichi.moe 历史记录窗一致的 WPM 进出场时长与缓动。
