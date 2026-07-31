@@ -84,7 +84,11 @@ export function KyuriMetroStudioToolModal({
       <p className="dialog-note kyuri-tool-dialog-note">
         <InfoCircleIcon className="dialog-note-icon" />
         <span>
-          在下方上传或粘贴 Metro Studio 工程 JSON（.metro-studio.json），选择线路后点击「转换」。回到本站后确认即可更新线路。
+          在下方上传或粘贴{' '}
+          <a href="https://metro-studio-iota.vercel.app/" target="_blank" rel="noreferrer">
+            Metro Studio
+          </a>{' '}
+          工程 JSON（.metro-studio.json），选择线路后点击「转换」。回到本站后确认即可更新线路。
         </span>
       </p>
       <iframe title="Metro Studio → Kyuri naive" src={iframeSrc} className="kyuri-rmg-tool-iframe" />
