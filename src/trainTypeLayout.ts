@@ -41,7 +41,7 @@ const BADGE_CANVAS_BY_TRAIN_TYPE: Record<TrainType, BadgeCanvasSizes> = {
   },
   'suburban-d': {
     currentStation: 2730,
-    direction: 3400,
+    direction: 5100,
     route: 5120,
     height: 800,
   },

@@ -18,7 +18,7 @@ describe('trainTypeLayout', () => {
     expect(getBadgeCanvasSizes('b-long').route).toBe(7924);
     expect(getBadgeCanvasSizes('suburban-d')).toEqual({
       currentStation: 2730,
-      direction: 3400,
+      direction: 5100,
       route: 5120,
       height: 800,
     });
