@@ -37,7 +37,7 @@ import {
 } from './features/generatorSlice';
 import { FontDetectionHubTiles } from './components/FontDetectionHubTiles';
 import { detectTargetFonts, targetFontSignatures, type FontDetectionResult } from './fontSignature';
-import { getNjmetroLineForegroundColor } from './njmetroLinePalette';
+import { normalizeTransferLines } from './normalizeTransfer';
 import { serializeRailmapYaml } from './stationListYaml';
 import { useAppDispatch, useAppSelector, selectCanRedo, selectCanUndo, selectGeneratorPresent } from './hooks';
 import { store, UndoActionCreators } from './store';
@@ -63,15 +63,7 @@ const fallbackFontDetectionResults: FontDetectionResult[] = Object.entries(targe
   detected: false,
 }));
 const sanitizeTransfer = (value: TransferLine[]): TransferLine[] =>
-  value
-    .map((entry) => {
-      const id = entry.id.trim();
-      const color = /^#[0-9a-fA-F]{6}$/.test(entry.color) ? entry.color.toLowerCase() : '#8c989f';
-      const textFromEntry = entry.textColor && /^#[0-9a-fA-F]{6}$/.test(entry.textColor) ? entry.textColor.toLowerCase() : null;
-      const textColor = textFromEntry ?? getNjmetroLineForegroundColor(id) ?? '#ffffff';
-      return { id, color, textColor };
-    })
-    .filter((entry) => entry.id.length > 0);
+  normalizeTransferLines(value, { fallbackColor: '#8c989f' });
 
 const toStationItem = (draft: StationFormDraft, id: string): StationItem => ({
   id,

@@ -1,6 +1,7 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 import { getBuiltinOpenedStationsByLineId } from '../builtinOpenedLineStations';
 import { readAutosaveSettings } from '../autosaveStorage';
+import { normalizeTransferLines } from '../normalizeTransfer';
 import { getNjmetroLineBackgroundColor, getNjmetroLineForegroundColor } from '../njmetroLinePalette';
 
 export type TransferLine = {
@@ -168,11 +169,7 @@ const generatorSlice = createSlice({
       const { stations } = action.payload;
       state.stnList = stations.map((station) => ({
         ...station,
-        transfer: station.transfer.map((line) => ({
-          id: line.id,
-          color: line.color,
-          textColor: line.textColor ?? getNjmetroLineForegroundColor(line.id) ?? '#ffffff',
-        })),
+        transfer: normalizeTransferLines(station.transfer),
       }));
       state.currentStnId = stations[0]?.id ?? '';
     },

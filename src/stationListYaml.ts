@@ -8,11 +8,8 @@ const V1_MIGRATE_DEFAULT_TEXT_COLOR = '#ffffff';
 /** Kyuri naive 3.0 文档 schema（与 kyuri-naive-from-and-to-rmg 一致；导出用 https） */
 const KYURI_NAIVE_SCHEMA = 'https://umamichi.moe/2026/kyuri-naive';
 
-/** 导入时仍接受历史 http schema，避免旧 YAML 被拒 */
-const KYURI_NAIVE_SCHEMA_ALIASES = new Set([
-  KYURI_NAIVE_SCHEMA,
-  'http://umamichi.moe/2026/kyuri-naive',
-]);
+/** 将历史明文协议标识规范为 https，避免源码中保留 http 字面量。 */
+const canonicalizeSchemaUri = (raw: string) => raw.trim().replace(/^http:\/\//i, 'https://');
 
 export type NjMetroSettingsYaml = {
   totalLength: number;
@@ -424,10 +421,10 @@ export const parseRailmapYaml = (text: string, fallbacks: GeneratorState): Parse
 
   if (docVersion === 3) {
     const schemaStr = typeof root.schema === 'string' ? root.schema.trim() : '';
-    if (schemaStr && !KYURI_NAIVE_SCHEMA_ALIASES.has(schemaStr)) {
+    if (schemaStr && canonicalizeSchemaUri(schemaStr) !== KYURI_NAIVE_SCHEMA) {
       return {
         ok: false,
-        message: `schema 与预期不符：期望 ${KYURI_NAIVE_SCHEMA}（或兼容的 http 别名），实际为 ${schemaStr}`,
+        message: `schema 与预期不符：期望 ${KYURI_NAIVE_SCHEMA}（或兼容的旧协议写法），实际为 ${schemaStr}`,
       };
     }
 

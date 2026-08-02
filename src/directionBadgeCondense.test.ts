@@ -7,7 +7,7 @@ vi.mock('./measureBadgeText', () => ({
   measureDirectionToLabelWidth: vi.fn(() => 120),
 }));
 
-vi.mock('./components/LineIdBadge', () => ({
+vi.mock('./lineIdBadgeMetrics', () => ({
   getLineIdBadgeWidth: vi.fn(() => 280),
 }));
 
@@ -15,7 +15,7 @@ vi.mock('./directionCondenseDebug', () => ({
   logDirectionCondenseSnapshot: vi.fn(),
 }));
 
-import { getLineIdBadgeWidth } from './components/LineIdBadge';
+import { getLineIdBadgeWidth } from './lineIdBadgeMetrics';
 import { resolveDirectionCondense } from './directionBadgeCondense';
 import {
   measureDirectionStationEnWidth,

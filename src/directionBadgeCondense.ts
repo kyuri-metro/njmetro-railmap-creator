@@ -16,7 +16,7 @@ import {
   getDirectionSectionMaxTotalWidthForLineId,
   type DirectionLayoutConstraintSnapshot,
 } from './directionBadgeLayout';
-import { getLineIdBadgeWidth } from './components/LineIdBadge';
+import { getLineIdBadgeWidth } from './lineIdBadgeMetrics';
 import {
   measureDirectionNextLabelWidth,
   measureDirectionStationEnWidth,

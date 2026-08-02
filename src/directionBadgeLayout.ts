@@ -1,4 +1,4 @@
-import { getLineIdBadgeWidth } from './components/LineIdBadge';
+import { getLineIdBadgeWidth } from './lineIdBadgeMetrics';
 
 /** 方向吊板 SVG 几何规格（主稿 viewBox `0 0 3972 800`）。 */
 

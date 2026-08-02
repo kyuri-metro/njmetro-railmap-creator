@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useIframeToolMessages } from '../hooks/useIframeToolMessages';
 import { KYURI_METRO_STUDIO_CHILD_SOURCE } from '../kyuriMetroStudioProtocol';
 import { OVERLAY_IDS } from '../overlay/overlayIds';
 import { FullscreenOverlay } from '@umamichi-ui/common-components/overlay';
@@ -21,33 +21,11 @@ export function KyuriMetroStudioToolModal({
 }: KyuriMetroStudioToolModalProps) {
   const iframeSrc = baseUrl ? `${baseUrl}/?hideOutput=1&flow=metro-studio-to-kyuri` : '';
 
-  useEffect(() => {
-    if (!open || !baseUrl) {
-      return;
-    }
-
-    let expectedOrigin = '';
-    try {
-      expectedOrigin = new URL(baseUrl).origin;
-    } catch {
-      return;
-    }
-
-    const onMsg = (e: MessageEvent) => {
-      if (expectedOrigin && e.origin !== expectedOrigin) {
-        return;
-      }
-      const d = e.data as {
-        source?: string;
-        type?: string;
-        ok?: boolean;
-        yaml?: string;
-        message?: string;
-      };
-      if (!d || d.source !== KYURI_METRO_STUDIO_CHILD_SOURCE) {
-        return;
-      }
-
+  useIframeToolMessages({
+    open,
+    baseUrl,
+    childSource: KYURI_METRO_STUDIO_CHILD_SOURCE,
+    onMessage: (d) => {
       if (d.type === 'result') {
         if (d.ok && typeof d.yaml === 'string') {
           onImportedYaml(d.yaml);
@@ -58,11 +36,8 @@ export function KyuriMetroStudioToolModal({
           window.alert(d.message);
         }
       }
-    };
-
-    window.addEventListener('message', onMsg);
-    return () => window.removeEventListener('message', onMsg);
-  }, [open, baseUrl, onImportedYaml, onClose]);
+    },
+  });
 
   if (!baseUrl) {
     return null;

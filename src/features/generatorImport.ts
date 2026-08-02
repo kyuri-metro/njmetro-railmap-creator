@@ -1,5 +1,6 @@
 import { getNjmetroLineBackgroundColor, getNjmetroLineForegroundColor } from '../njmetroLinePalette';
 import { resolveJianbanLineBackgroundColor, resolveJianbanLineForegroundColor } from '../jianbanLineColors';
+import { normalizeTransferLines } from '../normalizeTransfer';
 import type { RailmapYamlImport } from '../stationListYaml';
 import type { GeneratorState } from './generatorSlice';
 
@@ -10,11 +11,7 @@ export const railmapImportToGeneratorState = (
   ...previous,
   stnList: data.stations.map((station) => ({
     ...station,
-    transfer: station.transfer.map((line) => ({
-      id: line.id,
-      color: line.color,
-      textColor: line.textColor ?? getNjmetroLineForegroundColor(line.id) ?? '#ffffff',
-    })),
+    transfer: normalizeTransferLines(station.transfer),
   })),
   currentStnId: data.njMetroSettings.currentStnId,
   totalLength: data.njMetroSettings.totalLength,
@@ -45,11 +42,7 @@ export const builtinLineToGeneratorState = (
     idTextColor: paletteText ?? previous.idTextColor,
     stnList: stations.map((station) => ({
       ...station,
-      transfer: station.transfer.map((line) => ({
-        id: line.id,
-        color: line.color,
-        textColor: line.textColor ?? getNjmetroLineForegroundColor(line.id) ?? '#ffffff',
-      })),
+      transfer: normalizeTransferLines(station.transfer),
     })),
     currentStnId: stations[0]?.id ?? '',
   };

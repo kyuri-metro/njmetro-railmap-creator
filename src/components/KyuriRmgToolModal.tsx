@@ -1,4 +1,6 @@
 import { useEffect, useRef } from 'react';
+import { triggerBlobDownload } from '../badgeExport';
+import { useIframeToolMessages } from '../hooks/useIframeToolMessages';
 import { KYURI_RMG_CHILD_SOURCE, KYURI_RMG_PARENT_SOURCE } from '../kyuriRmgProtocol';
 import { OVERLAY_IDS } from '../overlay/overlayIds';
 import { FullscreenOverlay } from '@umamichi-ui/common-components/overlay';
@@ -8,24 +10,11 @@ type KyuriRmgToolModalProps = {
   open: boolean;
   mode: 'import' | 'export';
   baseUrl: string;
-  /** export 模式：当前线路 Kyuri YAML */
   kyuriYamlForExport: string;
   onClose: () => void;
   onExited?: () => void;
-  /** import 成功拿到 YAML */
   onImportedYaml: (yaml: string) => void;
 };
-
-function triggerBlobDownload(blob: Blob, downloadName: string) {
-  const objectUrl = window.URL.createObjectURL(blob);
-  const downloadLink = document.createElement('a');
-  downloadLink.href = objectUrl;
-  downloadLink.download = downloadName;
-  document.body.append(downloadLink);
-  downloadLink.click();
-  downloadLink.remove();
-  window.URL.revokeObjectURL(objectUrl);
-}
 
 export function KyuriRmgToolModal({
   open,
@@ -51,34 +40,11 @@ export function KyuriRmgToolModal({
     }
   }, [open]);
 
-  useEffect(() => {
-    if (!open || !baseUrl) {
-      return;
-    }
-
-    let expectedOrigin = '';
-    try {
-      expectedOrigin = new URL(baseUrl).origin;
-    } catch {
-      return;
-    }
-
-    const onMsg = (e: MessageEvent) => {
-      if (expectedOrigin && e.origin !== expectedOrigin) {
-        return;
-      }
-      const d = e.data as {
-        source?: string;
-        type?: string;
-        ok?: boolean;
-        yaml?: string;
-        json?: string;
-        message?: string;
-      };
-      if (!d || d.source !== KYURI_RMG_CHILD_SOURCE) {
-        return;
-      }
-
+  useIframeToolMessages({
+    open,
+    baseUrl,
+    childSource: KYURI_RMG_CHILD_SOURCE,
+    onMessage: (d, { origin }) => {
       if (d.type === 'ready') {
         if (mode === 'export' && iframeRef.current?.contentWindow && !exportPayloadSentRef.current) {
           exportPayloadSentRef.current = true;
@@ -89,7 +55,7 @@ export function KyuriRmgToolModal({
               yaml: kyuriYamlRef.current,
               thenConvert: true,
             } as const,
-            expectedOrigin || '*',
+            origin || '*',
           );
         }
         return;
@@ -111,11 +77,8 @@ export function KyuriRmgToolModal({
           window.alert(d.message);
         }
       }
-    };
-
-    window.addEventListener('message', onMsg);
-    return () => window.removeEventListener('message', onMsg);
-  }, [open, baseUrl, mode, onImportedYaml, onClose]);
+    },
+  });
 
   if (!baseUrl) {
     return null;

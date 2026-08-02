@@ -17,7 +17,8 @@ import {
 } from '../directionBadgeLayout';
 import type { GeneratorState } from '../features/generatorSlice';
 import { sansLatinFontStack, sansZhFontStack } from '../fontStacks';
-import { getLineIdBadgeWidth, LineIdBadge } from './LineIdBadge';
+import { getLineIdBadgeWidth } from '../lineIdBadgeMetrics';
+import { LineIdBadge } from './LineIdBadge';
 import { LineIdBlockAttributionOverlay } from './LineIdBlockAttributionOverlay';
 import { useSvgPositioner } from './svgPositioning';
 

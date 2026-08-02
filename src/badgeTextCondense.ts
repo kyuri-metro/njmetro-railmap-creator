@@ -107,3 +107,16 @@ export const getDirectionStationEnCondense = (
   defaultLetterSpacing: number,
 ): BadgeTextCondenseConfig =>
   getDirectionStationCondenseFromTier(defaultLetterSpacing, 'en', getDirectionInitialTier(name, 'en'));
+
+/** 线路图吊板站名压缩（与方向吊板阈值相近，但缩放系数独立）。 */
+export const getRouteZhNameCondense = (name: string): BadgeTextCondenseConfig => {
+  if (name.length >= 14) {
+    return { letterSpacing: 0, transform: scaleTransform(0.5) };
+  }
+
+  if (name.length >= 7) {
+    return { letterSpacing: 0, transform: scaleTransform(0.8) };
+  }
+
+  return { letterSpacing: 4, transform: undefined };
+};

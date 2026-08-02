@@ -1,7 +1,21 @@
 import { useId, useLayoutEffect, useRef, useState, type CSSProperties } from 'react';
+import { getRouteZhNameCondense } from '../badgeTextCondense';
 import type { GeneratorState, StationItem, TransferLine } from '../features/generatorSlice';
 import { njmetroDingsFontStack, sansLatinFontStack, sansZhFontStack } from '../fontStacks';
-import { LineIdBadge, getLineIdBadgeWidth } from './LineIdBadge';
+import { getLineIdBadgeWidth } from '../lineIdBadgeMetrics';
+import {
+  routeBadgeCanvas,
+  routeBadgeCurrentCard,
+  routeBadgeDirectionArrow,
+  routeBadgeDirectionArrowScale,
+  routeBadgeGaps,
+  routeBadgeLayoutOffsetX,
+  routeBadgeLine,
+  routeBadgeStationRadii,
+  routeBadgeTransferIcon,
+  routeBadgeTransferLineId,
+} from '../routeBadgeLayout';
+import { LineIdBadge } from './LineIdBadge';
 import { useSvgPositioner } from './svgPositioning';
 
 type RouteBadgeProps = {
@@ -33,37 +47,36 @@ const getStationTypeIcon = (type: StationItem['type']) => {
   return stationTypeIconMap[type];
 };
 
-const width = 7412;
-const height = 800;
-const lineCenterY = 315.75;
-const lineThickness = 46;
-const smallStationRadius = 17;
-const endStationRadius = 33.5;
-const endStationInnerRadius = 25.5;
-const currentOuterRadius = 37.5;
-const currentInnerRadius = 28;
-const directionArrowBaseWidth = 340;
-const directionArrowBaseHeight = 294.5;
-const directionArrowWidth = 355;
-const directionArrowGap = 105;
-const directionArrowScale = directionArrowWidth / directionArrowBaseWidth;
-const routeLayoutOffsetX = (directionArrowWidth + directionArrowGap) / 2;
-const topLabelGap = 11;
-const bottomLabelGap = 11;
-const topTransferGap = 130.25;
-const bottomTransferGap = 142.75;
-const currentCardConnectorHeight = lineThickness / 2 + 35.5;
-const currentCardGap = 12.5;
-const currentCardHorizontalPadding = 23.5;
-const currentCardTopPadding = 12;
-const currentCardBottomPadding = 10.5;
-const transferIconViewBoxX = -10;
-const transferIconViewBoxWidth = 797;
-const transferIconViewBoxHeight = 1000;
-const transferIconColor = '#000000';
-const currentStationAccent = '#142966';
-const transferIconPath =
-  'M 494,1000 C 494,983 646,881 646,669 C 646,638 640,535 565,452 L 539,423 C 455,500 539,423 455,500 C 448,188 455,500 448,188 L 757,224 L 673,301 L 702,333 C 729,362 787,425 787,566 C 787,858 499,1000 494,1000 Z M 283,0 C 283,17 131,119 131,331 C 131,362 137,464 212,547 L 238,576 C 322,499 238,576 322,499 C 329,810 322,499 329,810 L 20,774 L 105,697 L 76,665 C 49,636 -10,573 -10,432 C -10,142 278,0 283,0 Z';
+const width = routeBadgeCanvas.width;
+const height = routeBadgeCanvas.height;
+const lineCenterY = routeBadgeLine.centerY;
+const lineThickness = routeBadgeLine.thickness;
+const smallStationRadius = routeBadgeStationRadii.small;
+const endStationRadius = routeBadgeStationRadii.endOuter;
+const endStationInnerRadius = routeBadgeStationRadii.endInner;
+const currentOuterRadius = routeBadgeStationRadii.currentOuter;
+const currentInnerRadius = routeBadgeStationRadii.currentInner;
+const directionArrowBaseWidth = routeBadgeDirectionArrow.baseWidth;
+const directionArrowBaseHeight = routeBadgeDirectionArrow.baseHeight;
+const directionArrowWidth = routeBadgeDirectionArrow.width;
+const directionArrowGap = routeBadgeDirectionArrow.gap;
+const directionArrowScale = routeBadgeDirectionArrowScale;
+const routeLayoutOffsetX = routeBadgeLayoutOffsetX;
+const topLabelGap = routeBadgeGaps.topLabel;
+const bottomLabelGap = routeBadgeGaps.bottomLabel;
+const topTransferGap = routeBadgeGaps.topTransfer;
+const bottomTransferGap = routeBadgeGaps.bottomTransfer;
+const currentCardConnectorHeight = routeBadgeCurrentCard.connectorHeight;
+const currentCardGap = routeBadgeCurrentCard.gap;
+const currentCardHorizontalPadding = routeBadgeCurrentCard.horizontalPadding;
+const currentCardTopPadding = routeBadgeCurrentCard.topPadding;
+const currentCardBottomPadding = routeBadgeCurrentCard.bottomPadding;
+const transferIconViewBoxX = routeBadgeTransferIcon.viewBoxX;
+const transferIconViewBoxWidth = routeBadgeTransferIcon.viewBoxWidth;
+const transferIconViewBoxHeight = routeBadgeTransferIcon.viewBoxHeight;
+const transferIconColor = routeBadgeTransferIcon.color;
+const currentStationAccent = routeBadgeCurrentCard.accent;
+const transferIconPath = routeBadgeTransferIcon.path;
 
 const StationAnchorPoint = () => <rect x="-0.5" y="-0.5" width="1" height="1" fill="transparent" />;
 
@@ -98,7 +111,7 @@ const DirectionArrow = ({ direction }: { direction: 'l' | 'r' }) => {
 
   return (
     <g transform={`translate(${translateX} ${translateY}) rotate(${rotation}) scale(${directionArrowScale})`}>
-      <path d="m 145.5,0 h 71 L 99.5,119 H 340 v 55 H 100 l 120.5,120.5 h -74 L 0,148 Z" fill="#000000" />
+      <path d={routeBadgeDirectionArrow.path} fill="#000000" />
     </g>
   );
 };
@@ -118,30 +131,9 @@ const TransferStationIcon = ({ color, symbolId, targetHeight }: { color: string;
   );
 };
 
-const getZhNameCondenseConfig = (name: string) => {
-  if (name.length >= 14) {
-    return {
-      letterSpacing: 0,
-      transform: 'scale(0.5,1)',
-    };
-  }
-
-  if (name.length >= 7) {
-    return {
-      letterSpacing: 0,
-      transform: 'scale(0.8,1)',
-    };
-  }
-
-  return {
-    letterSpacing: 4,
-    transform: undefined,
-  };
-};
-
 const TransferBadgeGroup = ({ lines }: { lines: TransferLine[] }) => {
-  const gap = 12.5;
-  const badgeHeight = 68.5;
+  const gap = routeBadgeTransferLineId.gap;
+  const badgeHeight = routeBadgeTransferLineId.badgeHeight;
   const supportedLines = lines
     .map((line) => ({ line, width: getLineIdBadgeWidth(line.id, badgeHeight) }))
     .filter((entry): entry is { line: TransferLine; width: number } => entry.width !== null);
@@ -168,7 +160,7 @@ const TransferBadgeGroup = ({ lines }: { lines: TransferLine[] }) => {
 };
 
 const StationTextBlock = ({ showStationTypeIcons, station }: { showStationTypeIcons: boolean; station: StationItem }) => {
-  const zhNameCondenseConfig = getZhNameCondenseConfig(station.chName);
+  const zhNameCondenseConfig = getRouteZhNameCondense(station.chName);
   const stationTypeIcon = showStationTypeIcons ? getStationTypeIcon(station.type) : null;
 
   return (
@@ -193,7 +185,7 @@ const StationTextBlock = ({ showStationTypeIcons, station }: { showStationTypeIc
 
 const CurrentStationCardTextBlock = ({ showStationTypeIcons, station }: { showStationTypeIcons: boolean; station: StationItem }) => {
   const shouldCondenseZhName = station.chName.length >= 7;
-  const zhNameCondenseConfig = getZhNameCondenseConfig(station.chName);
+  const zhNameCondenseConfig = getRouteZhNameCondense(station.chName);
   const stationTypeIcon = showStationTypeIcons ? getStationTypeIcon(station.type) : null;
   const textColor = '#ffffff';
 
