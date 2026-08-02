@@ -11,6 +11,7 @@ import {
   type GeneratorState,
 } from '../features/generatorSlice';
 import { useAppDispatch } from '../hooks';
+import { isUndeterminedTrainTypeLineId } from '../njmetroLineTrainTypes';
 import { parseRailmapYaml, serializeRailmapYaml, type RailmapYamlImport } from '../stationListYaml';
 import { UndoActionCreators } from '../store';
 
@@ -38,6 +39,7 @@ export function useGeneratorWorkspaceActions({
   const [isYamlImportConfirmOpen, setIsYamlImportConfirmOpen] = useState(false);
   const [pendingRailmapImport, setPendingRailmapImport] = useState<RailmapYamlImport | null>(null);
   const [yamlImportError, setYamlImportError] = useState<string | null>(null);
+  const [isUndeterminedTrainTypeNoticeOpen, setIsUndeterminedTrainTypeNoticeOpen] = useState(false);
 
   const applyRestoredState = (nextState: GeneratorState) => {
     syncControlDraftsFromGenerator(nextState);
@@ -135,6 +137,10 @@ export function useGeneratorWorkspaceActions({
     }
 
     applyRestoredState(builtinLineToGeneratorState(lineId, builtinStations, generator, network));
+
+    if (isUndeterminedTrainTypeLineId(lineId)) {
+      setIsUndeterminedTrainTypeNoticeOpen(true);
+    }
   };
 
   const handleAutosaveEntrySelect = (entry: AutosaveEntry) => {
@@ -174,6 +180,7 @@ export function useGeneratorWorkspaceActions({
     isYamlImportConfirmOpen,
     yamlImportError,
     setYamlImportError,
+    isUndeterminedTrainTypeNoticeOpen,
     dismissAutosaveRestoreConfirm,
     handleExportStationYaml,
     applyYamlTextForImport,
@@ -194,5 +201,6 @@ export function useGeneratorWorkspaceActions({
       setPendingBuiltinFill(null);
     },
     dismissYamlError: () => setYamlImportError(null),
+    dismissUndeterminedTrainTypeNotice: () => setIsUndeterminedTrainTypeNoticeOpen(false),
   };
 }

@@ -36,6 +36,7 @@ const directionSections = {
 export type ResolveDirectionCondenseParams = {
   direction: 'l' | 'r';
   lineId: string;
+  canvasWidth: number;
   toStation: { chName: string; enName: string };
   nextStation: { chName: string; enName: string };
 };
@@ -126,8 +127,13 @@ const applyPairMove = (tiers: DirectionCondenseState, section: 'to' | 'next'): D
   return changed ? nextTiers : null;
 };
 
-const buildConstraints = (direction: 'l' | 'r', lineId: string, totalWidth: number): DirectionLayoutConstraintSnapshot => {
-  const maxTotalWidth = getDirectionSectionMaxTotalWidthForLineId(direction, lineId);
+const buildConstraints = (
+  direction: 'l' | 'r',
+  lineId: string,
+  canvasWidth: number,
+  totalWidth: number,
+): DirectionLayoutConstraintSnapshot => {
+  const maxTotalWidth = getDirectionSectionMaxTotalWidthForLineId(direction, lineId, canvasWidth);
 
   return {
     maxTotalWidth,
@@ -149,6 +155,39 @@ const compareCandidates = (a: DirectionCondenseCandidate, b: DirectionCondenseCa
   }
 
   return 0;
+};
+
+const tryPairMoveCandidate = (
+  names: DirectionCondenseNames,
+  tiers: DirectionCondenseState,
+  currentTotalWidth: number,
+  section: 'to' | 'next',
+): DirectionCondenseCandidate | null => {
+  const [zhKey, enKey] = directionSections[section];
+  const pairTiers = applyPairMove(tiers, section);
+
+  if (!pairTiers) {
+    return null;
+  }
+
+  const pairTotalWidth = measureDirectionSectionTotalWidth(names, pairTiers);
+
+  if (pairTotalWidth >= currentTotalWidth) {
+    return null;
+  }
+
+  const singleZhTiers = applySingleMove(tiers, zhKey);
+  const singleEnTiers = applySingleMove(tiers, enKey);
+  const singleZhWidth =
+    singleZhTiers === null ? currentTotalWidth : measureDirectionSectionTotalWidth(names, singleZhTiers);
+  const singleEnWidth =
+    singleEnTiers === null ? currentTotalWidth : measureDirectionSectionTotalWidth(names, singleEnTiers);
+
+  if (singleZhWidth >= currentTotalWidth && singleEnWidth >= currentTotalWidth) {
+    return { move: { type: 'pair', section }, tiers: pairTiers, totalWidth: pairTotalWidth };
+  }
+
+  return null;
 };
 
 const enumerateCandidates = (
@@ -173,28 +212,9 @@ const enumerateCandidates = (
   }
 
   for (const section of ['to', 'next'] as const) {
-    const [zhKey, enKey] = directionSections[section];
-    const pairTiers = applyPairMove(tiers, section);
-
-    if (!pairTiers) {
-      continue;
-    }
-
-    const pairTotalWidth = measureDirectionSectionTotalWidth(names, pairTiers);
-
-    if (pairTotalWidth >= currentTotalWidth) {
-      continue;
-    }
-
-    const singleZhTiers = applySingleMove(tiers, zhKey);
-    const singleEnTiers = applySingleMove(tiers, enKey);
-    const singleZhWidth =
-      singleZhTiers === null ? currentTotalWidth : measureDirectionSectionTotalWidth(names, singleZhTiers);
-    const singleEnWidth =
-      singleEnTiers === null ? currentTotalWidth : measureDirectionSectionTotalWidth(names, singleEnTiers);
-
-    if (singleZhWidth >= currentTotalWidth && singleEnWidth >= currentTotalWidth) {
-      candidates.push({ move: { type: 'pair', section }, tiers: pairTiers, totalWidth: pairTotalWidth });
+    const pairCandidate = tryPairMoveCandidate(names, tiers, currentTotalWidth, section);
+    if (pairCandidate) {
+      candidates.push(pairCandidate);
     }
   }
 
@@ -206,7 +226,11 @@ export const resolveDirectionCondense = (params: ResolveDirectionCondenseParams)
   const initialTiers = buildInitialTiers(names);
   let tiers = initialTiers;
   let totalWidth = measureDirectionSectionTotalWidth(names, tiers);
-  const maxTotalWidth = getDirectionSectionMaxTotalWidthForLineId(params.direction, params.lineId);
+  const maxTotalWidth = getDirectionSectionMaxTotalWidthForLineId(
+    params.direction,
+    params.lineId,
+    params.canvasWidth,
+  );
 
   if (totalWidth === 0 || maxTotalWidth === 0) {
     return { tiers: initialTiers };
@@ -226,7 +250,8 @@ export const resolveDirectionCondense = (params: ResolveDirectionCondenseParams)
         break;
       }
 
-      const best = candidates.sort(compareCandidates)[0];
+      const sortedCandidates = candidates.toSorted(compareCandidates);
+      const best = sortedCandidates[0];
 
       if (best.totalWidth >= totalWidth) {
         stoppedBecause = 'no-improvement';
@@ -239,7 +264,6 @@ export const resolveDirectionCondense = (params: ResolveDirectionCondenseParams)
       greedySteps.push({ step, move: best.move, totalWidth });
 
       if (totalWidth <= maxTotalWidth) {
-        stoppedBecause = 'fits';
         break;
       }
     }
@@ -258,7 +282,7 @@ export const resolveDirectionCondense = (params: ResolveDirectionCondenseParams)
     lineBadgeWidth,
     names,
     totalWidth,
-    constraints: buildConstraints(params.direction, params.lineId, totalWidth),
+    constraints: buildConstraints(params.direction, params.lineId, params.canvasWidth, totalWidth),
     initialTiers,
     finalTiers: tiers,
     lineWidths,

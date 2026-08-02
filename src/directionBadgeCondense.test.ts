@@ -38,6 +38,7 @@ describe('resolveDirectionCondense', () => {
     const result = resolveDirectionCondense({
       direction: 'l',
       lineId: '3',
+      canvasWidth: 3972,
       toStation: { chName: '甲', enName: 'A' },
       nextStation: { chName: '乙', enName: 'B' },
     });
@@ -61,6 +62,7 @@ describe('resolveDirectionCondense', () => {
     const result = resolveDirectionCondense({
       direction: 'l',
       lineId: '3',
+      canvasWidth: 3972,
       toStation: { chName: '甲', enName: 'Alpha' },
       nextStation: { chName: '乙', enName: 'Beta' },
     });
@@ -75,6 +77,7 @@ describe('resolveDirectionCondense', () => {
     const result = resolveDirectionCondense({
       direction: 'r',
       lineId: '1',
+      canvasWidth: 3972,
       toStation: { chName: '一二三四五六七', enName: 'Short' },
       nextStation: { chName: '甲', enName: 'B' },
     });
@@ -89,6 +92,7 @@ describe('resolveDirectionCondense', () => {
     const result = resolveDirectionCondense({
       direction: 'l',
       lineId: '3',
+      canvasWidth: 3972,
       toStation: { chName: '甲', enName: 'A' },
       nextStation: { chName: '乙', enName: 'B' },
     });

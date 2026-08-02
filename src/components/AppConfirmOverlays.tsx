@@ -38,6 +38,9 @@ export type AppConfirmOverlaysProps = {
   onDismissOverwriteStations: () => void;
   onConfirmOverwriteStations: () => void;
 
+  isUndeterminedTrainTypeNoticeOpen: boolean;
+  onDismissUndeterminedTrainTypeNotice: () => void;
+
   isExampleModalOpen: boolean;
   onDismissExampleModal: () => void;
 
@@ -59,6 +62,8 @@ export const AppConfirmOverlays = ({
   isOverwriteStationsConfirmOpen,
   onDismissOverwriteStations,
   onConfirmOverwriteStations,
+  isUndeterminedTrainTypeNoticeOpen,
+  onDismissUndeterminedTrainTypeNotice,
   isExampleModalOpen,
   onDismissExampleModal,
   isAutosaveRestoreConfirmOpen,
@@ -144,6 +149,23 @@ export const AppConfirmOverlays = ({
         </button>
         <button type="button" className="primary-button" onClick={onConfirmOverwriteStations}>
           继续
+        </button>
+      </div>
+    </ConfirmDialogOverlay>
+
+    <ConfirmDialogOverlay
+      open={isUndeterminedTrainTypeNoticeOpen}
+      overlayId={OVERLAY_IDS.undeterminedTrainTypeNotice}
+      onDismiss={onDismissUndeterminedTrainTypeNotice}
+      title="编组未定"
+      titleId="undetermined-train-type-notice-title"
+    >
+      <p id="undetermined-train-type-notice-desc" className="confirm-dialog-body">
+        简办视频中编组未定，已填充站点但未更改车型。
+      </p>
+      <div className="confirm-dialog-actions">
+        <button type="button" className="primary-button" onClick={onDismissUndeterminedTrainTypeNotice}>
+          知道了
         </button>
       </div>
     </ConfirmDialogOverlay>

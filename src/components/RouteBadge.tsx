@@ -4,7 +4,6 @@ import type { GeneratorState, StationItem, TransferLine } from '../features/gene
 import { njmetroDingsFontStack, sansLatinFontStack, sansZhFontStack } from '../fontStacks';
 import { getLineIdBadgeWidth } from '../lineIdBadgeMetrics';
 import {
-  routeBadgeCanvas,
   routeBadgeCurrentCard,
   routeBadgeDirectionArrow,
   routeBadgeDirectionArrowScale,
@@ -15,6 +14,7 @@ import {
   routeBadgeTransferIcon,
   routeBadgeTransferLineId,
 } from '../routeBadgeLayout';
+import { getBadgeCanvasSizes } from '../trainTypeLayout';
 import { LineIdBadge } from './LineIdBadge';
 import { useSvgPositioner } from './svgPositioning';
 
@@ -47,8 +47,6 @@ const getStationTypeIcon = (type: StationItem['type']) => {
   return stationTypeIconMap[type];
 };
 
-const width = routeBadgeCanvas.width;
-const height = routeBadgeCanvas.height;
 const lineCenterY = routeBadgeLine.centerY;
 const lineThickness = routeBadgeLine.thickness;
 const smallStationRadius = routeBadgeStationRadii.small;
@@ -253,8 +251,134 @@ const CurrentStationCard = ({ placeAbove, showStationTypeIcons, station }: { pla
   );
 };
 
+const getEndpointFill = (index: number, direction: 'l' | 'r', idColor: string, inactiveColor: string): string => {
+  if (index === 0) {
+    return direction === 'l' ? idColor : inactiveColor;
+  }
+  return direction === 'l' ? inactiveColor : idColor;
+};
+
+const getStationMarkerId = (isCurrent: boolean, isEndpoint: boolean, index: number): string => {
+  if (isCurrent) {
+    return `station-current-${index}`;
+  }
+  if (isEndpoint) {
+    return `station-end-${index}`;
+  }
+  return `station-marker-${index}`;
+};
+
+const getTransferCircleDiameter = (isCurrent: boolean, isEndpoint: boolean): number => {
+  if (isCurrent) {
+    return currentInnerRadius * 2;
+  }
+  if (isEndpoint) {
+    return endStationInnerRadius * 2;
+  }
+  return smallStationRadius * 2;
+};
+
+type RouteStationRowProps = Readonly<{
+  station: StationItem;
+  index: number;
+  stnListLength: number;
+  safeCurrentIndex: number;
+  showStationTypeIcons: boolean;
+  transferIconSymbolId: string;
+  getTransferStationIconColor: (index: number) => string;
+  anchor: ReturnType<typeof useSvgPositioner>['anchor'];
+}>;
+
+const getVerticalCardConstraints = (placeAbove: boolean, anchorId: string, gap: number) =>
+  placeAbove
+    ? { bottom: { to: anchorId, edge: 'top' as const, gap } }
+    : { top: { to: anchorId, edge: 'bottom' as const, gap } };
+
+const RouteStationRow = ({
+  station,
+  index,
+  stnListLength,
+  safeCurrentIndex,
+  showStationTypeIcons,
+  transferIconSymbolId,
+  getTransferStationIconColor,
+  anchor,
+}: RouteStationRowProps) => {
+  const isCurrent = index === safeCurrentIndex;
+  const isEndpoint = index === 0 || index === stnListLength - 1;
+  const placeAbove = index % 2 === 0;
+  const stationPointId = `station-point-${index}`;
+  const stationMarkerId = getStationMarkerId(isCurrent, isEndpoint, index);
+  const transferIconAnchorId = `station-transfer-icon-${index}`;
+  const transferIconHeight = getTransferCircleDiameter(isCurrent, isEndpoint) * 0.8;
+
+  let labelAnchor = null;
+  if (isCurrent) {
+    labelAnchor = anchor(
+      `current-station-card-${index}`,
+      <CurrentStationCard placeAbove={placeAbove} showStationTypeIcons={showStationTypeIcons} station={station} />,
+      {
+        centerX: { to: stationPointId, offset: 0 },
+        ...(placeAbove
+          ? { bottom: { to: stationPointId, edge: 'bottom', gap: 0.5 } }
+          : { top: { to: stationPointId, edge: 'top', gap: 0.5 } }),
+      },
+    );
+  } else {
+    labelAnchor = anchor(`station-label-${index}`, <StationTextBlock showStationTypeIcons={showStationTypeIcons} station={station} />, {
+      centerX: { to: stationPointId, offset: 0 },
+      ...(placeAbove
+        ? { bottom: { to: 'route-line-reference', edge: 'top', gap: topLabelGap } }
+        : { top: { to: 'route-line-reference', edge: 'bottom', gap: bottomLabelGap } }),
+    });
+  }
+
+  let transferBadgeAnchor = null;
+  if (station.transfer.length > 0) {
+    const labelAnchorId = isCurrent ? `current-station-card-${index}` : `station-label-${index}`;
+    transferBadgeAnchor = anchor(`station-transfer-${index}`, <TransferBadgeGroup lines={station.transfer} />, {
+      centerX: { to: labelAnchorId, offset: 0 },
+      ...getVerticalCardConstraints(placeAbove, labelAnchorId, currentCardGap),
+    });
+  }
+
+  return (
+    <g key={station.id}>
+      {!isCurrent && !isEndpoint
+        ? anchor(stationMarkerId, <StationMarker />, {
+            centerX: { to: stationPointId, offset: 0 },
+            centerY: { to: stationPointId, offset: 0 },
+          })
+        : null}
+
+      {labelAnchor}
+
+      {isCurrent
+        ? anchor(stationMarkerId, <CurrentStationMarker />, {
+            centerX: { to: stationPointId, offset: 0 },
+            centerY: { to: stationPointId, offset: 0 },
+          })
+        : null}
+
+      {station.transfer.length > 0
+        ? anchor(
+            transferIconAnchorId,
+            <TransferStationIcon color={getTransferStationIconColor(index)} symbolId={transferIconSymbolId} targetHeight={transferIconHeight} />,
+            {
+              centerX: { to: stationMarkerId, offset: 0 },
+              centerY: { to: stationMarkerId, offset: 0 },
+            },
+          )
+        : null}
+
+      {transferBadgeAnchor}
+    </g>
+  );
+};
+
 export function RouteBadge({ data }: RouteBadgeProps) {
-  const { currentStnId, direction, idColor, showStationTypeIcons, totalLength, stnList } = data;
+  const { currentStnId, direction, idColor, showStationTypeIcons, totalLength, stnList, trainType } = data;
+  const { route: width, height } = getBadgeCanvasSizes(trainType);
   const { anchor } = useSvgPositioner(width, height);
   const transferIconSymbolId = useId().replaceAll(':', '');
   const currentIndex = stnList.findIndex((station) => station.id === currentStnId);
@@ -345,7 +469,7 @@ export function RouteBadge({ data }: RouteBadgeProps) {
           return null;
         }
 
-        const fill = index === 0 ? (direction === 'l' ? idColor : inactiveColor) : direction === 'l' ? inactiveColor : idColor;
+        const fill = getEndpointFill(index, direction, idColor, inactiveColor);
 
         return anchor(`station-end-${index}`, <EndStationMarker fill={fill} />, {
           centerX: { to: `station-point-${index}`, offset: 0 },
@@ -353,79 +477,19 @@ export function RouteBadge({ data }: RouteBadgeProps) {
         });
       })}
 
-      {stnList.map((station, index) => {
-        const isCurrent = index === safeCurrentIndex;
-        const isEndpoint = index === 0 || index === stnList.length - 1;
-        const placeAbove = index % 2 === 0;
-        const stationPointId = `station-point-${index}`;
-        const stationMarkerId = isCurrent ? `station-current-${index}` : isEndpoint ? `station-end-${index}` : `station-marker-${index}`;
-        const transferIconAnchorId = `station-transfer-icon-${index}`;
-        const transferCircleDiameter = isCurrent ? currentInnerRadius * 2 : isEndpoint ? endStationInnerRadius * 2 : smallStationRadius * 2;
-        const transferIconHeight = transferCircleDiameter * 0.8;
-
-        return (
-          <g key={station.id}>
-            {!isCurrent && !isEndpoint
-              ? anchor(stationMarkerId, <StationMarker />, {
-                  centerX: { to: stationPointId, offset: 0 },
-                  centerY: { to: stationPointId, offset: 0 },
-                })
-              : null}
-
-            {isCurrent
-              ? anchor(
-                  `current-station-card-${index}`,
-                  <CurrentStationCard placeAbove={placeAbove} showStationTypeIcons={showStationTypeIcons} station={station} />,
-                  {
-                  centerX: { to: stationPointId, offset: 0 },
-                  ...(placeAbove
-                    ? { bottom: { to: stationPointId, edge: 'bottom', gap: 0.5 } }
-                    : { top: { to: stationPointId, edge: 'top', gap: 0.5 } }),
-                },
-                )
-              : anchor(`station-label-${index}`, <StationTextBlock showStationTypeIcons={showStationTypeIcons} station={station} />, {
-                  centerX: { to: stationPointId, offset: 0 },
-                  ...(placeAbove
-                    ? { bottom: { to: 'route-line-reference', edge: 'top', gap: topLabelGap } }
-                    : { top: { to: 'route-line-reference', edge: 'bottom', gap: bottomLabelGap } }),
-                })}
-
-            {isCurrent
-              ? anchor(stationMarkerId, <CurrentStationMarker />, {
-                  centerX: { to: stationPointId, offset: 0 },
-                  centerY: { to: stationPointId, offset: 0 },
-                })
-              : null}
-
-            {station.transfer.length > 0
-              ? anchor(
-                  transferIconAnchorId,
-                  <TransferStationIcon color={getTransferStationIconColor(index)} symbolId={transferIconSymbolId} targetHeight={transferIconHeight} />,
-                  {
-                    centerX: { to: stationMarkerId, offset: 0 },
-                    centerY: { to: stationMarkerId, offset: 0 },
-                  },
-                )
-              : null}
-
-            {station.transfer.length > 0
-              ? isCurrent
-                ? anchor(`station-transfer-${index}`, <TransferBadgeGroup lines={station.transfer} />, {
-                    centerX: { to: `current-station-card-${index}`, offset: 0 },
-                    ...(placeAbove
-                      ? { bottom: { to: `current-station-card-${index}`, edge: 'top', gap: currentCardGap } }
-                      : { top: { to: `current-station-card-${index}`, edge: 'bottom', gap: currentCardGap } }),
-                  })
-                : anchor(`station-transfer-${index}`, <TransferBadgeGroup lines={station.transfer} />, {
-                    centerX: { to: `station-label-${index}`, offset: 0 },
-                    ...(placeAbove
-                      ? { bottom: { to: `station-label-${index}`, edge: 'top', gap: currentCardGap } }
-                      : { top: { to: `station-label-${index}`, edge: 'bottom', gap: currentCardGap } }),
-                  })
-              : null}
-          </g>
-        );
-      })}
+      {stnList.map((station, index) => (
+        <RouteStationRow
+          key={station.id}
+          station={station}
+          index={index}
+          stnListLength={stnList.length}
+          safeCurrentIndex={safeCurrentIndex}
+          showStationTypeIcons={showStationTypeIcons}
+          transferIconSymbolId={transferIconSymbolId}
+          getTransferStationIconColor={getTransferStationIconColor}
+          anchor={anchor}
+        />
+      ))}
     </svg>
   );
 }

@@ -2,13 +2,11 @@ import type { CSSProperties } from 'react';
 import { getCurrentStationBadgeEnCondense, getCurrentStationBadgeZhCondense } from '../badgeTextCondense';
 import type { GeneratorState } from '../features/generatorSlice';
 import { sansLatinFontStack, sansZhFontStack } from '../fontStacks';
+import { getBadgeCanvasSizes } from '../trainTypeLayout';
 
 type CurrentStationBadgeProps = Readonly<{
   data: GeneratorState;
 }>;
-
-const width = 3322;
-const height = 800;
 
 const zhTextStyle = (letterSpacing?: number): CSSProperties => ({
   fontFamily: sansZhFontStack,
@@ -23,7 +21,8 @@ const enTextStyle = (letterSpacing?: number): CSSProperties => ({
 });
 
 export function CurrentStationBadge({ data }: CurrentStationBadgeProps) {
-  const { stnList, currentStnId, idColor } = data;
+  const { stnList, currentStnId, idColor, trainType } = data;
+  const { currentStation: width, height } = getBadgeCanvasSizes(trainType);
   const currentStation = stnList.find((station) => station.id === currentStnId) ?? stnList[0] ?? null;
   const safeStation = currentStation ?? {
     chName: '不存在或未定义',

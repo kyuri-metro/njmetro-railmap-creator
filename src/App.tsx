@@ -72,6 +72,92 @@ const toStationItem = (draft: StationFormDraft, id: string): StationItem => ({
   transfer: sanitizeTransfer(draft.transfer),
 });
 
+type WorkspaceKeyboardContext = Pick<
+  ReturnType<typeof useGeneratorWorkspaceActions>,
+  | 'isNewProjectConfirmOpen'
+  | 'isOverwriteStationsConfirmOpen'
+  | 'isYamlImportConfirmOpen'
+  | 'yamlImportError'
+  | 'isUndeterminedTrainTypeNoticeOpen'
+  | 'dismissNewProject'
+  | 'dismissOverwriteStations'
+  | 'dismissYamlImport'
+  | 'dismissYamlError'
+  | 'dismissUndeterminedTrainTypeNotice'
+>;
+
+const handleWorkspaceEscapeKey = (workspace: WorkspaceKeyboardContext) => {
+  if (workspace.isNewProjectConfirmOpen) {
+    workspace.dismissNewProject();
+    return;
+  }
+
+  if (workspace.isOverwriteStationsConfirmOpen) {
+    workspace.dismissOverwriteStations();
+    return;
+  }
+
+  if (workspace.isYamlImportConfirmOpen) {
+    workspace.dismissYamlImport();
+    return;
+  }
+
+  if (workspace.yamlImportError) {
+    workspace.dismissYamlError();
+    return;
+  }
+
+  if (workspace.isUndeterminedTrainTypeNoticeOpen) {
+    workspace.dismissUndeterminedTrainTypeNotice();
+  }
+};
+
+const isEditingTextTarget = (target: EventTarget | null) => {
+  if (!(target instanceof HTMLElement)) {
+    return false;
+  }
+
+  return (
+    target instanceof HTMLInputElement ||
+    target instanceof HTMLTextAreaElement ||
+    target instanceof HTMLSelectElement ||
+    target.isContentEditable
+  );
+};
+
+const handleUndoRedoShortcut = (
+  event: KeyboardEvent,
+  canUndo: boolean,
+  canRedo: boolean,
+  applyUndo: () => void,
+  applyRedo: () => void,
+) => {
+  const mod = event.ctrlKey || event.metaKey;
+
+  if (!mod) {
+    return;
+  }
+
+  if (event.key === 'z' && !event.shiftKey) {
+    if (!canUndo) {
+      return;
+    }
+
+    event.preventDefault();
+    applyUndo();
+    return;
+  }
+
+  if (event.key === 'y' || (event.key === 'z' && event.shiftKey)) {
+    if (!canRedo) {
+      return;
+    }
+
+    event.preventDefault();
+    applyRedo();
+  }
+};
+
 function App() {
   const dispatch = useAppDispatch();
   const generator = useAppSelector(selectGeneratorPresent);
@@ -159,70 +245,16 @@ function App() {
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
-      const target = event.target;
-
       if (event.key === 'Escape') {
-        if (workspace.isNewProjectConfirmOpen) {
-          workspace.dismissNewProject();
-          return;
-        }
-
-        if (workspace.isOverwriteStationsConfirmOpen) {
-          workspace.dismissOverwriteStations();
-          return;
-        }
-
-        if (workspace.isYamlImportConfirmOpen) {
-          workspace.dismissYamlImport();
-          return;
-        }
-
-        if (workspace.yamlImportError) {
-          workspace.dismissYamlError();
-          return;
-        }
-
+        handleWorkspaceEscapeKey(workspace);
         return;
       }
 
-      if (!(target instanceof HTMLElement)) {
+      if (isEditingTextTarget(event.target)) {
         return;
       }
 
-      const editingText =
-        target instanceof HTMLInputElement ||
-        target instanceof HTMLTextAreaElement ||
-        target instanceof HTMLSelectElement ||
-        target.isContentEditable;
-
-      if (editingText) {
-        return;
-      }
-
-      const mod = event.ctrlKey || event.metaKey;
-
-      if (!mod) {
-        return;
-      }
-
-      if (event.key === 'z' && !event.shiftKey) {
-        if (!canUndo) {
-          return;
-        }
-
-        event.preventDefault();
-        applyUndo();
-        return;
-      }
-
-      if (event.key === 'y' || (event.key === 'z' && event.shiftKey)) {
-        if (!canRedo) {
-          return;
-        }
-
-        event.preventDefault();
-        applyRedo();
-      }
+      handleUndoRedoShortcut(event, canUndo, canRedo, applyUndo, applyRedo);
     };
 
     window.addEventListener('keydown', onKeyDown);
@@ -234,10 +266,12 @@ function App() {
     workspace.isOverwriteStationsConfirmOpen,
     workspace.isYamlImportConfirmOpen,
     workspace.yamlImportError,
+    workspace.isUndeterminedTrainTypeNoticeOpen,
     workspace.dismissNewProject,
     workspace.dismissOverwriteStations,
     workspace.dismissYamlImport,
     workspace.dismissYamlError,
+    workspace.dismissUndeterminedTrainTypeNotice,
   ]);
 
   const openInsertModal = (position: 'before' | 'after' | 'start' | 'end') => {
@@ -462,6 +496,8 @@ function App() {
         isOverwriteStationsConfirmOpen={workspace.isOverwriteStationsConfirmOpen}
         onDismissOverwriteStations={workspace.dismissOverwriteStations}
         onConfirmOverwriteStations={workspace.confirmBuiltinStationOverwrite}
+        isUndeterminedTrainTypeNoticeOpen={workspace.isUndeterminedTrainTypeNoticeOpen}
+        onDismissUndeterminedTrainTypeNotice={workspace.dismissUndeterminedTrainTypeNotice}
         isExampleModalOpen={isExampleModalOpen}
         onDismissExampleModal={() => setIsExampleModalOpen(false)}
         isAutosaveRestoreConfirmOpen={workspace.isAutosaveRestoreConfirmOpen}

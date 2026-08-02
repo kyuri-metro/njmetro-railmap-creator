@@ -3,6 +3,11 @@ import { getBuiltinOpenedStationsByLineId } from '../builtinOpenedLineStations';
 import { readAutosaveSettings } from '../autosaveStorage';
 import { normalizeTransferLines } from '../normalizeTransfer';
 import { getNjmetroLineBackgroundColor, getNjmetroLineForegroundColor } from '../njmetroLinePalette';
+import {
+  adjustTotalLengthForTrainTypeChange,
+  DEFAULT_TRAIN_TYPE,
+  type TrainType,
+} from '../trainTypeLayout';
 
 export type TransferLine = {
   id: string;
@@ -22,6 +27,8 @@ export type StationItem = {
 
 export type TrainDirection = 'l' | 'r';
 
+export type { TrainType };
+
 export type GeneratorState = {
   stnList: StationItem[];
   currentStnId: string;
@@ -32,6 +39,7 @@ export type GeneratorState = {
   /** 线路编号块上的数字/文字颜色（与 @kyuri-metro/njmetro-palette 的 foreground 一致） */
   idTextColor: string;
   showStationTypeIcons: boolean;
+  trainType: TrainType;
 };
 
 type InsertPosition = 'before' | 'after' | 'start' | 'end';
@@ -67,6 +75,7 @@ const initialState: GeneratorState = {
   idColor: getNjmetroLineBackgroundColor(initialLineId) ?? '#009a44',
   idTextColor: getNjmetroLineForegroundColor(initialLineId) ?? '#ffffff',
   showStationTypeIcons: false,
+  trainType: DEFAULT_TRAIN_TYPE,
 };
 
 export const getDefaultGeneratorState = (): GeneratorState => ({
@@ -87,6 +96,7 @@ export const getEmptyGeneratorState = (): GeneratorState => ({
   idColor: initialState.idColor,
   idTextColor: initialState.idTextColor,
   showStationTypeIcons: initialState.showStationTypeIcons,
+  trainType: initialState.trainType,
 });
 
 const fallbackCurrentId = (stations: StationItem[], currentId: string) => {
@@ -134,6 +144,11 @@ const generatorSlice = createSlice({
     },
     setShowStationTypeIcons(state, action: PayloadAction<boolean>) {
       state.showStationTypeIcons = action.payload;
+    },
+    setTrainType(state, action: PayloadAction<TrainType>) {
+      const nextType = action.payload;
+      state.totalLength = adjustTotalLengthForTrainTypeChange(state.trainType, nextType, state.totalLength);
+      state.trainType = nextType;
     },
     setCurrentStation(state, action: PayloadAction<string>) {
       state.currentStnId = action.payload;
@@ -193,6 +208,7 @@ export const {
   setLineId,
   setShowStationTypeIcons,
   setTotalLength,
+  setTrainType,
   replaceStations,
   restoreGeneratorState,
   updateStation,
