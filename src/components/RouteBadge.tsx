@@ -18,9 +18,9 @@ import {
 import { LineIdBadge } from './LineIdBadge';
 import { useSvgPositioner } from './svgPositioning';
 
-type RouteBadgeProps = {
+type RouteBadgeProps = Readonly<{
   data: GeneratorState;
-};
+}>;
 
 const zhTextStyle = (letterSpacing?: number, fill = '#000000'): CSSProperties => ({
   fontFamily: sansZhFontStack,
@@ -58,14 +58,11 @@ const currentOuterRadius = routeBadgeStationRadii.currentOuter;
 const currentInnerRadius = routeBadgeStationRadii.currentInner;
 const directionArrowBaseWidth = routeBadgeDirectionArrow.baseWidth;
 const directionArrowBaseHeight = routeBadgeDirectionArrow.baseHeight;
-const directionArrowWidth = routeBadgeDirectionArrow.width;
 const directionArrowGap = routeBadgeDirectionArrow.gap;
 const directionArrowScale = routeBadgeDirectionArrowScale;
 const routeLayoutOffsetX = routeBadgeLayoutOffsetX;
 const topLabelGap = routeBadgeGaps.topLabel;
 const bottomLabelGap = routeBadgeGaps.bottomLabel;
-const topTransferGap = routeBadgeGaps.topTransfer;
-const bottomTransferGap = routeBadgeGaps.bottomTransfer;
 const currentCardConnectorHeight = routeBadgeCurrentCard.connectorHeight;
 const currentCardGap = routeBadgeCurrentCard.gap;
 const currentCardHorizontalPadding = routeBadgeCurrentCard.horizontalPadding;

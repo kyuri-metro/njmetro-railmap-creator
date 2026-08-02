@@ -31,7 +31,6 @@ import {
   reverseStnList,
   setCurrentStation,
   updateStation,
-  type GeneratorState,
   type StationItem,
   type TransferLine,
 } from './features/generatorSlice';
@@ -287,9 +286,6 @@ function App() {
       dispatch(updateStation(toStationItem(draft, modalState.stationId)));
     }
   };
-
-  const currentStation = generator.stnList.find((station) => station.id === generator.currentStnId);
-  const missingTargetFonts = fontDetectionResults.filter((result) => !result.detected);
 
   return (
     <main className="app-layout">
