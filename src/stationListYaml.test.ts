@@ -49,7 +49,7 @@ describe('parseRailmapYaml / serializeRailmapYaml', () => {
     state.currentStnId = state.stnList[0].id;
 
     const yaml = serializeRailmapYaml(state);
-    expect(yaml).toContain('schema: http://umamichi.moe/2026/kyuri-naive');
+    expect(yaml).toContain('schema: https://umamichi.moe/2026/kyuri-naive');
     expect(yaml).toContain('version: 3');
 
     const parsed = parseRailmapYaml(yaml, fallback());
@@ -65,7 +65,7 @@ describe('parseRailmapYaml / serializeRailmapYaml', () => {
     expect(parsed.data.njMetroSettings.currentStnId).toBe(state.currentStnId);
   });
 
-  it('parses a version 3 document with schema', () => {
+  it('accepts legacy http schema alias on import', () => {
     const yaml = `
 version: 3
 schema: http://umamichi.moe/2026/kyuri-naive

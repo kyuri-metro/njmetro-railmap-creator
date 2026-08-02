@@ -5,8 +5,14 @@ const STATION_TYPES = new Set<StationType>(['none', 'railway', 'airport']);
 
 const V1_MIGRATE_DEFAULT_TEXT_COLOR = '#ffffff';
 
-/** Kyuri naive 3.0 文档 schema（与 kyuri-naive-from-and-to-rmg 一致） */
-const KYURI_NAIVE_SCHEMA = 'http://umamichi.moe/2026/kyuri-naive';
+/** Kyuri naive 3.0 文档 schema（与 kyuri-naive-from-and-to-rmg 一致；导出用 https） */
+const KYURI_NAIVE_SCHEMA = 'https://umamichi.moe/2026/kyuri-naive';
+
+/** 导入时仍接受历史 http schema，避免旧 YAML 被拒 */
+const KYURI_NAIVE_SCHEMA_ALIASES = new Set([
+  KYURI_NAIVE_SCHEMA,
+  'http://umamichi.moe/2026/kyuri-naive',
+]);
 
 export type NjMetroSettingsYaml = {
   totalLength: number;
@@ -418,10 +424,10 @@ export const parseRailmapYaml = (text: string, fallbacks: GeneratorState): Parse
 
   if (docVersion === 3) {
     const schemaStr = typeof root.schema === 'string' ? root.schema.trim() : '';
-    if (schemaStr && schemaStr !== KYURI_NAIVE_SCHEMA) {
+    if (schemaStr && !KYURI_NAIVE_SCHEMA_ALIASES.has(schemaStr)) {
       return {
         ok: false,
-        message: `schema 与预期不符：期望 ${KYURI_NAIVE_SCHEMA}，实际为 ${schemaStr}`,
+        message: `schema 与预期不符：期望 ${KYURI_NAIVE_SCHEMA}（或兼容的 http 别名），实际为 ${schemaStr}`,
       };
     }
 
