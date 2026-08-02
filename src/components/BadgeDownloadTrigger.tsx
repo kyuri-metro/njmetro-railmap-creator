@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import { BadgeDownloadDialog } from './BadgeDownloadDialog';
 
-type BadgeDownloadTriggerProps = {
+type BadgeDownloadTriggerProps = Readonly<{
   fileName: string;
   getSvgElement: () => SVGSVGElement | null;
   triggerClassName?: string;
-};
+}>;
 
 export function BadgeDownloadTrigger({ fileName, getSvgElement, triggerClassName }: BadgeDownloadTriggerProps) {
   const [dialogOpen, setDialogOpen] = useState(false);

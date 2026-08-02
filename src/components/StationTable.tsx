@@ -10,14 +10,14 @@ const PencilIcon = () => (
   </svg>
 );
 
-type StationTableProps = {
+type StationTableProps = Readonly<{
   currentStnId: string;
   stations: StationItem[];
   onEdit: (station: StationItem) => void;
   onInsert: (position: 'before' | 'after' | 'start' | 'end') => void;
   onReverseList: () => void;
   onSelect: (stationId: string) => void;
-};
+}>;
 
 export function StationTable({ currentStnId, stations, onEdit, onInsert, onReverseList, onSelect }: StationTableProps) {
   return (

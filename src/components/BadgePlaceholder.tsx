@@ -1,10 +1,10 @@
 import type { GeneratorState } from '../features/generatorSlice';
 
-type BadgePlaceholderProps = {
+type BadgePlaceholderProps = Readonly<{
   title: string;
   description: string;
   data: GeneratorState;
-};
+}>;
 
 export function BadgePlaceholder({ title, description, data }: BadgePlaceholderProps) {
   const currentStation = data.stnList.find((station) => station.id === data.currentStnId);

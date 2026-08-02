@@ -3,9 +3,9 @@ import { getCurrentStationBadgeEnCondense, getCurrentStationBadgeZhCondense } fr
 import type { GeneratorState } from '../features/generatorSlice';
 import { sansLatinFontStack, sansZhFontStack } from '../fontStacks';
 
-type CurrentStationBadgeProps = {
+type CurrentStationBadgeProps = Readonly<{
   data: GeneratorState;
-};
+}>;
 
 const width = 3322;
 const height = 800;

@@ -7,14 +7,14 @@ type YamlIoMenuTriggerVariant = 'labeled' | 'icon';
 const iconTriggerClassName = 'icon-button app-topbar-icon-button dropdown-menu-trigger dropdown-menu-trigger--icon';
 const labeledTriggerClassName = 'secondary-button dropdown-menu-trigger';
 
-type StationYamlImportMenuProps = {
+type StationYamlImportMenuProps = Readonly<{
   yamlFileInputRef: RefObject<HTMLInputElement | null>;
   rmgToolConfigured: boolean;
   metroStudioToolConfigured: boolean;
   onOpenRmgImport: () => void;
   onOpenMetroStudioImport: () => void;
   triggerVariant?: YamlIoMenuTriggerVariant;
-};
+}>;
 
 export function StationYamlImportMenu({
   yamlFileInputRef,
@@ -62,12 +62,12 @@ export function StationYamlImportMenu({
   );
 }
 
-type StationYamlExportMenuProps = {
+type StationYamlExportMenuProps = Readonly<{
   rmgToolConfigured: boolean;
   onDownloadYaml: () => void;
   onOpenRmgExport: () => void;
   triggerVariant?: YamlIoMenuTriggerVariant;
-};
+}>;
 
 export function StationYamlExportMenu({
   rmgToolConfigured,

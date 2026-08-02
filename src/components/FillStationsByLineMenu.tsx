@@ -6,9 +6,9 @@ import { getNjmetroLineBackgroundColor } from '../njmetroLinePalette';
 
 export type BuiltinStationNetwork = 'opened' | 'jianban';
 
-type FillStationsByLineMenuProps = {
+type FillStationsByLineMenuProps = Readonly<{
   onSelectLine: (network: BuiltinStationNetwork, lineId: string) => void;
-};
+}>;
 
 const FALLBACK_LINE_SWATCH = '#8c989f';
 

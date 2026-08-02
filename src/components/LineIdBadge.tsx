@@ -4,13 +4,13 @@ import { resolveLineNumber } from '../lineIdBadgeMetrics';
 
 export { getLineIdBadgeWidth } from '../lineIdBadgeMetrics';
 
-type LineIdBadgeProps = {
+type LineIdBadgeProps = Readonly<{
   lineId: string;
   color: string;
   /** 线路号数字颜色，对应 njmetro-palette 的 foreground */
   textColor?: string;
   height: number;
-};
+}>;
 
 const baseHeight = 1000;
 

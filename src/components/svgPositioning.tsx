@@ -30,7 +30,7 @@ export type PositionConstraints = {
   centerY?: number | CenterConstraint;
 };
 
-type PositionedSvgElementProps = {
+type PositionedSvgElementProps = Readonly<{
   localBoxes: Record<string, SvgBox>;
   resolvedBoxes: Record<string, SvgBox>;
   canvas: SvgBox;
@@ -38,7 +38,7 @@ type PositionedSvgElementProps = {
   constraints: PositionConstraints;
   id: string;
   onMeasure: (id: string, localBox: SvgBox, resolvedBox: SvgBox) => void;
-};
+}>;
 
 const areBoxesEqual = (left?: SvgBox, right?: SvgBox) => {
   if (!left || !right) {
