@@ -295,17 +295,19 @@ export function useSvgPositioner(width: number, height: number) {
   }, []);
 
   const anchor = (id: string, element: ReactNode, constraints: PositionConstraints) => {
-    if (renderConstraintGraph.has(id)) {
-      throw new Error(`anchor() does not allow duplicate ids in the same render: ${id}`);
-    }
-
     const targets = collectConstraintTargets(constraints);
-    renderConstraintGraph.set(id, targets);
 
-    const cyclePath = detectAnchorCycle(renderConstraintGraph, id);
+    // Child components may call `anchor` in their render body. React Strict Mode
+    // double-invokes those children while reusing the parent's Map from one parent
+    // render, so a hard throw on duplicate ids blanks the whole tree.
+    if (!renderConstraintGraph.has(id)) {
+      renderConstraintGraph.set(id, targets);
 
-    if (cyclePath) {
-      throw new Error(`anchor() does not allow cyclic dependencies: ${cyclePath.join(' -> ')}`);
+      const cyclePath = detectAnchorCycle(renderConstraintGraph, id);
+
+      if (cyclePath) {
+        throw new Error(`anchor() does not allow cyclic dependencies: ${cyclePath.join(' -> ')}`);
+      }
     }
 
     return (
