@@ -3,14 +3,15 @@ import {
   useDeferredValue,
   useEffect,
   useState,
-  type ChangeEvent,
 } from 'react';
 import { usePreviewLoadingOverlay } from './hooks/usePreviewLoadingOverlay';
 import { useLineThemePalette } from './hooks/useLineThemePalette';
 import { useGeneratorControlDrafts } from './hooks/useGeneratorControlDrafts';
+import { useGeneratorWorkspaceActions } from './hooks/useGeneratorWorkspaceActions';
 import { useThemeMode } from './hooks/useThemeMode';
 import { AppConfirmOverlays } from './components/AppConfirmOverlays';
 import { AppTopbar } from './components/AppTopbar';
+import { GeneratorSettingsPanel } from './components/GeneratorSettingsPanel';
 import { PreviewResultsPane } from './components/PreviewResultsPane';
 import { StationFormModal, stationToDraft, type StationFormDraft } from './components/StationFormModal';
 import { StationTable } from './components/StationTable';
@@ -21,22 +22,14 @@ import { AutosaveListDialog } from './components/AutosaveListDialog';
 import { SettingsDialog } from './components/SettingsDialog';
 import { KYURI_RMG_IFRAME_ORIGIN } from './config/kyuriRmgIframe';
 import { KYURI_METRO_STUDIO_IFRAME_ORIGIN } from './config/kyuriMetroStudioIframe';
-import { getBuiltinOpenedStationsByLineId } from './builtinOpenedLineStations';
-import { getBuiltinJianbanStationsByLineId } from './builtinJianbanLineStations';
-import { FillStationsByLineMenu, type BuiltinStationNetwork } from './components/FillStationsByLineMenu';
-import type { AutosaveEntry } from './autosaveStorage';
+import { FillStationsByLineMenu } from './components/FillStationsByLineMenu';
 import { markAutosaveDirty } from './features/autosaveScheduler';
-import { markSavedExempt, shouldWarnOnLeave } from './features/leaveGuard';
-import { builtinLineToGeneratorState, railmapImportToGeneratorState } from './features/generatorImport';
+import { shouldWarnOnLeave } from './features/leaveGuard';
 import {
   deleteStation,
-  getEmptyGeneratorState,
   insertStation,
-  restoreGeneratorState,
   reverseStnList,
   setCurrentStation,
-  setDirection,
-  setShowStationTypeIcons,
   updateStation,
   type GeneratorState,
   type StationItem,
@@ -45,7 +38,7 @@ import {
 import { FontDetectionHubTiles } from './components/FontDetectionHubTiles';
 import { detectTargetFonts, targetFontSignatures, type FontDetectionResult } from './fontSignature';
 import { getNjmetroLineForegroundColor } from './njmetroLinePalette';
-import { parseRailmapYaml, serializeRailmapYaml, type RailmapYamlImport } from './stationListYaml';
+import { serializeRailmapYaml } from './stationListYaml';
 import { useAppDispatch, useAppSelector, selectCanRedo, selectCanUndo, selectGeneratorPresent } from './hooks';
 import { store, UndoActionCreators } from './store';
 
@@ -88,79 +81,6 @@ const toStationItem = (draft: StationFormDraft, id: string): StationItem => ({
   transfer: sanitizeTransfer(draft.transfer),
 });
 
-const SunIcon = () => (
-  <svg className="app-theme-icon" viewBox="0 0 24 24" aria-hidden>
-    <circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" strokeWidth="2" />
-    <path
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      d="M12 2v2m0 14v2M4.93 4.93l1.41 1.41m11.32 11.32l1.41 1.41M2 12h2m14 0h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"
-    />
-  </svg>
-);
-
-const UndoIcon = () => (
-  <svg className="app-topbar-action-icon" viewBox="0 0 24 24" width="20" height="20" aria-hidden>
-    <path
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      d="M9 15 3 9m0 0 6-6M3 9h12a6 6 0 0 1 0 12h-3"
-    />
-  </svg>
-);
-
-const RedoIcon = () => (
-  <svg className="app-topbar-action-icon" viewBox="0 0 24 24" width="20" height="20" aria-hidden>
-    <path
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      d="m15 9 6 6m0 0-6 6M21 15H9a6 6 0 0 1 0-12h3"
-    />
-  </svg>
-);
-
-const MoreIcon = () => (
-  <svg className="app-topbar-action-icon" viewBox="0 0 24 24" width="20" height="20" aria-hidden>
-    <circle cx="5" cy="12" r="1.75" fill="currentColor" />
-    <circle cx="12" cy="12" r="1.75" fill="currentColor" />
-    <circle cx="19" cy="12" r="1.75" fill="currentColor" />
-  </svg>
-);
-
-const SettingsIcon = () => (
-  <svg className="app-topbar-action-icon" viewBox="0 0 24 24" width="20" height="20" aria-hidden>
-    <path
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33 1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82 1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"
-    />
-  </svg>
-);
-
-const MoonIcon = () => (
-  <svg className="app-theme-icon" viewBox="0 0 24 24" aria-hidden>
-    <path
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"
-    />
-  </svg>
-);
-
 function App() {
   const dispatch = useAppDispatch();
   const generator = useAppSelector(selectGeneratorPresent);
@@ -183,20 +103,21 @@ function App() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isTopbarMoreMenuOpen, setIsTopbarMoreMenuOpen] = useState(false);
   const [isAutosaveListOpen, setIsAutosaveListOpen] = useState(false);
-  const [isAutosaveRestoreConfirmOpen, setIsAutosaveRestoreConfirmOpen] = useState(false);
-  const [pendingAutosaveEntry, setPendingAutosaveEntry] = useState<AutosaveEntry | null>(null);
   const [isExampleModalOpen, setIsExampleModalOpen] = useState(false);
-  const [isOverwriteStationsConfirmOpen, setIsOverwriteStationsConfirmOpen] = useState(false);
-  const [pendingBuiltinFill, setPendingBuiltinFill] = useState<{ network: BuiltinStationNetwork; lineId: string } | null>(null);
-  const [isNewProjectConfirmOpen, setIsNewProjectConfirmOpen] = useState(false);
-  const [isYamlImportConfirmOpen, setIsYamlImportConfirmOpen] = useState(false);
-  const [pendingRailmapImport, setPendingRailmapImport] = useState<RailmapYamlImport | null>(null);
-  const [yamlImportError, setYamlImportError] = useState<string | null>(null);
   const [kyuriRmgModal, setKyuriRmgModal] = useState<null | { mode: 'import' | 'export' }>(null);
   const [kyuriRmgOpen, setKyuriRmgOpen] = useState(false);
   const [kyuriMetroStudioOpen, setKyuriMetroStudioOpen] = useState(false);
   const [fontDetectionResults, setFontDetectionResults] = useState<FontDetectionResult[]>(fallbackFontDetectionResults);
   const [fontDetectionState, setFontDetectionState] = useState<'idle' | 'checking' | 'done'>('idle');
+
+  const workspace = useGeneratorWorkspaceActions({
+    generator,
+    syncControlDraftsFromGenerator,
+    onAfterAutosaveRestore: () => {
+      setIsAutosaveListOpen(false);
+      setIsSettingsOpen(false);
+    },
+  });
 
   const applyUndo = () => {
     dispatch(UndoActionCreators.undo());
@@ -208,11 +129,6 @@ function App() {
     dispatch(UndoActionCreators.redo());
     markAutosaveDirty();
     queueMicrotask(() => syncControlDraftsFromGenerator(store.getState().generator.present));
-  };
-
-  const dismissAutosaveRestoreConfirm = () => {
-    setIsAutosaveRestoreConfirmOpen(false);
-    setPendingAutosaveEntry(null);
   };
 
   useEffect(() => {
@@ -255,25 +171,23 @@ function App() {
       const target = event.target;
 
       if (event.key === 'Escape') {
-        if (isNewProjectConfirmOpen) {
-          setIsNewProjectConfirmOpen(false);
+        if (workspace.isNewProjectConfirmOpen) {
+          workspace.dismissNewProject();
           return;
         }
 
-        if (isOverwriteStationsConfirmOpen) {
-          setIsOverwriteStationsConfirmOpen(false);
-          setPendingBuiltinFill(null);
+        if (workspace.isOverwriteStationsConfirmOpen) {
+          workspace.dismissOverwriteStations();
           return;
         }
 
-        if (isYamlImportConfirmOpen) {
-          setIsYamlImportConfirmOpen(false);
-          setPendingRailmapImport(null);
+        if (workspace.isYamlImportConfirmOpen) {
+          workspace.dismissYamlImport();
           return;
         }
 
-        if (yamlImportError) {
-          setYamlImportError(null);
+        if (workspace.yamlImportError) {
+          workspace.dismissYamlError();
           return;
         }
 
@@ -325,11 +239,14 @@ function App() {
   }, [
     canRedo,
     canUndo,
-    dispatch,
-    isNewProjectConfirmOpen,
-    isOverwriteStationsConfirmOpen,
-    isYamlImportConfirmOpen,
-    yamlImportError,
+    workspace.isNewProjectConfirmOpen,
+    workspace.isOverwriteStationsConfirmOpen,
+    workspace.isYamlImportConfirmOpen,
+    workspace.yamlImportError,
+    workspace.dismissNewProject,
+    workspace.dismissOverwriteStations,
+    workspace.dismissYamlImport,
+    workspace.dismissYamlError,
   ]);
 
   const openInsertModal = (position: 'before' | 'after' | 'start' | 'end') => {
@@ -379,146 +296,6 @@ function App() {
     }
   };
 
-  const handleFillStationsByLineId = (network: BuiltinStationNetwork, lineId: string) => {
-    setPendingBuiltinFill({ network, lineId });
-    setIsOverwriteStationsConfirmOpen(true);
-  };
-
-  const handleExportStationYaml = () => {
-    const yml = serializeRailmapYaml(generator);
-    const blob = new Blob([yml], { type: 'text/yaml;charset=utf-8' });
-    const objectUrl = window.URL.createObjectURL(blob);
-    const downloadLink = document.createElement('a');
-
-    downloadLink.href = objectUrl;
-    downloadLink.download = 'railmap.yml';
-    document.body.append(downloadLink);
-    downloadLink.click();
-    downloadLink.remove();
-    window.URL.revokeObjectURL(objectUrl);
-    markSavedExempt();
-  };
-
-  const applyYamlTextForImport = (text: string) => {
-    const result = parseRailmapYaml(text, generator);
-
-    if (!result.ok) {
-      setYamlImportError(result.message);
-      return;
-    }
-
-    setPendingRailmapImport(result.data);
-    setIsYamlImportConfirmOpen(true);
-  };
-
-  const handleYamlFileChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    event.target.value = '';
-
-    if (!file) {
-      return;
-    }
-
-    const reader = new FileReader();
-
-    reader.onload = () => {
-      const text = String(reader.result ?? '');
-      applyYamlTextForImport(text);
-    };
-
-    reader.onerror = () => {
-      setYamlImportError('读取文件失败。');
-    };
-
-    reader.readAsText(file, 'UTF-8');
-  };
-
-  const confirmYamlStationImport = () => {
-    if (!pendingRailmapImport) {
-      return;
-    }
-
-    setIsYamlImportConfirmOpen(false);
-    setPendingRailmapImport(null);
-
-    const nextState = railmapImportToGeneratorState(pendingRailmapImport, generator);
-    syncControlDraftsFromGenerator(nextState);
-
-    startTransition(() => {
-      dispatch(restoreGeneratorState(nextState));
-      dispatch(UndoActionCreators.clearHistory());
-    });
-  };
-
-  const confirmBuiltinStationOverwrite = () => {
-    setIsOverwriteStationsConfirmOpen(false);
-
-    if (!pendingBuiltinFill) {
-      return;
-    }
-
-    const { network, lineId } = pendingBuiltinFill;
-    setPendingBuiltinFill(null);
-
-    const builtinStations =
-      network === 'opened'
-        ? getBuiltinOpenedStationsByLineId(lineId)
-        : getBuiltinJianbanStationsByLineId(lineId);
-
-    if (!builtinStations) {
-      return;
-    }
-
-    const nextState = builtinLineToGeneratorState(lineId, builtinStations, generator, network);
-    syncControlDraftsFromGenerator(nextState);
-
-    startTransition(() => {
-      dispatch(restoreGeneratorState(nextState));
-      dispatch(UndoActionCreators.clearHistory());
-    });
-  };
-
-  const handleAutosaveEntrySelect = (entry: AutosaveEntry) => {
-    setPendingAutosaveEntry(entry);
-    setIsAutosaveRestoreConfirmOpen(true);
-  };
-
-  const confirmNewProject = () => {
-    setIsNewProjectConfirmOpen(false);
-    const nextState = getEmptyGeneratorState();
-    syncControlDraftsFromGenerator(nextState);
-
-    startTransition(() => {
-      dispatch(restoreGeneratorState(nextState));
-      dispatch(UndoActionCreators.clearHistory());
-    });
-  };
-
-  const confirmAutosaveRestore = () => {
-    if (!pendingAutosaveEntry) {
-      return;
-    }
-
-    const result = parseRailmapYaml(pendingAutosaveEntry.yaml, generator);
-
-    if (!result.ok) {
-      dismissAutosaveRestoreConfirm();
-      setYamlImportError(result.message);
-      return;
-    }
-
-    const nextState = railmapImportToGeneratorState(result.data, generator);
-    dismissAutosaveRestoreConfirm();
-    setIsAutosaveListOpen(false);
-    setIsSettingsOpen(false);
-    syncControlDraftsFromGenerator(nextState);
-
-    startTransition(() => {
-      dispatch(restoreGeneratorState(nextState));
-      dispatch(UndoActionCreators.clearHistory());
-    });
-  };
-
   const currentStation = generator.stnList.find((station) => station.id === generator.currentStnId);
   const missingTargetFonts = fontDetectionResults.filter((result) => !result.detected);
 
@@ -532,9 +309,9 @@ function App() {
         onTopbarMoreMenuOpenChange={setIsTopbarMoreMenuOpen}
         onUndo={applyUndo}
         onRedo={applyRedo}
-        onNew={() => setIsNewProjectConfirmOpen(true)}
-        onDownloadYaml={handleExportStationYaml}
-        onYamlFileChange={handleYamlFileChange}
+        onNew={() => workspace.setIsNewProjectConfirmOpen(true)}
+        onDownloadYaml={workspace.handleExportStationYaml}
+        onYamlFileChange={workspace.handleYamlFileChange}
         onOpenRmgImport={() => {
           setKyuriRmgModal({ mode: 'import' });
           setKyuriRmgOpen(true);
@@ -595,85 +372,19 @@ function App() {
               <FontDetectionHubTiles results={fontDetectionResults} detectionState={fontDetectionState} />
             </section>
 
-            <section className="panel">
-              <h2 className="site-content-heading">生成设置</h2>
-              <div className="form-scope form-grid generator-settings-grid">
-                <label className="field-label">
-                  <span>总长（px）</span>
-                  <input
-                    className="text-input"
-                    type="text"
-                    inputMode="numeric"
-                    autoComplete="off"
-                    spellCheck={false}
-                    value={totalLengthField.draft}
-                    onChange={(event) => totalLengthField.onDraftChange(event.target.value)}
-                    onBlur={totalLengthField.onBlur}
-                  />
-                </label>
-                <label className="field-label">
-                  <span>列车行进方向</span>
-                  <select
-                    className="select-input"
-                    value={generator.direction}
-                    onChange={(event) => {
-                      startTransition(() => {
-                        dispatch(setDirection(event.target.value as 'l' | 'r'));
-                      });
-                    }}
-                  >
-                    <option value="l">l</option>
-                    <option value="r">r</option>
-                  </select>
-                </label>
-                <label className="field-label">
-                  <span>线路编号</span>
-                  <input
-                    className="text-input"
-                    type="text"
-                    value={lineIdField.draft}
-                    onChange={(event) => lineIdField.onDraftChange(event.target.value)}
-                    onBlur={lineIdField.onBlur}
-                  />
-                </label>
-                <label className="field-label">
-                  <span>线路标识色</span>
-                  <input
-                    type="color"
-                    value={idColorField.draft}
-                    onChange={(event) => idColorField.onDraftChange(event.target.value)}
-                    onBlur={idColorField.onBlur}
-                  />
-                </label>
-                <label className="field-label">
-                  <span>线路编号字体色</span>
-                  <input
-                    type="color"
-                    value={idTextColorField.draft}
-                    onChange={(event) => idTextColorField.onDraftChange(event.target.value)}
-                    onBlur={idTextColorField.onBlur}
-                  />
-                </label>
-                <label className="field-label field-label-checkbox">
-                  <input
-                    type="checkbox"
-                    checked={generator.showStationTypeIcons}
-                    onChange={(event) => {
-                      startTransition(() => {
-                        dispatch(setShowStationTypeIcons(event.target.checked));
-                      });
-                    }}
-                  />
-                  <span>在火车站或机场站名前添加图标（测试）</span>
-                </label>
-              </div>
-            </section>
+            <GeneratorSettingsPanel
+              generator={generator}
+              totalLengthField={totalLengthField}
+              lineIdField={lineIdField}
+              idColorField={idColorField}
+              idTextColorField={idTextColorField}
+            />
 
             <section className="panel">
               <div className="station-list-heading">
                 <h2 className="site-content-heading">站点列表</h2>
                 <div className="station-list-heading-end">
-                  <FillStationsByLineMenu onSelectLine={handleFillStationsByLineId} />
+                  <FillStationsByLineMenu onSelectLine={workspace.requestBuiltinStationOverwrite} />
                 </div>
               </div>
 
@@ -735,7 +446,7 @@ function App() {
           onClose={() => setKyuriRmgOpen(false)}
           onExited={() => setKyuriRmgModal(null)}
           onImportedYaml={(yaml) => {
-            applyYamlTextForImport(yaml);
+            workspace.applyYamlTextForImport(yaml);
             setKyuriRmgOpen(false);
           }}
         />
@@ -746,35 +457,29 @@ function App() {
         baseUrl={KYURI_METRO_STUDIO_IFRAME_ORIGIN}
         onClose={() => setKyuriMetroStudioOpen(false)}
         onImportedYaml={(yaml) => {
-          applyYamlTextForImport(yaml);
+          workspace.applyYamlTextForImport(yaml);
           setKyuriMetroStudioOpen(false);
         }}
       />
 
       <AppConfirmOverlays
-        isNewProjectConfirmOpen={isNewProjectConfirmOpen}
-        onDismissNewProject={() => setIsNewProjectConfirmOpen(false)}
-        onConfirmNewProject={confirmNewProject}
-        isYamlImportConfirmOpen={isYamlImportConfirmOpen}
-        onDismissYamlImport={() => {
-          setIsYamlImportConfirmOpen(false);
-          setPendingRailmapImport(null);
-        }}
-        onConfirmYamlImport={confirmYamlStationImport}
-        yamlImportError={yamlImportError}
-        onDismissYamlError={() => setYamlImportError(null)}
-        isOverwriteStationsConfirmOpen={isOverwriteStationsConfirmOpen}
-        onDismissOverwriteStations={() => {
-          setIsOverwriteStationsConfirmOpen(false);
-          setPendingBuiltinFill(null);
-        }}
-        onConfirmOverwriteStations={confirmBuiltinStationOverwrite}
+        isNewProjectConfirmOpen={workspace.isNewProjectConfirmOpen}
+        onDismissNewProject={workspace.dismissNewProject}
+        onConfirmNewProject={workspace.confirmNewProject}
+        isYamlImportConfirmOpen={workspace.isYamlImportConfirmOpen}
+        onDismissYamlImport={workspace.dismissYamlImport}
+        onConfirmYamlImport={workspace.confirmYamlStationImport}
+        yamlImportError={workspace.yamlImportError}
+        onDismissYamlError={workspace.dismissYamlError}
+        isOverwriteStationsConfirmOpen={workspace.isOverwriteStationsConfirmOpen}
+        onDismissOverwriteStations={workspace.dismissOverwriteStations}
+        onConfirmOverwriteStations={workspace.confirmBuiltinStationOverwrite}
         isExampleModalOpen={isExampleModalOpen}
         onDismissExampleModal={() => setIsExampleModalOpen(false)}
-        isAutosaveRestoreConfirmOpen={isAutosaveRestoreConfirmOpen}
-        pendingAutosaveEntry={pendingAutosaveEntry}
-        onDismissAutosaveRestore={dismissAutosaveRestoreConfirm}
-        onConfirmAutosaveRestore={confirmAutosaveRestore}
+        isAutosaveRestoreConfirmOpen={workspace.isAutosaveRestoreConfirmOpen}
+        pendingAutosaveEntry={workspace.pendingAutosaveEntry}
+        onDismissAutosaveRestore={workspace.dismissAutosaveRestoreConfirm}
+        onConfirmAutosaveRestore={workspace.confirmAutosaveRestore}
       />
 
       <SettingsDialog
@@ -786,7 +491,7 @@ function App() {
       <AutosaveListDialog
         open={isAutosaveListOpen}
         onClose={() => setIsAutosaveListOpen(false)}
-        onSelectEntry={handleAutosaveEntrySelect}
+        onSelectEntry={workspace.handleAutosaveEntrySelect}
       />
 
       <AboutDialog open={isAboutOpen} onClose={() => setIsAboutOpen(false)} />
