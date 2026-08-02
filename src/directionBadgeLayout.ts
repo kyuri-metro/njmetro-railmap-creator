@@ -125,7 +125,11 @@ export type DirectionLayoutConstraintSnapshot = {
   fits: boolean;
 };
 
-export const getDirectionSectionMaxTotalWidth = (direction: 'l' | 'r', lineBadgeWidth: number) => {
+export const getDirectionSectionMaxTotalWidth = (
+  direction: 'l' | 'r',
+  lineBadgeWidth: number,
+  canvasWidth: number = directionBadgeCanvas.width,
+) => {
   if (direction === 'l') {
     const sectionLeft =
       directionBadgeMargins.left +
@@ -134,14 +138,14 @@ export const getDirectionSectionMaxTotalWidth = (direction: 'l' | 'r', lineBadge
       lineBadgeWidth +
       directionBadgeGaps.lineBadge;
 
-    return directionBadgeCanvas.width - directionBadgeMargins.right - sectionLeft;
+    return canvasWidth - directionBadgeMargins.right - sectionLeft;
   }
 
   const sectionLeft =
     directionBadgeMargins.left + directionBadgeArrow.width + directionBadgeGaps.arrow;
 
   return (
-    directionBadgeCanvas.width -
+    canvasWidth -
     directionBadgeMargins.right -
     sectionLeft -
     lineBadgeWidth -
@@ -149,8 +153,12 @@ export const getDirectionSectionMaxTotalWidth = (direction: 'l' | 'r', lineBadge
   );
 };
 
-export const getDirectionSectionMaxTotalWidthForLineId = (direction: 'l' | 'r', lineId: string) => {
+export const getDirectionSectionMaxTotalWidthForLineId = (
+  direction: 'l' | 'r',
+  lineId: string,
+  canvasWidth: number = directionBadgeCanvas.width,
+) => {
   const lineBadgeWidth = getLineIdBadgeWidth(lineId, directionBadgeLineBadge.height) ?? 0;
 
-  return getDirectionSectionMaxTotalWidth(direction, lineBadgeWidth);
+  return getDirectionSectionMaxTotalWidth(direction, lineBadgeWidth, canvasWidth);
 };

@@ -4,7 +4,6 @@ import { resolveDirectionCondense } from '../directionBadgeCondense';
 import {
   directionBadgeAnchors,
   directionBadgeArrow,
-  directionBadgeCanvas,
   directionBadgeChrome,
   directionBadgeGaps,
   directionBadgeLabelText,
@@ -18,6 +17,7 @@ import {
 import type { GeneratorState } from '../features/generatorSlice';
 import { sansLatinFontStack, sansZhFontStack } from '../fontStacks';
 import { getLineIdBadgeWidth } from '../lineIdBadgeMetrics';
+import { getBadgeCanvasSizes } from '../trainTypeLayout';
 import { LineIdBadge } from './LineIdBadge';
 import { LineIdBlockAttributionOverlay } from './LineIdBlockAttributionOverlay';
 import { useSvgPositioner } from './svgPositioning';
@@ -196,9 +196,17 @@ const NextStationNameBlock = ({
   />
 );
 
+const resolveNextIndex = (currentIndex: number, direction: 'l' | 'r'): number => {
+  if (currentIndex === -1) {
+    return -1;
+  }
+  return direction === 'r' ? currentIndex + 1 : currentIndex - 1;
+};
+
 export function DirectionBadge({ data }: DirectionBadgeProps) {
-  const { stnList, currentStnId, direction, idColor, idTextColor, lineId } = data;
-  const { anchor, resolvedBoxes } = useSvgPositioner(directionBadgeCanvas.width, directionBadgeCanvas.height);
+  const { stnList, currentStnId, direction, idColor, idTextColor, lineId, trainType } = data;
+  const { direction: canvasWidth, height: canvasHeight } = getBadgeCanvasSizes(trainType);
+  const { anchor, resolvedBoxes } = useSvgPositioner(canvasWidth, canvasHeight);
 
   const lineBadgeBox = resolvedBoxes['line-badge'];
   const lineIdBadgeSupported = getLineIdBadgeWidth(lineId, directionBadgeLineBadge.height) !== null;
@@ -210,8 +218,8 @@ export function DirectionBadge({ data }: DirectionBadgeProps) {
       {svg}
       {showLineIdAttribution ? (
         <LineIdBlockAttributionOverlay
-          viewWidth={directionBadgeCanvas.width}
-          viewHeight={directionBadgeCanvas.height}
+          viewWidth={canvasWidth}
+          viewHeight={canvasHeight}
           box={lineBadgeBox}
         />
       ) : null}
@@ -221,9 +229,9 @@ export function DirectionBadge({ data }: DirectionBadgeProps) {
   const isRightward = direction === 'r';
 
   const currentIndex = stnList.findIndex((station) => station.id === currentStnId);
-  const nextIndex = currentIndex === -1 ? -1 : direction === 'r' ? currentIndex + 1 : currentIndex - 1;
+  const nextIndex = resolveNextIndex(currentIndex, direction);
   const nextStation = stnList[nextIndex] ?? stnList[currentIndex] ?? null;
-  const toStation = direction === 'r' ? stnList[stnList.length - 1] : stnList[0];
+  const toStation = direction === 'r' ? stnList.at(-1) : stnList[0];
   const isTerminus =
     currentIndex !== -1 && ((direction === 'r' && currentIndex === stnList.length - 1) || (direction === 'l' && currentIndex === 0));
   const safeToStation = toStation ?? { chName: '不存在或未定义', enName: 'Bucunzai Huo Weidingyi' };
@@ -232,17 +240,17 @@ export function DirectionBadge({ data }: DirectionBadgeProps) {
   if (isTerminus) {
     return wrapPreview(
       <svg
-        viewBox={`0 0 ${directionBadgeCanvas.width} ${directionBadgeCanvas.height}`}
+        viewBox={`0 0 ${canvasWidth} ${canvasHeight}`}
         className="badge-svg"
         role="img"
         aria-label="终点站方向牌"
       >
-        <rect id="white-background" x="0" y="0" width={directionBadgeCanvas.width} height={directionBadgeCanvas.height} fill="white" />
+        <rect id="white-background" x="0" y="0" width={canvasWidth} height={canvasHeight} fill="white" />
         <rect
           id="button-line"
           x="0"
-          y={directionBadgeCanvas.height - directionBadgeChrome.buttonLineHeight}
-          width={directionBadgeCanvas.width}
+          y={canvasHeight - directionBadgeChrome.buttonLineHeight}
+          width={canvasWidth}
           height={directionBadgeChrome.buttonLineHeight}
           fill={idColor}
         />
@@ -268,23 +276,24 @@ export function DirectionBadge({ data }: DirectionBadgeProps) {
   const condenseTiers = resolveDirectionCondense({
     direction,
     lineId,
+    canvasWidth,
     toStation: safeToStation,
     nextStation: safeNextStation,
   }).tiers;
 
   return wrapPreview(
     <svg
-      viewBox={`0 0 ${directionBadgeCanvas.width} ${directionBadgeCanvas.height}`}
+      viewBox={`0 0 ${canvasWidth} ${canvasHeight}`}
       className="badge-svg"
       role="img"
       aria-label="方向牌"
     >
-      <rect id="white-background" x="0" y="0" width={directionBadgeCanvas.width} height={directionBadgeCanvas.height} fill="white" />
+      <rect id="white-background" x="0" y="0" width={canvasWidth} height={canvasHeight} fill="white" />
       <rect
         id="button-line"
         x="0"
-        y={directionBadgeCanvas.height - directionBadgeChrome.buttonLineHeight}
-        width={directionBadgeCanvas.width}
+        y={canvasHeight - directionBadgeChrome.buttonLineHeight}
+        width={canvasWidth}
         height={directionBadgeChrome.buttonLineHeight}
         fill={idColor}
       />

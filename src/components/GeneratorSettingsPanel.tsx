@@ -1,7 +1,8 @@
 import { startTransition } from 'react';
 import type { DebouncedGeneratorField } from '../hooks/useDebouncedGeneratorField';
 import { useAppDispatch } from '../hooks';
-import { setDirection, setShowStationTypeIcons, type GeneratorState } from '../features/generatorSlice';
+import { setDirection, setShowStationTypeIcons, setTrainType, type GeneratorState } from '../features/generatorSlice';
+import { TRAIN_TYPE_OPTIONS, type TrainType } from '../trainTypeLayout';
 
 export type GeneratorSettingsPanelProps = {
   generator: GeneratorState;
@@ -50,6 +51,24 @@ export const GeneratorSettingsPanel = ({
           >
             <option value="l">l</option>
             <option value="r">r</option>
+          </select>
+        </label>
+        <label className="field-label">
+          <span>车型</span>
+          <select
+            className="select-input"
+            value={generator.trainType}
+            onChange={(event) => {
+              startTransition(() => {
+                dispatch(setTrainType(event.target.value as TrainType));
+              });
+            }}
+          >
+            {TRAIN_TYPE_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
           </select>
         </label>
         <label className="field-label">

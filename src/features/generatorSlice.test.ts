@@ -13,6 +13,7 @@ import generatorReducer, {
   setLineId,
   setShowStationTypeIcons,
   setTotalLength,
+  setTrainType,
   updateStation,
   type GeneratorState,
   type StationItem,
@@ -70,6 +71,18 @@ describe('generatorSlice', () => {
     expect(state.idColor).toBe('#112233');
     expect(state.idTextColor).toBe('#aabbcc');
     expect(state.showStationTypeIcons).toBe(true);
+  });
+
+  it('setTrainType adjusts totalLength by route canvas delta', () => {
+    expect(state.trainType).toBe('a');
+    state = generatorReducer(state, setTotalLength(6550));
+    state = generatorReducer(state, setTrainType('b'));
+    expect(state.trainType).toBe('b');
+    expect(state.totalLength).toBe(6550 + (4602 - 7412));
+
+    state = generatorReducer(state, setTrainType('b-long'));
+    expect(state.trainType).toBe('b-long');
+    expect(state.totalLength).toBe(3740 + 3322);
   });
 
   it('auto-fills palette colors when setLineId and autoFill is on', () => {
