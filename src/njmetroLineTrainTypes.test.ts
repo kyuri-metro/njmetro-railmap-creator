@@ -5,7 +5,7 @@ describe('njmetroLineTrainTypes', () => {
   it('maps known lines including suburban A/B remaps and line 7 long badge', () => {
     expect(lookupLineTrainType('1')).toEqual({ kind: 'known', trainType: 'a' });
     expect(lookupLineTrainType('s5')).toEqual({ kind: 'known', trainType: 'a' });
-    expect(lookupLineTrainType('S2')).toEqual({ kind: 'known', trainType: 'b' });
+    expect(lookupLineTrainType('S2')).toEqual({ kind: 'known', trainType: 'b-long' });
     expect(lookupLineTrainType('7')).toEqual({ kind: 'known', trainType: 'b-long' });
     expect(lookupLineTrainType('S4')).toEqual({ kind: 'known', trainType: 'suburban-d' });
     expect(lookupLineTrainType('8')).toEqual({ kind: 'known', trainType: 'b' });

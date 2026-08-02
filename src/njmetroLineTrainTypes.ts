@@ -3,7 +3,7 @@ import type { TrainType } from './trainTypeLayout';
 /**
  * 南京地铁线号 → 车型。
  * 编组来源：[南京地铁 - 维基百科](https://zh.wikipedia.org/wiki/%E5%8D%97%E4%BA%AC%E5%9C%B0%E9%93%81)；
- * 市域 A/B 映射为 A/B；7 号线为 B 型长线路图；16/18 编组待定（不映射）。
+ * 市域 A/B 映射为 A/B；7 号线、S2 为 B 型长线路图；16/18 编组待定（不映射）。
  */
 
 export type LineTrainTypeLookup =
@@ -24,7 +24,7 @@ const KNOWN_TRAIN_TYPES_BY_LINE_ID: Record<string, TrainType> = {
   '10': 'a',
   '11': 'a',
   S1: 'b',
-  S2: 'b',
+  S2: 'b-long',
   S3: 'b',
   S4: 'suburban-d',
   S5: 'a',
