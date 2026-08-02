@@ -1,7 +1,9 @@
 import { getNjmetroLineBackgroundColor, getNjmetroLineForegroundColor } from '../njmetroLinePalette';
 import { resolveJianbanLineBackgroundColor, resolveJianbanLineForegroundColor } from '../jianbanLineColors';
+import { lookupLineTrainType } from '../njmetroLineTrainTypes';
 import { normalizeTransferLines } from '../normalizeTransfer';
 import type { RailmapYamlImport } from '../stationListYaml';
+import { adjustTotalLengthForTrainTypeChange } from '../trainTypeLayout';
 import type { GeneratorState } from './generatorSlice';
 
 export const railmapImportToGeneratorState = (
@@ -36,6 +38,14 @@ export const builtinLineToGeneratorState = (
   const paletteText =
     network === 'jianban' ? resolveJianbanLineForegroundColor(lineId) : getNjmetroLineForegroundColor(lineId);
 
+  const trainTypeLookup = lookupLineTrainType(lineId);
+  const trainType =
+    trainTypeLookup.kind === 'known' ? trainTypeLookup.trainType : previous.trainType;
+  const totalLength =
+    trainTypeLookup.kind === 'known'
+      ? adjustTotalLengthForTrainTypeChange(previous.trainType, trainType, previous.totalLength)
+      : previous.totalLength;
+
   return {
     ...previous,
     lineId,
@@ -46,5 +56,7 @@ export const builtinLineToGeneratorState = (
       transfer: normalizeTransferLines(station.transfer),
     })),
     currentStnId: stations[0]?.id ?? '',
+    trainType,
+    totalLength,
   };
 };
