@@ -42,7 +42,8 @@ jobs:
     # After first successful CI analysis, disable Automatic Analysis in SonarCloud
     # Administration → Analysis Method to avoid double analysis, and ensure a
     # Quality Gate is assigned to the project.
-    if: ${{ secrets.SONAR_TOKEN != '' }}
+    # Note: do not gate this job with `if: secrets.*` — GitHub rejects that as an
+    # invalid workflow and skips the whole run (0s failure).
     steps:
       - uses: actions/checkout@v4
         with:
