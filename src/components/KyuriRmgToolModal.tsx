@@ -30,9 +30,8 @@ export function KyuriRmgToolModal({
   const kyuriYamlRef = useRef(kyuriYamlForExport);
   kyuriYamlRef.current = kyuriYamlForExport;
 
-  const iframeSrc = baseUrl
-    ? `${baseUrl}/?hideOutput=1&flow=${mode === 'export' ? 'kyuri-to-rmg' : 'rmg-to-kyuri'}`
-    : '';
+  const flow = mode === 'export' ? 'kyuri-to-rmg' : 'rmg-to-kyuri';
+  const iframeSrc = baseUrl ? `${baseUrl}/?hideOutput=1&flow=${flow}` : '';
 
   useEffect(() => {
     if (!open) {

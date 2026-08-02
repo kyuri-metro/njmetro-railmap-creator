@@ -224,7 +224,14 @@ const canvasToRasterBlob = async (
   canvas: HTMLCanvasElement,
   format: 'png' | 'jpeg' | 'webp',
 ): Promise<Blob | null> => {
-  const mimeType = format === 'png' ? 'image/png' : format === 'jpeg' ? 'image/jpeg' : 'image/webp';
+  let mimeType: string;
+  if (format === 'png') {
+    mimeType = 'image/png';
+  } else if (format === 'jpeg') {
+    mimeType = 'image/jpeg';
+  } else {
+    mimeType = 'image/webp';
+  }
   const quality = format === 'jpeg' || format === 'webp' ? 0.92 : undefined;
 
   return await new Promise((resolve) => {
@@ -298,37 +305,42 @@ export const triggerBlobDownload = (blob: Blob, downloadName: string) => {
   window.URL.revokeObjectURL(objectUrl);
 };
 
-export const exportSvgToRasterBlob = async (
+const exportSingleTileRasterBlob = async (
   svgElement: SVGSVGElement,
   format: 'png' | 'jpeg' | 'webp',
-  exportHeight: number,
-  withWatermark = false,
+  width: number,
+  height: number,
+  withWatermark: boolean,
 ): Promise<Blob | null> => {
-  const { width, height, pixelScale } = getExportDimensions(svgElement, exportHeight);
-  const needsTiling = width > RASTER_EXPORT_TILE_MAX || height > RASTER_EXPORT_TILE_MAX;
+  const clone = prepareSvgExportClone(svgElement, width, height);
+  const svgMarkup = new XMLSerializer().serializeToString(clone);
+  const canvas = await rasterizeSvgMarkupToCanvas(svgMarkup, width, height);
 
-  if (!needsTiling) {
-    const clone = prepareSvgExportClone(svgElement, width, height);
-    const svgMarkup = new XMLSerializer().serializeToString(clone);
-    const canvas = await rasterizeSvgMarkupToCanvas(svgMarkup, width, height);
+  if (!canvas) {
+    return null;
+  }
 
-    if (!canvas) {
+  if (withWatermark) {
+    const context = canvas.getContext('2d');
+
+    if (!context) {
       return null;
     }
 
-    if (withWatermark) {
-      const context = canvas.getContext('2d');
-
-      if (!context) {
-        return null;
-      }
-
-      drawRepeatingWatermark(context, width, height);
-    }
-
-    return canvasToRasterBlob(canvas, format);
+    drawRepeatingWatermark(context, width, height);
   }
 
+  return canvasToRasterBlob(canvas, format);
+};
+
+const exportTiledRasterBlob = async (
+  svgElement: SVGSVGElement,
+  format: 'png' | 'jpeg' | 'webp',
+  width: number,
+  height: number,
+  pixelScale: number,
+  withWatermark: boolean,
+): Promise<Blob | null> => {
   const viewBoxOrigin = getSvgViewBoxOrigin(svgElement);
   const baseClone = prepareSvgExportClone(svgElement, width, height);
   const finalCanvas = document.createElement('canvas');
@@ -368,6 +380,22 @@ export const exportSvgToRasterBlob = async (
   }
 
   return canvasToRasterBlob(finalCanvas, format);
+};
+
+export const exportSvgToRasterBlob = async (
+  svgElement: SVGSVGElement,
+  format: 'png' | 'jpeg' | 'webp',
+  exportHeight: number,
+  withWatermark = false,
+): Promise<Blob | null> => {
+  const { width, height, pixelScale } = getExportDimensions(svgElement, exportHeight);
+  const needsTiling = width > RASTER_EXPORT_TILE_MAX || height > RASTER_EXPORT_TILE_MAX;
+
+  if (!needsTiling) {
+    return exportSingleTileRasterBlob(svgElement, format, width, height, withWatermark);
+  }
+
+  return exportTiledRasterBlob(svgElement, format, width, height, pixelScale, withWatermark);
 };
 
 export const downloadBadgeSvg = (
