@@ -450,14 +450,11 @@ const parseRailmapYamlV3 = (
 
   let currentFromRoot = typeof root.currentStnId === 'string' ? root.currentStnId.trim() : '';
   const njRaw = root.njMetroSettings;
-  if (
-    !currentFromRoot &&
-    njRaw !== null &&
-    typeof njRaw === 'object' &&
-    !Array.isArray(njRaw) &&
-    typeof (njRaw as Record<string, unknown>).currentStnId === 'string'
-  ) {
-    currentFromRoot = (njRaw as Record<string, unknown>).currentStnId.trim();
+  if (!currentFromRoot && njRaw !== null && typeof njRaw === 'object' && !Array.isArray(njRaw)) {
+    const legacyCurrentStnId = (njRaw as Record<string, unknown>).currentStnId;
+    if (typeof legacyCurrentStnId === 'string') {
+      currentFromRoot = legacyCurrentStnId.trim();
+    }
   }
 
   const currentStnId = resolveCurrentStnId(

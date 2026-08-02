@@ -250,7 +250,7 @@ export const resolveDirectionCondense = (params: ResolveDirectionCondenseParams)
         break;
       }
 
-      const sortedCandidates = candidates.toSorted(compareCandidates);
+      const sortedCandidates = [...candidates].sort(compareCandidates);
       const best = sortedCandidates[0];
 
       if (best.totalWidth >= totalWidth) {
