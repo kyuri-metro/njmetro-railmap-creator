@@ -312,26 +312,23 @@ const RouteStationRow = ({
   const transferIconAnchorId = `station-transfer-icon-${index}`;
   const transferIconHeight = getTransferCircleDiameter(isCurrent, isEndpoint) * 0.8;
 
-  let labelAnchor = null;
-  if (isCurrent) {
-    labelAnchor = anchor(
-      `current-station-card-${index}`,
-      <CurrentStationCard placeAbove={placeAbove} showStationTypeIcons={showStationTypeIcons} station={station} />,
-      {
+  const labelAnchor = isCurrent
+    ? anchor(
+        `current-station-card-${index}`,
+        <CurrentStationCard placeAbove={placeAbove} showStationTypeIcons={showStationTypeIcons} station={station} />,
+        {
+          centerX: { to: stationPointId, offset: 0 },
+          ...(placeAbove
+            ? { bottom: { to: stationPointId, edge: 'bottom', gap: 0.5 } }
+            : { top: { to: stationPointId, edge: 'top', gap: 0.5 } }),
+        },
+      )
+    : anchor(`station-label-${index}`, <StationTextBlock showStationTypeIcons={showStationTypeIcons} station={station} />, {
         centerX: { to: stationPointId, offset: 0 },
         ...(placeAbove
-          ? { bottom: { to: stationPointId, edge: 'bottom', gap: 0.5 } }
-          : { top: { to: stationPointId, edge: 'top', gap: 0.5 } }),
-      },
-    );
-  } else {
-    labelAnchor = anchor(`station-label-${index}`, <StationTextBlock showStationTypeIcons={showStationTypeIcons} station={station} />, {
-      centerX: { to: stationPointId, offset: 0 },
-      ...(placeAbove
-        ? { bottom: { to: 'route-line-reference', edge: 'top', gap: topLabelGap } }
-        : { top: { to: 'route-line-reference', edge: 'bottom', gap: bottomLabelGap } }),
-    });
-  }
+          ? { bottom: { to: 'route-line-reference', edge: 'top', gap: topLabelGap } }
+          : { top: { to: 'route-line-reference', edge: 'bottom', gap: bottomLabelGap } }),
+      });
 
   let transferBadgeAnchor = null;
   if (station.transfer.length > 0) {
