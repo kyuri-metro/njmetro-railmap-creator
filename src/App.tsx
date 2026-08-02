@@ -2,20 +2,16 @@ import {
   startTransition,
   useDeferredValue,
   useEffect,
-  useId,
-  useLayoutEffect,
   useRef,
   useState,
   type ChangeEvent,
-  type ReactNode,
 } from 'react';
 import { ConfirmDialogOverlay } from '@umamichi-ui/common-components/dialog';
 import { FullscreenOverlay } from '@umamichi-ui/common-components/overlay';
 import { usePreviewLoadingOverlay } from './hooks/usePreviewLoadingOverlay';
 import { useLineThemePalette } from './hooks/useLineThemePalette';
-import { CurrentStationBadge } from './components/CurrentStationBadge';
-import { DirectionBadge } from './components/DirectionBadge';
-import { RouteBadge } from './components/RouteBadge';
+import { useGeneratorControlDrafts } from './hooks/useGeneratorControlDrafts';
+import { PreviewResultsPane } from './components/PreviewResultsPane';
 import { StationFormModal, stationToDraft, type StationFormDraft } from './components/StationFormModal';
 import { StationTable } from './components/StationTable';
 import { KyuriRmgToolModal } from './components/KyuriRmgToolModal';
@@ -23,7 +19,6 @@ import { KyuriMetroStudioToolModal } from './components/KyuriMetroStudioToolModa
 import { AboutDialog } from './components/AboutDialog';
 import { AutosaveListDialog } from './components/AutosaveListDialog';
 import { SettingsDialog } from './components/SettingsDialog';
-import { BadgeDownloadTrigger } from './components/BadgeDownloadTrigger';
 import { InfoCircleIcon } from '@umamichi-ui/common-components/icons';
 import { MobileActionSheet } from '@umamichi-ui/common-components/menu';
 import { TopbarFileCommands, ExportIcon, ImportIcon, NewFileIcon } from './components/topbar/TopbarFileCommands';
@@ -44,11 +39,7 @@ import {
   reverseStnList,
   setCurrentStation,
   setDirection,
-  setIdColor,
-  setIdTextColor,
-  setLineId,
   setShowStationTypeIcons,
-  setTotalLength,
   updateStation,
   type GeneratorState,
   type StationItem,
@@ -77,34 +68,6 @@ type ModalState =
   | null;
 
 type ThemeMode = 'light' | 'dark';
-
-const controlDebounceMs = 160;
-
-const parseTotalLengthDraft = (raw: string) => {
-  const trimmed = raw.trim();
-
-  if (trimmed === '') {
-    return 0;
-  }
-
-  const n = Math.trunc(Number(trimmed));
-
-  return Number.isFinite(n) && n >= 0 ? n : 0;
-};
-
-const normalizeLineIdDraft = (raw: string) => raw.trim().toUpperCase();
-
-const normalizeIdColorDraft = (raw: string) => {
-  const v = raw.trim();
-
-  if (/^#[0-9a-fA-F]{6}$/.test(v)) {
-    return v.toLowerCase();
-  }
-
-  return null;
-};
-
-const hexColorsEqual = (a: string, b: string) => a.trim().toLowerCase() === b.trim().toLowerCase();
 
 const themeStorageKey = 'site-theme';
 const themeTransitionLockClassName = 'theme-transition-lock';
@@ -272,146 +235,6 @@ const MoonIcon = () => (
   </svg>
 );
 
-const MagnifyPreviewIcon = () => (
-  <svg className="result-svg-zoom-icon" viewBox="0 0 24 24" width="20" height="20" aria-hidden>
-    <circle cx="10" cy="10" r="6" fill="none" stroke="currentColor" strokeWidth="2" />
-    <path fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" d="M10 7.75v4.5M7.75 10h4.5" />
-    <path fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" d="M15 15l6 6" />
-  </svg>
-);
-
-type DownloadableBadgeCardProps = {
-  title: string;
-  fileName: string;
-  children: ReactNode;
-};
-
-const DownloadableBadgeCard = ({ title, fileName, children }: DownloadableBadgeCardProps) => {
-  const badgeContainerRef = useRef<HTMLDivElement | null>(null);
-  const svgZoomBodyRef = useRef<HTMLDivElement | null>(null);
-  const svgZoomScrollLeftRef = useRef<number | null>(null);
-  const svgZoomTitleId = useId();
-  const [isSvgZoomOpen, setIsSvgZoomOpen] = useState(false);
-  const svgZoomOverlayId = `${useId().replace(/:/g, '')}-svg-preview`;
-  const [svgZoomMarkup, setSvgZoomMarkup] = useState('');
-  const [svgZoomPercent, setSvgZoomPercent] = useState(100);
-
-  const setSvgZoomPercentAnchored = (nextPercent: number) => {
-    const body = svgZoomBodyRef.current;
-
-    if (body && nextPercent !== svgZoomPercent) {
-      const ratio = nextPercent / svgZoomPercent;
-      const viewportCenterX = body.scrollLeft + body.clientWidth / 2;
-      svgZoomScrollLeftRef.current = viewportCenterX * ratio - body.clientWidth / 2;
-    }
-
-    setSvgZoomPercent(nextPercent);
-  };
-
-  useLayoutEffect(() => {
-    if (!isSvgZoomOpen) {
-      return;
-    }
-
-    const body = svgZoomBodyRef.current;
-    const nextScrollLeft = svgZoomScrollLeftRef.current;
-
-    if (!body || nextScrollLeft === null) {
-      return;
-    }
-
-    body.scrollLeft = nextScrollLeft;
-    svgZoomScrollLeftRef.current = null;
-  }, [isSvgZoomOpen, svgZoomPercent]);
-
-  const getBadgeSvgElement = () => {
-    const candidate = badgeContainerRef.current?.querySelector('svg');
-
-    return candidate instanceof SVGSVGElement ? candidate : null;
-  };
-
-  const openSvgZoom = () => {
-    const svgElement = badgeContainerRef.current?.querySelector('svg');
-
-    if (!svgElement) {
-      return;
-    }
-
-    const serializer = new XMLSerializer();
-    setSvgZoomMarkup(serializer.serializeToString(svgElement));
-    svgZoomScrollLeftRef.current = 0;
-    setSvgZoomPercent(100);
-    setIsSvgZoomOpen(true);
-  };
-
-  const closeSvgZoom = () => {
-    setIsSvgZoomOpen(false);
-  };
-
-  return (
-    <>
-      <div className="result-block">
-        <div className="result-block-heading">
-          <h3>{title}</h3>
-          <div className="result-actions">
-            <BadgeDownloadTrigger fileName={fileName} getSvgElement={getBadgeSvgElement} />
-            <button
-              type="button"
-              className="icon-button result-svg-zoom-trigger"
-              aria-label={`查看 ${title} 大图`}
-              onClick={openSvgZoom}
-            >
-              <MagnifyPreviewIcon />
-            </button>
-          </div>
-        </div>
-        <div ref={badgeContainerRef} className="badge-preview">
-          {children}
-        </div>
-      </div>
-
-      <FullscreenOverlay
-        open={isSvgZoomOpen}
-        overlayId={svgZoomOverlayId}
-        onDismiss={closeSvgZoom}
-        title={`预览：${title}`}
-        titleId={svgZoomTitleId}
-        size="page"
-        fill
-        closeAriaLabel="关闭预览"
-        panelClassName="svg-preview-zoom-dialog"
-        bodyClassName="svg-preview-zoom-overlay-body"
-      >
-        <div className="svg-preview-zoom-toolbar form-scope">
-          <label className="svg-preview-zoom-scale-label">
-            <span>缩放</span>
-            <input
-              type="range"
-              className="svg-preview-zoom-range"
-              min={100}
-              max={500}
-              step={1}
-              value={svgZoomPercent}
-              onChange={(event) => setSvgZoomPercentAnchored(Number(event.target.value))}
-            />
-            <span className="svg-preview-zoom-scale-value">{svgZoomPercent}%</span>
-          </label>
-          <BadgeDownloadTrigger
-            fileName={fileName}
-            getSvgElement={getBadgeSvgElement}
-            triggerClassName="svg-preview-zoom-download"
-          />
-        </div>
-        <div ref={svgZoomBodyRef} className="svg-preview-zoom-body">
-          <div className="svg-preview-zoom-scaled" style={{ width: `${svgZoomPercent}%` }}>
-            <div dangerouslySetInnerHTML={{ __html: svgZoomMarkup }} />
-          </div>
-        </div>
-      </FullscreenOverlay>
-    </>
-  );
-};
-
 function App() {
   const dispatch = useAppDispatch();
   const generator = useAppSelector(selectGeneratorPresent);
@@ -422,22 +245,13 @@ function App() {
   const [modalState, setModalState] = useState<ModalState>(null);
   const [stationModalVisible, setStationModalVisible] = useState(false);
   const previewLoading = usePreviewLoadingOverlay(generator, 16);
-  const [totalLengthDraft, setTotalLengthDraft] = useState(() => String(generator.totalLength));
-  const totalLengthDraftRef = useRef(totalLengthDraft);
-  const totalLengthDirtyRef = useRef(false);
-  const totalLengthDebounceRef = useRef(0);
-  const [lineIdDraft, setLineIdDraft] = useState(() => generator.lineId);
-  const lineIdDraftRef = useRef(lineIdDraft);
-  const lineIdDirtyRef = useRef(false);
-  const lineIdDebounceRef = useRef(0);
-  const [idColorDraft, setIdColorDraft] = useState(() => generator.idColor);
-  const idColorDraftRef = useRef(idColorDraft);
-  const idColorDirtyRef = useRef(false);
-  const idColorDebounceRef = useRef(0);
-  const [idTextColorDraft, setIdTextColorDraft] = useState(() => generator.idTextColor);
-  const idTextColorDraftRef = useRef(idTextColorDraft);
-  const idTextColorDirtyRef = useRef(false);
-  const idTextColorDebounceRef = useRef(0);
+  const {
+    totalLength: totalLengthField,
+    lineId: lineIdField,
+    idColor: idColorField,
+    idTextColor: idTextColorField,
+    syncFromGenerator: syncControlDraftsFromGenerator,
+  } = useGeneratorControlDrafts(generator);
   const [themeMode, setThemeMode] = useState<ThemeMode>('light');
   const [isAboutOpen, setIsAboutOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -458,17 +272,6 @@ function App() {
   const yamlFileInputRef = useRef<HTMLInputElement>(null);
   const [fontDetectionResults, setFontDetectionResults] = useState<FontDetectionResult[]>(fallbackFontDetectionResults);
   const [fontDetectionState, setFontDetectionState] = useState<'idle' | 'checking' | 'done'>('idle');
-
-  const syncControlDraftsFromGenerator = (state: GeneratorState) => {
-    totalLengthDirtyRef.current = false;
-    lineIdDirtyRef.current = false;
-    idColorDirtyRef.current = false;
-    idTextColorDirtyRef.current = false;
-    setTotalLengthDraft(String(state.totalLength));
-    setLineIdDraft(state.lineId);
-    setIdColorDraft(state.idColor);
-    setIdTextColorDraft(state.idTextColor);
-  };
 
   const applyUndo = () => {
     dispatch(UndoActionCreators.undo());
@@ -623,191 +426,6 @@ function App() {
     isYamlImportConfirmOpen,
     yamlImportError,
   ]);
-
-  totalLengthDraftRef.current = totalLengthDraft;
-  lineIdDraftRef.current = lineIdDraft;
-  idColorDraftRef.current = idColorDraft;
-  idTextColorDraftRef.current = idTextColorDraft;
-
-  useEffect(() => {
-    if (!totalLengthDirtyRef.current) {
-      setTotalLengthDraft(String(generator.totalLength));
-    }
-  }, [generator.totalLength]);
-
-  useEffect(() => {
-    if (!lineIdDirtyRef.current) {
-      setLineIdDraft(generator.lineId);
-    }
-  }, [generator.lineId]);
-
-  useEffect(() => {
-    if (!idColorDirtyRef.current) {
-      setIdColorDraft(generator.idColor);
-    }
-  }, [generator.idColor]);
-
-  useEffect(() => {
-    if (!idTextColorDirtyRef.current) {
-      setIdTextColorDraft(generator.idTextColor);
-    }
-  }, [generator.idTextColor]);
-
-  useEffect(() => {
-    window.clearTimeout(totalLengthDebounceRef.current);
-    totalLengthDebounceRef.current = window.setTimeout(() => {
-      const parsed = parseTotalLengthDraft(totalLengthDraftRef.current);
-
-      if (parsed !== generator.totalLength) {
-        startTransition(() => {
-          dispatch(setTotalLength(parsed));
-        });
-      }
-
-      totalLengthDirtyRef.current = false;
-      setTotalLengthDraft(String(parsed));
-    }, controlDebounceMs);
-
-    return () => {
-      window.clearTimeout(totalLengthDebounceRef.current);
-    };
-  }, [totalLengthDraft, generator.totalLength, dispatch]);
-
-  useEffect(() => {
-    window.clearTimeout(lineIdDebounceRef.current);
-    lineIdDebounceRef.current = window.setTimeout(() => {
-      const next = normalizeLineIdDraft(lineIdDraftRef.current);
-
-      if (next !== generator.lineId) {
-        startTransition(() => {
-          dispatch(setLineId(next));
-        });
-      }
-
-      lineIdDirtyRef.current = false;
-      setLineIdDraft(next);
-    }, controlDebounceMs);
-
-    return () => {
-      window.clearTimeout(lineIdDebounceRef.current);
-    };
-  }, [lineIdDraft, generator.lineId, dispatch]);
-
-  useEffect(() => {
-    window.clearTimeout(idColorDebounceRef.current);
-    idColorDebounceRef.current = window.setTimeout(() => {
-      const next = normalizeIdColorDraft(idColorDraftRef.current);
-
-      if (next !== null && !hexColorsEqual(next, generator.idColor)) {
-        startTransition(() => {
-          dispatch(setIdColor(next));
-        });
-      }
-
-      idColorDirtyRef.current = false;
-
-      if (next !== null) {
-        setIdColorDraft(next);
-      } else {
-        setIdColorDraft(generator.idColor);
-      }
-    }, controlDebounceMs);
-
-    return () => {
-      window.clearTimeout(idColorDebounceRef.current);
-    };
-  }, [idColorDraft, generator.idColor, dispatch]);
-
-  useEffect(() => {
-    window.clearTimeout(idTextColorDebounceRef.current);
-    idTextColorDebounceRef.current = window.setTimeout(() => {
-      const next = normalizeIdColorDraft(idTextColorDraftRef.current);
-
-      if (next !== null && !hexColorsEqual(next, generator.idTextColor)) {
-        startTransition(() => {
-          dispatch(setIdTextColor(next));
-        });
-      }
-
-      idTextColorDirtyRef.current = false;
-
-      if (next !== null) {
-        setIdTextColorDraft(next);
-      } else {
-        setIdTextColorDraft(generator.idTextColor);
-      }
-    }, controlDebounceMs);
-
-    return () => {
-      window.clearTimeout(idTextColorDebounceRef.current);
-    };
-  }, [idTextColorDraft, generator.idTextColor, dispatch]);
-
-  const flushTotalLengthDraft = () => {
-    window.clearTimeout(totalLengthDebounceRef.current);
-    const parsed = parseTotalLengthDraft(totalLengthDraftRef.current);
-
-    if (parsed !== generator.totalLength) {
-      startTransition(() => {
-        dispatch(setTotalLength(parsed));
-      });
-    }
-
-    totalLengthDirtyRef.current = false;
-    setTotalLengthDraft(String(parsed));
-  };
-
-  const flushLineIdDraft = () => {
-    window.clearTimeout(lineIdDebounceRef.current);
-    const next = normalizeLineIdDraft(lineIdDraftRef.current);
-
-    if (next !== generator.lineId) {
-      startTransition(() => {
-        dispatch(setLineId(next));
-      });
-    }
-
-    lineIdDirtyRef.current = false;
-    setLineIdDraft(next);
-  };
-
-  const flushIdColorDraft = () => {
-    window.clearTimeout(idColorDebounceRef.current);
-    const next = normalizeIdColorDraft(idColorDraftRef.current);
-
-    if (next !== null && !hexColorsEqual(next, generator.idColor)) {
-      startTransition(() => {
-        dispatch(setIdColor(next));
-      });
-    }
-
-    idColorDirtyRef.current = false;
-
-    if (next !== null) {
-      setIdColorDraft(next);
-    } else {
-      setIdColorDraft(generator.idColor);
-    }
-  };
-
-  const flushIdTextColorDraft = () => {
-    window.clearTimeout(idTextColorDebounceRef.current);
-    const next = normalizeIdColorDraft(idTextColorDraftRef.current);
-
-    if (next !== null && !hexColorsEqual(next, generator.idTextColor)) {
-      startTransition(() => {
-        dispatch(setIdTextColor(next));
-      });
-    }
-
-    idTextColorDirtyRef.current = false;
-
-    if (next !== null) {
-      setIdTextColorDraft(next);
-    } else {
-      setIdTextColorDraft(generator.idTextColor);
-    }
-  };
 
   const openInsertModal = (position: 'before' | 'after' | 'start' | 'end') => {
     const nextId = `station-${crypto.randomUUID()}`;
@@ -1162,12 +780,9 @@ function App() {
                     inputMode="numeric"
                     autoComplete="off"
                     spellCheck={false}
-                    value={totalLengthDraft}
-                    onChange={(event) => {
-                      totalLengthDirtyRef.current = true;
-                      setTotalLengthDraft(event.target.value.replace(/\D/g, ''));
-                    }}
-                    onBlur={flushTotalLengthDraft}
+                    value={totalLengthField.draft}
+                    onChange={(event) => totalLengthField.onDraftChange(event.target.value)}
+                    onBlur={totalLengthField.onBlur}
                   />
                 </label>
                 <label className="field-label">
@@ -1190,36 +805,27 @@ function App() {
                   <input
                     className="text-input"
                     type="text"
-                    value={lineIdDraft}
-                    onChange={(event) => {
-                      lineIdDirtyRef.current = true;
-                      setLineIdDraft(event.target.value.trim().toUpperCase());
-                    }}
-                    onBlur={flushLineIdDraft}
+                    value={lineIdField.draft}
+                    onChange={(event) => lineIdField.onDraftChange(event.target.value)}
+                    onBlur={lineIdField.onBlur}
                   />
                 </label>
                 <label className="field-label">
                   <span>线路标识色</span>
                   <input
                     type="color"
-                    value={idColorDraft}
-                    onChange={(event) => {
-                      idColorDirtyRef.current = true;
-                      setIdColorDraft(event.target.value);
-                    }}
-                    onBlur={flushIdColorDraft}
+                    value={idColorField.draft}
+                    onChange={(event) => idColorField.onDraftChange(event.target.value)}
+                    onBlur={idColorField.onBlur}
                   />
                 </label>
                 <label className="field-label">
                   <span>线路编号字体色</span>
                   <input
                     type="color"
-                    value={idTextColorDraft}
-                    onChange={(event) => {
-                      idTextColorDirtyRef.current = true;
-                      setIdTextColorDraft(event.target.value);
-                    }}
-                    onBlur={flushIdTextColorDraft}
+                    value={idTextColorField.draft}
+                    onChange={(event) => idTextColorField.onDraftChange(event.target.value)}
+                    onBlur={idTextColorField.onBlur}
                   />
                 </label>
                 <label className="field-label field-label-checkbox">
@@ -1269,30 +875,7 @@ function App() {
             </section>
           </div>
 
-          <aside className="app-column app-column-preview" aria-label="结果预览">
-            <div className="preview-column-root">
-              {previewLoading ? (
-                <div className="preview-loading-overlay" aria-live="polite" aria-busy="true">
-                  <span className="preview-loading-label">加载中</span>
-                </div>
-              ) : null}
-              <section className="panel result-panel">
-                <h2 className="site-content-heading">结果</h2>
-
-                <DownloadableBadgeCard title="当前站吊板" fileName="current-station-badge.svg">
-                  <CurrentStationBadge data={previewGenerator} />
-                </DownloadableBadgeCard>
-
-                <DownloadableBadgeCard title="方向吊板" fileName="direction-badge.svg">
-                  <DirectionBadge data={previewGenerator} />
-                </DownloadableBadgeCard>
-
-                <DownloadableBadgeCard title="线路图吊板" fileName="route-badge.svg">
-                  <RouteBadge data={previewGenerator} />
-                </DownloadableBadgeCard>
-              </section>
-            </div>
-          </aside>
+          <PreviewResultsPane previewGenerator={previewGenerator} previewLoading={previewLoading} />
         </div>
       </div>
 

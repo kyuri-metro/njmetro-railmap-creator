@@ -12,6 +12,7 @@ export default defineConfig({
         'src/stationListYaml.ts',
         'src/directionBadgeCondense.ts',
         'src/features/generatorSlice.ts',
+        'src/hooks/useDebouncedGeneratorField.ts',
       ],
     },
   },
