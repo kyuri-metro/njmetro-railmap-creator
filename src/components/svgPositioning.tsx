@@ -8,7 +8,9 @@ export type SvgBox = {
 };
 
 type AnchorEdge = 'left' | 'right' | 'top' | 'bottom';
-type AnchorTarget = 'canvas' | string;
+type AnchorTarget = string;
+
+const ANCHOR_CANVAS_TARGET = 'canvas';
 
 type AnchorConstraint = {
   to?: AnchorTarget;
@@ -66,8 +68,8 @@ const getEdgeCoordinate = (box: SvgBox, edge: AnchorEdge) => {
   }
 };
 
-const getTargetBox = (boxes: Record<string, SvgBox>, canvas: SvgBox, target: AnchorTarget = 'canvas') =>
-  target === 'canvas' ? canvas : boxes[target];
+const getTargetBox = (boxes: Record<string, SvgBox>, canvas: SvgBox, target: AnchorTarget = ANCHOR_CANVAS_TARGET) =>
+  target === ANCHOR_CANVAS_TARGET ? canvas : boxes[target];
 
 const toAnchorConstraint = (value: number | AnchorConstraint | undefined, defaultEdge: AnchorEdge): AnchorConstraint | null => {
   if (value === undefined) {
@@ -75,10 +77,10 @@ const toAnchorConstraint = (value: number | AnchorConstraint | undefined, defaul
   }
 
   if (typeof value === 'number') {
-    return { to: 'canvas', edge: defaultEdge, gap: value };
+    return { to: ANCHOR_CANVAS_TARGET, edge: defaultEdge, gap: value };
   }
 
-  const target = value.to ?? 'canvas';
+  const target = value.to ?? ANCHOR_CANVAS_TARGET;
 
   return {
     to: target,
@@ -93,10 +95,10 @@ const toCenterConstraint = (value: number | CenterConstraint | undefined): Cente
   }
 
   if (typeof value === 'number') {
-    return { to: 'canvas', offset: value };
+    return { to: ANCHOR_CANVAS_TARGET, offset: value };
   }
 
-  const target = value.to ?? 'canvas';
+  const target = value.to ?? ANCHOR_CANVAS_TARGET;
 
   return {
     to: target,
@@ -114,7 +116,7 @@ const collectConstraintTargets = (constraints: PositionConstraints) => {
     if (value && typeof value === 'object' && 'to' in value) {
       const target = value.to;
 
-      if (target && target !== 'canvas') {
+      if (target && target !== ANCHOR_CANVAS_TARGET) {
         targets.add(target);
       }
     }
@@ -158,6 +160,48 @@ const detectAnchorCycle = (graph: Map<string, string[]>, startId: string) => {
   return visit(startId);
 };
 
+const computeAxisTranslation = (
+  box: SvgBox,
+  boxes: Record<string, SvgBox>,
+  canvas: SvgBox,
+  primary: AnchorConstraint | null,
+  secondary: AnchorConstraint | null,
+  center: CenterConstraint | null,
+  axis: 'x' | 'y',
+): number => {
+  const boxOrigin = axis === 'x' ? box.x : box.y;
+  const boxSize = axis === 'x' ? box.width : box.height;
+
+  if (primary) {
+    const target = getTargetBox(boxes, canvas, primary.to);
+    if (!target) {
+      return 0;
+    }
+    const edge = primary.edge ?? (axis === 'x' ? 'left' : 'top');
+    return getEdgeCoordinate(target, edge) + (primary.gap ?? 0) - boxOrigin;
+  }
+
+  if (secondary) {
+    const target = getTargetBox(boxes, canvas, secondary.to);
+    if (!target) {
+      return 0;
+    }
+    const edge = secondary.edge ?? (axis === 'x' ? 'right' : 'bottom');
+    return getEdgeCoordinate(target, edge) - (secondary.gap ?? 0) - (boxOrigin + boxSize);
+  }
+
+  if (center) {
+    const target = getTargetBox(boxes, canvas, center.to);
+    if (!target) {
+      return 0;
+    }
+    const targetCenter = axis === 'x' ? target.x + target.width / 2 : target.y + target.height / 2;
+    return targetCenter + (center.offset ?? 0) - (boxOrigin + boxSize / 2);
+  }
+
+  return 0;
+};
+
 const computeTranslation = (box: SvgBox, boxes: Record<string, SvgBox>, canvas: SvgBox, constraints: PositionConstraints) => {
   const left = toAnchorConstraint(constraints.left, 'left');
   const right = toAnchorConstraint(constraints.right, 'right');
@@ -166,48 +210,8 @@ const computeTranslation = (box: SvgBox, boxes: Record<string, SvgBox>, canvas: 
   const centerX = toCenterConstraint(constraints.centerX);
   const centerY = toCenterConstraint(constraints.centerY);
 
-  let translateX = 0;
-  let translateY = 0;
-
-  if (left) {
-    const target = getTargetBox(boxes, canvas, left.to);
-
-    if (target) {
-      translateX = getEdgeCoordinate(target, left.edge ?? 'left') + (left.gap ?? 0) - box.x;
-    }
-  } else if (right) {
-    const target = getTargetBox(boxes, canvas, right.to);
-
-    if (target) {
-      translateX = getEdgeCoordinate(target, right.edge ?? 'right') - (right.gap ?? 0) - (box.x + box.width);
-    }
-  } else if (centerX) {
-    const target = getTargetBox(boxes, canvas, centerX.to);
-
-    if (target) {
-      translateX = target.x + target.width / 2 + (centerX.offset ?? 0) - (box.x + box.width / 2);
-    }
-  }
-
-  if (top) {
-    const target = getTargetBox(boxes, canvas, top.to);
-
-    if (target) {
-      translateY = getEdgeCoordinate(target, top.edge ?? 'top') + (top.gap ?? 0) - box.y;
-    }
-  } else if (bottom) {
-    const target = getTargetBox(boxes, canvas, bottom.to);
-
-    if (target) {
-      translateY = getEdgeCoordinate(target, bottom.edge ?? 'bottom') - (bottom.gap ?? 0) - (box.y + box.height);
-    }
-  } else if (centerY) {
-    const target = getTargetBox(boxes, canvas, centerY.to);
-
-    if (target) {
-      translateY = target.y + target.height / 2 + (centerY.offset ?? 0) - (box.y + box.height / 2);
-    }
-  }
+  const translateX = computeAxisTranslation(box, boxes, canvas, left, right, centerX, 'x');
+  const translateY = computeAxisTranslation(box, boxes, canvas, top, bottom, centerY, 'y');
 
   return { translateX, translateY };
 };
