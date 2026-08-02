@@ -20,6 +20,7 @@ export const railmapImportToGeneratorState = (
   idColor: data.color,
   idTextColor: data.lineIdTextColor,
   showStationTypeIcons: data.njMetroSettings.showStationTypeIcons,
+  trainType: data.njMetroSettings.trainType,
 });
 
 export type BuiltinLineFillNetwork = 'opened' | 'jianban';

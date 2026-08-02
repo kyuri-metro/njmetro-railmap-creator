@@ -1,5 +1,6 @@
 import YAML from 'yaml';
 import type { GeneratorState, StationItem, StationType, TrainDirection, TransferLine } from './features/generatorSlice';
+import { isTrainType, type TrainType } from './trainTypeLayout';
 
 const STATION_TYPES = new Set<StationType>(['none', 'railway', 'airport']);
 
@@ -16,6 +17,7 @@ export type NjMetroSettingsYaml = {
   direction: TrainDirection;
   currentStnId: string;
   showStationTypeIcons: boolean;
+  trainType: TrainType;
 };
 
 export type RailmapYamlImport = {
@@ -37,6 +39,19 @@ const normalizeHexColor = (raw: string): string => {
 const isValidHex6 = (raw: unknown): raw is string =>
   typeof raw === 'string' && /^#[0-9a-fA-F]{6}$/.test(raw.trim());
 
+const toScalarString = (raw: unknown): string | null => {
+  if (typeof raw === 'string') {
+    return raw;
+  }
+  if (typeof raw === 'number' && Number.isFinite(raw)) {
+    return String(raw);
+  }
+  if (typeof raw === 'boolean') {
+    return String(raw);
+  }
+  return null;
+};
+
 const parseYamlDocumentVersion = (raw: unknown): 1 | 2 | 3 | null => {
   if (raw === undefined || raw === null) {
     return 1;
@@ -55,7 +70,11 @@ const parseYamlDocumentVersion = (raw: unknown): 1 | 2 | 3 | null => {
     return null;
   }
 
-  const s = String(raw).trim();
+  if (typeof raw !== 'string') {
+    return null;
+  }
+
+  const s = raw.trim();
   if (s === '1') {
     return 1;
   }
@@ -112,37 +131,69 @@ const ensureUniqueIds = (stations: StationItem[]): StationItem[] => {
   });
 };
 
+const applyNameFieldsFromObject = (o: Record<string, unknown>, names: { zh: string; en: string }) => {
+  const zhVal = toScalarString(o.zh);
+  if (zhVal !== null) {
+    names.zh = zhVal;
+  }
+  const enVal = toScalarString(o.en);
+  if (enVal !== null) {
+    names.en = enVal;
+  }
+};
+
 const parseNameBlock = (raw: unknown): { zh: string; en: string } | null => {
   if (raw === null || raw === undefined) {
     return null;
   }
 
   if (Array.isArray(raw)) {
-    let zh = '';
-    let en = '';
+    const names = { zh: '', en: '' };
     for (const item of raw) {
       if (item !== null && typeof item === 'object' && !Array.isArray(item)) {
-        const o = item as Record<string, unknown>;
-        if ('zh' in o && o.zh !== undefined) {
-          zh = String(o.zh);
-        }
-        if ('en' in o && o.en !== undefined) {
-          en = String(o.en);
-        }
+        applyNameFieldsFromObject(item as Record<string, unknown>, names);
       }
     }
-    return { zh, en };
+    return names;
   }
 
   if (typeof raw === 'object') {
-    const o = raw as Record<string, unknown>;
-    return {
-      zh: o.zh !== undefined ? String(o.zh) : '',
-      en: o.en !== undefined ? String(o.en) : '',
-    };
+    const names = { zh: '', en: '' };
+    applyNameFieldsFromObject(raw as Record<string, unknown>, names);
+    return names;
   }
 
   return null;
+};
+
+const parseTransferLineItem = (
+  o: Record<string, unknown>,
+  docVersion: 1 | 2 | 3,
+  stationIndex: number,
+): TransferLine | { ok: false; message: string } | null => {
+  const lineRaw = o.lineId ?? o.id;
+  const idStr = toScalarString(lineRaw);
+  if (idStr === null) {
+    return null;
+  }
+  const id = idStr.trim();
+  if (!id) {
+    return null;
+  }
+  const color = normalizeHexColor(toScalarString(o.color) ?? '#000000');
+
+  if (docVersion >= 2) {
+    const textRaw = o.textColor;
+    if (!isValidHex6(textRaw)) {
+      return {
+        ok: false,
+        message: `第 ${stationIndex + 1} 个站点：version 2 或 3 要求每条换乘包含有效的 textColor（#RRGGBB）。`,
+      };
+    }
+    return { id, color, textColor: normalizeHexColor(textRaw) };
+  }
+
+  return { id, color, textColor: V1_MIGRATE_DEFAULT_TEXT_COLOR };
 };
 
 const parseTransferBlock = (
@@ -160,36 +211,21 @@ const parseTransferBlock = (
     if (item === null || typeof item !== 'object' || Array.isArray(item)) {
       continue;
     }
-    const o = item as Record<string, unknown>;
-    const lineRaw = o.lineId ?? o.id;
-    if (lineRaw === undefined || lineRaw === null) {
+    const parsed = parseTransferLineItem(item as Record<string, unknown>, docVersion, stationIndex);
+    if (parsed === null) {
       continue;
     }
-    const id = String(lineRaw).trim();
-    if (!id) {
-      continue;
+    if ('ok' in parsed) {
+      return parsed;
     }
-    const color = normalizeHexColor(o.color !== undefined && o.color !== null ? String(o.color) : '#000000');
-
-    if (docVersion >= 2) {
-      const textRaw = o.textColor;
-      if (!isValidHex6(textRaw)) {
-        return {
-          ok: false,
-          message: `第 ${stationIndex + 1} 个站点：version 2 或 3 要求每条换乘包含有效的 textColor（#RRGGBB）。`,
-        };
-      }
-      out.push({ id, color, textColor: normalizeHexColor(textRaw) });
-    } else {
-      out.push({ id, color, textColor: V1_MIGRATE_DEFAULT_TEXT_COLOR });
-    }
+    out.push(parsed);
   }
 
   return out;
 };
 
 const parseType = (raw: unknown): StationType => {
-  const s = String(raw ?? 'none').trim();
+  const s = (toScalarString(raw) ?? 'none').trim();
   if (STATION_TYPES.has(s as StationType)) {
     return s as StationType;
   }
@@ -225,7 +261,8 @@ const parseStationsYamlArray = (
       return { ok: false, message: `${errorPrefix}第 ${i + 1} 个站点：缺少有效的 name（zh / en）。` };
     }
 
-    const idRaw = o.id !== undefined && o.id !== null ? String(o.id).trim() : '';
+    const idScalar = toScalarString(o.id);
+    const idRaw = idScalar !== null ? idScalar.trim() : '';
     const fromRaw = idRaw ? sanitizeId(idRaw) : '';
     const id = fromRaw || slugId(names.zh, names.en, i);
 
@@ -264,14 +301,16 @@ const mergeNjMetroSettings = (raw: unknown, fb: GeneratorState): NjMetroSettings
   const showStationTypeIcons =
     typeof o.showStationTypeIcons === 'boolean' ? o.showStationTypeIcons : fb.showStationTypeIcons;
 
-  return { totalLength, direction, currentStnId, showStationTypeIcons };
+  const trainType = isTrainType(o.trainType) ? o.trainType : fb.trainType;
+
+  return { totalLength, direction, currentStnId, showStationTypeIcons, trainType };
 };
 
 /** version 3：`njMetroSettings` 仅含南京特有项（不含 direction、currentStnId） */
 const mergeNjMetroSettingsV3Partial = (
   raw: unknown,
   fb: GeneratorState,
-): Pick<NjMetroSettingsYaml, 'totalLength' | 'showStationTypeIcons'> => {
+): Pick<NjMetroSettingsYaml, 'totalLength' | 'showStationTypeIcons' | 'trainType'> => {
   const o = raw !== null && typeof raw === 'object' && !Array.isArray(raw) ? (raw as Record<string, unknown>) : {};
 
   let totalLength = fb.totalLength;
@@ -282,7 +321,9 @@ const mergeNjMetroSettingsV3Partial = (
   const showStationTypeIcons =
     typeof o.showStationTypeIcons === 'boolean' ? o.showStationTypeIcons : fb.showStationTypeIcons;
 
-  return { totalLength, showStationTypeIcons };
+  const trainType = isTrainType(o.trainType) ? o.trainType : fb.trainType;
+
+  return { totalLength, showStationTypeIcons, trainType };
 };
 
 const resolveCurrentStnId = (requested: string, stations: StationItem[], fallback: string): string => {
@@ -322,6 +363,7 @@ export const serializeRailmapYaml = (state: GeneratorState): string => {
     njMetroSettings: {
       totalLength: state.totalLength,
       showStationTypeIcons: state.showStationTypeIcons,
+      trainType: state.trainType,
     },
     stations: stationsToYamlBodies(state.stnList),
   };
@@ -330,6 +372,115 @@ export const serializeRailmapYaml = (state: GeneratorState): string => {
 };
 
 export type ParseRailmapYamlResult = { ok: true; data: RailmapYamlImport } | { ok: false; message: string };
+
+const parseRailmapYamlArrayRoot = (
+  data: unknown[],
+  fallbacks: GeneratorState,
+): ParseRailmapYamlResult => {
+  const stationsResult = parseStationsYamlArray(data, '', 1);
+  if (!stationsResult.ok) {
+    return stationsResult;
+  }
+  const stations = stationsResult.stations;
+  const nj = mergeNjMetroSettings(undefined, fallbacks);
+  const base: RailmapYamlImport = {
+    lineId: fallbacks.lineId,
+    color: normalizeHexColor(fallbacks.idColor),
+    lineIdTextColor: '',
+    njMetroSettings: {
+      ...nj,
+      currentStnId: resolveCurrentStnId(nj.currentStnId, stations, fallbacks.currentStnId),
+    },
+    stations,
+  };
+  return { ok: true, data: migrateRailmapYamlV1ToV2(base) };
+};
+
+const resolveRootColor = (root: Record<string, unknown>, fallbacks: GeneratorState): string => {
+  if (typeof root.color === 'string' && /^#[0-9a-fA-F]{6}$/.test(root.color.trim())) {
+    return normalizeHexColor(root.color);
+  }
+  return normalizeHexColor(fallbacks.idColor);
+};
+
+const resolveLineIdTextColor = (
+  root: Record<string, unknown>,
+  docVersion: 1 | 2 | 3,
+): string | ParseRailmapYamlResult => {
+  if (docVersion === 1) {
+    return '';
+  }
+  if (docVersion === 3) {
+    if (!isValidHex6(root.textColor)) {
+      return {
+        ok: false,
+        message: 'version 3 要求根字段 textColor（#RRGGBB）。',
+      };
+    }
+    return normalizeHexColor(root.textColor);
+  }
+  if (!isValidHex6(root.lineIdTextColor)) {
+    return { ok: false, message: 'version 2 要求根字段 lineIdTextColor（#RRGGBB）。' };
+  }
+  return normalizeHexColor(root.lineIdTextColor);
+};
+
+const parseRailmapYamlV3 = (
+  root: Record<string, unknown>,
+  fallbacks: GeneratorState,
+  lineId: string,
+  color: string,
+  lineIdTextColor: string,
+  stations: StationItem[],
+): ParseRailmapYamlResult => {
+  const schemaStr = typeof root.schema === 'string' ? root.schema.trim() : '';
+  if (schemaStr && canonicalizeSchemaUri(schemaStr) !== KYURI_NAIVE_SCHEMA) {
+    return {
+      ok: false,
+      message: `schema 与预期不符：期望 ${KYURI_NAIVE_SCHEMA}（或兼容的旧协议写法），实际为 ${schemaStr}`,
+    };
+  }
+
+  const partial = mergeNjMetroSettingsV3Partial(root.njMetroSettings, fallbacks);
+
+  let direction: TrainDirection = fallbacks.direction;
+  if (root.direction === 'l' || root.direction === 'r') {
+    direction = root.direction;
+  }
+
+  let currentFromRoot = typeof root.currentStnId === 'string' ? root.currentStnId.trim() : '';
+  const njRaw = root.njMetroSettings;
+  if (
+    !currentFromRoot &&
+    njRaw !== null &&
+    typeof njRaw === 'object' &&
+    !Array.isArray(njRaw) &&
+    typeof (njRaw as Record<string, unknown>).currentStnId === 'string'
+  ) {
+    currentFromRoot = (njRaw as Record<string, unknown>).currentStnId.trim();
+  }
+
+  const currentStnId = resolveCurrentStnId(
+    currentFromRoot || fallbacks.currentStnId,
+    stations,
+    fallbacks.currentStnId,
+  );
+
+  return {
+    ok: true,
+    data: {
+      lineId,
+      color,
+      lineIdTextColor,
+      njMetroSettings: {
+        ...partial,
+        direction,
+        currentStnId,
+      },
+      stations,
+    },
+  };
+};
 
 export const parseRailmapYaml = (text: string, fallbacks: GeneratorState): ParseRailmapYamlResult => {
   let data: unknown;
@@ -342,23 +493,7 @@ export const parseRailmapYaml = (text: string, fallbacks: GeneratorState): Parse
   }
 
   if (Array.isArray(data)) {
-    const stationsResult = parseStationsYamlArray(data, '', 1);
-    if (!stationsResult.ok) {
-      return stationsResult;
-    }
-    const stations = stationsResult.stations;
-    const nj = mergeNjMetroSettings(undefined, fallbacks);
-    const base: RailmapYamlImport = {
-      lineId: fallbacks.lineId,
-      color: normalizeHexColor(fallbacks.idColor),
-      lineIdTextColor: '',
-      njMetroSettings: {
-        ...nj,
-        currentStnId: resolveCurrentStnId(nj.currentStnId, stations, fallbacks.currentStnId),
-      },
-      stations,
-    };
-    return { ok: true, data: migrateRailmapYamlV1ToV2(base) };
+    return parseRailmapYamlArrayRoot(data, fallbacks);
   }
 
   if (data === null || typeof data !== 'object' || Array.isArray(data)) {
@@ -391,81 +526,20 @@ export const parseRailmapYaml = (text: string, fallbacks: GeneratorState): Parse
   }
   const stations = stationsResult.stations;
 
-  const lineIdRaw = root.lineId !== undefined && root.lineId !== null ? String(root.lineId).trim() : '';
+  const lineIdScalar = toScalarString(root.lineId);
+  const lineIdRaw = lineIdScalar !== null ? lineIdScalar.trim() : '';
   const lineId = lineIdRaw !== '' ? lineIdRaw : fallbacks.lineId;
 
-  let color: string;
-  if (typeof root.color === 'string' && /^#[0-9a-fA-F]{6}$/.test(root.color.trim())) {
-    color = normalizeHexColor(root.color);
-  } else {
-    color = normalizeHexColor(fallbacks.idColor);
-  }
+  const color = resolveRootColor(root, fallbacks);
 
-  let lineIdTextColor: string;
-  if (docVersion === 1) {
-    lineIdTextColor = '';
-  } else if (docVersion === 3) {
-    if (!isValidHex6(root.textColor)) {
-      return {
-        ok: false,
-        message: 'version 3 要求根字段 textColor（#RRGGBB）。',
-      };
-    }
-    lineIdTextColor = normalizeHexColor(String(root.textColor));
-  } else {
-    if (!isValidHex6(root.lineIdTextColor)) {
-      return { ok: false, message: 'version 2 要求根字段 lineIdTextColor（#RRGGBB）。' };
-    }
-    lineIdTextColor = normalizeHexColor(root.lineIdTextColor);
+  const lineIdTextColorResult = resolveLineIdTextColor(root, docVersion);
+  if (typeof lineIdTextColorResult !== 'string') {
+    return lineIdTextColorResult;
   }
+  const lineIdTextColor = lineIdTextColorResult;
 
   if (docVersion === 3) {
-    const schemaStr = typeof root.schema === 'string' ? root.schema.trim() : '';
-    if (schemaStr && canonicalizeSchemaUri(schemaStr) !== KYURI_NAIVE_SCHEMA) {
-      return {
-        ok: false,
-        message: `schema 与预期不符：期望 ${KYURI_NAIVE_SCHEMA}（或兼容的旧协议写法），实际为 ${schemaStr}`,
-      };
-    }
-
-    const partial = mergeNjMetroSettingsV3Partial(root.njMetroSettings, fallbacks);
-
-    let direction: TrainDirection = fallbacks.direction;
-    if (root.direction === 'l' || root.direction === 'r') {
-      direction = root.direction;
-    }
-
-    let currentFromRoot = typeof root.currentStnId === 'string' ? root.currentStnId.trim() : '';
-    const njRaw = root.njMetroSettings;
-    if (
-      !currentFromRoot &&
-      njRaw !== null &&
-      typeof njRaw === 'object' &&
-      !Array.isArray(njRaw) &&
-      typeof (njRaw as Record<string, unknown>).currentStnId === 'string'
-    ) {
-      currentFromRoot = String((njRaw as Record<string, unknown>).currentStnId).trim();
-    }
-
-    const currentStnId = resolveCurrentStnId(
-      currentFromRoot || fallbacks.currentStnId,
-      stations,
-      fallbacks.currentStnId,
-    );
-
-    const payload: RailmapYamlImport = {
-      lineId,
-      color,
-      lineIdTextColor,
-      njMetroSettings: {
-        ...partial,
-        direction,
-        currentStnId,
-      },
-      stations,
-    };
-
-    return { ok: true, data: payload };
+    return parseRailmapYamlV3(root, fallbacks, lineId, color, lineIdTextColor, stations);
   }
 
   const njMerged = mergeNjMetroSettings(root.njMetroSettings, fallbacks);
