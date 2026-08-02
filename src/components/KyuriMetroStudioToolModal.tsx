@@ -4,13 +4,13 @@ import { OVERLAY_IDS } from '../overlay/overlayIds';
 import { FullscreenOverlay } from '@umamichi-ui/common-components/overlay';
 import { InfoCircleIcon } from '@umamichi-ui/common-components/icons';
 
-type KyuriMetroStudioToolModalProps = {
+type KyuriMetroStudioToolModalProps = Readonly<{
   open: boolean;
   baseUrl: string;
   onClose: () => void;
   onExited?: () => void;
   onImportedYaml: (yaml: string) => void;
-};
+}>;
 
 export function KyuriMetroStudioToolModal({
   open,
@@ -63,11 +63,12 @@ export function KyuriMetroStudioToolModal({
           <a href="https://metro-studio-iota.vercel.app/" target="_blank" rel="noreferrer">
             Metro Studio
           </a>
+          {' '}
           （可能需要国际互联网访问）工程 JSON（.metro-studio.json），选择线路后点击「转换」。回到本站后确认即可更新线路。
         </span>
       </p>
       <iframe title="Metro Studio → Kyuri naive" src={iframeSrc} className="kyuri-rmg-tool-iframe" />
-      <div className="dialog-section-rule" role="separator" />
+      <hr className="dialog-section-rule" />
       <div className="confirm-dialog-actions">
         <button type="button" className="secondary-button" onClick={onClose}>
           关闭

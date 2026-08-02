@@ -12,10 +12,10 @@ const docsUrl = 'https://github.com/kyuri-metro/njmetro-railmap-creator/tree/mai
 const jianbanAttributionUrl = `${githubUrl}/blob/main/docs/builtin-jianban-attribution.md`;
 const jianbanVideoUrl = 'https://www.bilibili.com/video/BV1Bw41127DF';
 
-type AboutDialogProps = {
+type AboutDialogProps = Readonly<{
   open: boolean;
   onClose: () => void;
-};
+}>;
 
 export function AboutDialog({ open, onClose }: AboutDialogProps) {
   return (
@@ -46,6 +46,7 @@ export function AboutDialog({ open, onClose }: AboutDialogProps) {
                 <a href={jianbanVideoUrl} target="_blank" rel="noreferrer">
                   BV1Bw41127DF
                 </a>
+                {' '}
                 （公开建设规划等为依据），经作者私信授权用于本站；并致谢 @纵横金陵、@萝铁杂谈、@油坊桥上的灯、@北落师门b0125
                 等对数据表、线路图等提出建议及修正的简办视频贡献者，以及私信或评论对简办动态演示提供信息的网友。详情见{' '}
                 <a href={jianbanAttributionUrl} target="_blank" rel="noreferrer">

@@ -9,11 +9,11 @@ import { updateAutosaveSchedulerSettings } from '../features/autosaveScheduler';
 import { OVERLAY_IDS } from '../overlay/overlayIds';
 import { ConfirmDialogOverlay } from '@umamichi-ui/common-components/dialog';
 
-type SettingsDialogProps = {
+type SettingsDialogProps = Readonly<{
   open: boolean;
   onClose: () => void;
   onOpenAutosaveList: () => void;
-};
+}>;
 
 const parsePositiveInt = (raw: string, fallback: number) => {
   const n = Math.trunc(Number(raw.trim()));
@@ -117,7 +117,7 @@ export function SettingsDialog({ open, onClose, onOpenAutosaveList }: SettingsDi
           <span>输入线路号后自动填充南京地铁线路色</span>
         </label>
 
-        <div className="dialog-section-rule" role="separator" />
+        <hr className="dialog-section-rule" />
 
         <button type="button" className="secondary-button settings-autosave-list-button" onClick={handleOpenAutosaveList}>
           查看自动保存的内容

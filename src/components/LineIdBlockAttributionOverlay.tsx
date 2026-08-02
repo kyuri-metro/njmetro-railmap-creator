@@ -7,11 +7,11 @@ const LINE_ID_NPM_URL = 'https://www.npmjs.com/package/@kyuri-metro/njmetro-line
 
 const HIDE_DELAY_MS = 220;
 
-type LineIdBlockAttributionOverlayProps = {
+type LineIdBlockAttributionOverlayProps = Readonly<{
   viewWidth: number;
   viewHeight: number;
   box: SvgBox;
-};
+}>;
 
 /** 预览用 HTML 层：不参与 SVG 序列化（下载 / 放大预览仅含 svg）。 */
 export function LineIdBlockAttributionOverlay({ viewWidth, viewHeight, box }: LineIdBlockAttributionOverlayProps) {
@@ -66,7 +66,7 @@ export function LineIdBlockAttributionOverlay({ viewWidth, viewHeight, box }: Li
           <span className="line-id-attribution-dot" aria-hidden />
         </div>
       </div>
-      <div
+      <section
         className={`line-id-attribution-tooltip${tooltipVisible ? ' is-visible' : ''}`}
         style={{
           left: `${leftPct}%`,
@@ -74,22 +74,21 @@ export function LineIdBlockAttributionOverlay({ viewWidth, viewHeight, box }: Li
         }}
         onMouseEnter={showTooltip}
         onMouseLeave={scheduleHideTooltip}
-        role="region"
         aria-label="线路号方块生成器与 NPM 包"
       >
         <p className="line-id-attribution-tooltip-line">
-          南京地铁线路号方块生成器：
+          南京地铁线路号方块生成器：{' '}
           <a href={LINE_ID_GENERATOR_URL} target="_blank" rel="noopener noreferrer">
             {LINE_ID_GENERATOR_URL}
           </a>
         </p>
         <p className="line-id-attribution-tooltip-line">
-          也提供 NPM 包：
+          也提供 NPM 包：{' '}
           <a href={LINE_ID_NPM_URL} target="_blank" rel="noopener noreferrer">
             @kyuri-metro/njmetro-line-id-block-svg-generator
           </a>
         </p>
-      </div>
+      </section>
     </div>
   );
 }

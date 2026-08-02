@@ -3,11 +3,11 @@ import { readAutosaveEntries, type AutosaveEntry } from '../autosaveStorage';
 import { OVERLAY_IDS } from '../overlay/overlayIds';
 import { ConfirmDialogOverlay } from '@umamichi-ui/common-components/dialog';
 
-type AutosaveListDialogProps = {
+type AutosaveListDialogProps = Readonly<{
   open: boolean;
   onClose: () => void;
   onSelectEntry: (entry: AutosaveEntry) => void;
-};
+}>;
 
 const formatSavedAt = (savedAt: number) => {
   try {
@@ -63,7 +63,7 @@ export function AutosaveListDialog({ open, onClose, onSelectEntry }: AutosaveLis
         )}
       </div>
 
-      <div className="dialog-section-rule" role="separator" />
+      <hr className="dialog-section-rule" />
 
       <div className="confirm-dialog-actions">
         <button type="button" className="primary-button" onClick={onClose}>

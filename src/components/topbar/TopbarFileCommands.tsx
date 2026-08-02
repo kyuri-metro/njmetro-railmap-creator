@@ -2,7 +2,7 @@ import type { RefObject } from 'react';
 import { StationYamlExportMenu, StationYamlImportMenu } from '../StationYamlIoMenus';
 import { ExportIcon, ImportIcon, NewFileIcon } from './FileCommandIcons';
 
-type TopbarFileCommandsProps = {
+type TopbarFileCommandsProps = Readonly<{
   yamlFileInputRef: RefObject<HTMLInputElement | null>;
   rmgToolConfigured: boolean;
   metroStudioToolConfigured: boolean;
@@ -11,7 +11,7 @@ type TopbarFileCommandsProps = {
   onOpenRmgImport: () => void;
   onOpenMetroStudioImport: () => void;
   onOpenRmgExport: () => void;
-};
+}>;
 
 export function TopbarFileCommands({
   yamlFileInputRef,
@@ -24,7 +24,8 @@ export function TopbarFileCommands({
   onOpenRmgExport,
 }: TopbarFileCommandsProps) {
   return (
-    <div className="app-topbar-file-commands app-topbar-action--desktop-only" role="group" aria-label="文件">
+    <fieldset className="app-topbar-file-commands app-topbar-action--desktop-only">
+      <legend className="visually-hidden">文件</legend>
       <button type="button" className="icon-button app-topbar-icon-button" aria-label="新建" onClick={onNew}>
         <NewFileIcon />
       </button>
@@ -42,7 +43,7 @@ export function TopbarFileCommands({
         onDownloadYaml={onDownloadYaml}
         onOpenRmgExport={onOpenRmgExport}
       />
-    </div>
+    </fieldset>
   );
 }
 

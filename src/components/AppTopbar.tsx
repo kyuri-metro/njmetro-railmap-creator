@@ -157,9 +157,8 @@ export const AppTopbar = ({
             onOpenMetroStudioImport={onOpenMetroStudioImport}
             onOpenRmgExport={onOpenRmgExport}
           />
-          <div
+          <hr
             className="app-topbar-divider app-topbar-action--desktop-only"
-            role="separator"
             aria-orientation="vertical"
             aria-hidden="true"
           />

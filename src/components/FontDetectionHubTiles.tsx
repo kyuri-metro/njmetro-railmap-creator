@@ -53,12 +53,11 @@ const FontDetectionHubTile = ({ result, detectionState, index }: FontDetectionHu
   const ariaLabel = `${title}（${result.fontFamily}）：${statusLabel}`;
 
   return (
-    <article
+    <li
       className="font-hub-tile"
       data-visual-state={isFlipped ? 'flipped' : 'expanded'}
       data-detected={result.detected ? 'true' : 'false'}
       data-checking={isPending ? 'true' : 'false'}
-      role="listitem"
       aria-label={ariaLabel}
     >
       <div className="font-hub-tile__viewport">
@@ -75,14 +74,13 @@ const FontDetectionHubTile = ({ result, detectionState, index }: FontDetectionHu
           <p className="font-hub-tile__back-title">{result.fontFamily}</p>
         </div>
       </div>
-    </article>
+    </li>
   );
 };
 
 export const FontDetectionHubTiles = ({ results, detectionState }: FontDetectionHubTilesProps) => (
-  <div
+  <ul
     className="font-detection-tiles"
-    role="list"
     aria-label="字体检测结果"
     aria-busy={detectionState !== 'done'}
     aria-live="polite"
@@ -90,5 +88,5 @@ export const FontDetectionHubTiles = ({ results, detectionState }: FontDetection
     {results.map((result, index) => (
       <FontDetectionHubTile key={result.fontFamily} result={result} detectionState={detectionState} index={index} />
     ))}
-  </div>
+  </ul>
 );

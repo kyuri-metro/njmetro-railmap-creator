@@ -6,7 +6,7 @@ import { OVERLAY_IDS } from '../overlay/overlayIds';
 import { FullscreenOverlay } from '@umamichi-ui/common-components/overlay';
 import { InfoCircleIcon } from '@umamichi-ui/common-components/icons';
 
-type KyuriRmgToolModalProps = {
+type KyuriRmgToolModalProps = Readonly<{
   open: boolean;
   mode: 'import' | 'export';
   baseUrl: string;
@@ -14,7 +14,7 @@ type KyuriRmgToolModalProps = {
   onClose: () => void;
   onExited?: () => void;
   onImportedYaml: (yaml: string) => void;
-};
+}>;
 
 export function KyuriRmgToolModal({
   open,
@@ -106,7 +106,7 @@ export function KyuriRmgToolModal({
         </span>
       </p>
       <iframe ref={iframeRef} title="Kyuri naive ↔ RMG" src={iframeSrc} className="kyuri-rmg-tool-iframe" />
-      <div className="dialog-section-rule" role="separator" />
+      <hr className="dialog-section-rule" />
       <div className="confirm-dialog-actions">
         <button type="button" className="secondary-button" onClick={onClose}>
           关闭

@@ -24,7 +24,7 @@ const createEmptyTransferLine = (): TransferLine => ({
   textColor: '#ffffff',
 });
 
-type StationFormModalProps = {
+type StationFormModalProps = Readonly<{
   allowDelete: boolean;
   initialValue: StationFormDraft;
   modeLabel: string;
@@ -33,7 +33,7 @@ type StationFormModalProps = {
   onExited?: () => void;
   onDelete?: () => void;
   onChange: (draft: StationFormDraft) => void;
-};
+}>;
 
 export function StationFormModal({
   allowDelete,
@@ -119,7 +119,7 @@ export function StationFormModal({
         </button>
       </div>
 
-      <div className="dialog-section-rule" role="separator" />
+      <hr className="dialog-section-rule" />
 
       <div className="modal-form">
         <div className="dialog-field-row">

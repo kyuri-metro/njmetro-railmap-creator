@@ -15,12 +15,12 @@ import { InfoCircleIcon } from '@umamichi-ui/common-components/icons';
 
 export type BadgeDownloadFormat = 'svg' | BadgeRasterFormat;
 
-type BadgeDownloadDialogProps = {
+type BadgeDownloadDialogProps = Readonly<{
   open: boolean;
   fileName: string;
   getSvgElement: () => SVGSVGElement | null;
   onClose: () => void;
-};
+}>;
 
 const formatOptions: { value: BadgeDownloadFormat; label: string; disabled?: boolean }[] = [
   { value: 'svg', label: 'SVG' },
@@ -124,7 +124,7 @@ export function BadgeDownloadDialog({ open, fileName, getSvgElement, onClose }: 
         </label>
       </div>
 
-      <div className="dialog-section-rule" role="separator" />
+      <hr className="dialog-section-rule" />
 
       <div className="badge-download-attribution-block">
         <label className="field-label field-label-checkbox badge-download-attribution">
@@ -135,9 +135,9 @@ export function BadgeDownloadDialog({ open, fileName, getSvgElement, onClose }: 
             aria-describedby={watermarkHintId}
           />
           <span>
-            下载后，我发布本图片时将会附上
+            下载后，我发布本图片时将会附上{' '}
             <code>{PUBLISH_ATTRIBUTION_SNIPPET}</code>
-            ，并附上
+            ，并附上{' '}
             <a href={GENERATOR_PUBLIC_URL} target="_blank" rel="noreferrer">
               本生成器链接
             </a>
