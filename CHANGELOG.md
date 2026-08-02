@@ -9,8 +9,16 @@
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-08-03
+
+对应 `package.json` 中的 `0.3.0`。相对 [0.2.1]：吊板**车型**（画布宽度档 + 按线路填充默认车型）、以及 Unreleased 积压的下载水印 / 叠层动效 / 主题表头等界面与依赖更新。版本号按 **MINOR** 递增（不低于 [0.2.0] 引入方向吊板压缩规则时的级别）。
+
 ### Added
 
+- **车型**（生成设置）：`A型` / `B型` / `B型（长线路图）` / `市域D型`；当前站 / 方向标 / 线路图画布逻辑宽度随车型切换（A 保持原宽；B 方向与线路图 4602；B 长线路图 4602+3322；市域 D 为 2730 / 3400 / 5120）。
+- 切换车型时按**线路图画布宽度差**同量调整「总长（px）」，下限钳制为 0。
+- YAML `njMetroSettings.trainType` 读写；缺省回落当前工程车型。
+- 「按线路填充站点」时按维基编组映射写入车型（市域 A/B → A/B；7 号线为 B 型长线路图）；16 / 18 号线编组待定：填充后提示「简办视频中编组未定」且不覆盖车型。
 - 设置项「输入线路号后自动填充南京地铁线路色」（默认开启）：关闭后改主线路号或换乘线路号时不再自动套用官方色板底色 / 字色。
 - `@umamichi-ui/chromatic-fringe`：指针驱动色差描边（顶栏底边、页面按钮与打开中的 `FloatingMenu` 面板）；顶栏控件跳过 box fringe。
 - 「按线路填充站点」下拉：线路号左侧显示标志色圆点（开通线网用官方色，简办用 `resolveJianbanLine*`，含 16/18 虚拟参考色）。
@@ -28,6 +36,7 @@
 - 依赖 `@umamichi-ui/common-components` 升至 ^0.4.1：内容型叠层改用 `FullscreenOverlay` / 更新后的 `ConfirmDialogOverlay`（移动端全屏滑入 + 返回，桌面端居中对话框 + 关闭；叠层打开时锁定滚动并保留滚动条槽位）。
 - 站点编辑 / 设置等对话框改为向壳组件传 `title` 与正文，避免移动端全屏下表单间距被拉散；设置表单在窄屏拉满宽度。
 - 桌面浮层宽度改为 `width: min(100%, …)`（避免 `100vw` 含滚动条导致面板偏左）。
+- 「关于」等界面展示的版本号为 `0.3.0`。
 
 ### Fixed
 
@@ -174,7 +183,8 @@
 - 部署至 Cloudflare Pages（[njmetro-railmap-creator.umamichi.moe](https://njmetro-railmap-creator.umamichi.moe/)）。
 - 基于 [@umamichi-ui/common-css](https://www.npmjs.com/package/@umamichi-ui/common-css) 的界面样式与弹层交互。
 
-[Unreleased]: https://github.com/kyuri-metro/njmetro-railmap-creator/compare/v0.2.1...HEAD
+[Unreleased]: https://github.com/kyuri-metro/njmetro-railmap-creator/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/kyuri-metro/njmetro-railmap-creator/compare/v0.2.1...v0.3.0
 [0.2.1]: https://github.com/kyuri-metro/njmetro-railmap-creator/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/kyuri-metro/njmetro-railmap-creator/compare/v0.1.3...v0.2.0
 [0.1.3]: https://github.com/kyuri-metro/njmetro-railmap-creator/compare/v0.1.2...v0.1.3
