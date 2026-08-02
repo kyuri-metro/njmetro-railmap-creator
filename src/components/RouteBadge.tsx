@@ -1,8 +1,9 @@
 import { useId, useLayoutEffect, useRef, useState, type CSSProperties } from 'react';
-import { getRouteZhNameCondense } from '../badgeTextCondense';
+import { getRouteZhNameCondense, type BadgeTextCondenseConfig } from '../badgeTextCondense';
 import type { GeneratorState, StationItem, TransferLine } from '../features/generatorSlice';
 import { njmetroDingsFontStack, sansLatinFontStack, sansZhFontStack } from '../fontStacks';
 import { getLineIdBadgeWidth } from '../lineIdBadgeMetrics';
+import { measureBadgeTextWidth } from '../measureBadgeText';
 import {
   routeBadgeCurrentCard,
   routeBadgeDirectionArrow,
@@ -45,6 +46,87 @@ const getStationTypeIcon = (type: StationItem['type']) => {
   }
 
   return stationTypeIconMap[type];
+};
+
+const routeZhNameFontSize = 51;
+
+/** 从 `scale(sx, 1)` 取出水平缩放；无 transform 时为 1。 */
+const routeZhNameScaleX = (transform: string | undefined): number => {
+  if (!transform) {
+    return 1;
+  }
+
+  const match = /^scale\(([^,\s]+)/.exec(transform);
+  const scaleX = match ? Number(match[1]) : Number.NaN;
+  return Number.isFinite(scaleX) && scaleX > 0 ? scaleX : 1;
+};
+
+/**
+ * 线路图中文站名行：有站类型图标且站名被水平压缩时，把图标拆出测宽居中，
+ * 避免 dings 图标与汉字一起被 scaleX 压扁。
+ */
+const RouteZhNameRow = ({
+  chName,
+  condense,
+  fill = '#000000',
+  letterSpacing,
+  stationTypeIcon,
+}: {
+  chName: string;
+  condense: BadgeTextCondenseConfig;
+  fill?: string;
+  letterSpacing: number | undefined;
+  stationTypeIcon: string | null;
+}) => {
+  const scaleX = routeZhNameScaleX(condense.transform);
+
+  if (!stationTypeIcon || scaleX === 1) {
+    return (
+      <text
+        x="0"
+        y={routeZhNameFontSize}
+        textAnchor="middle"
+        fontSize={`${routeZhNameFontSize}px`}
+        style={zhTextStyle(letterSpacing, fill)}
+        transform={condense.transform}
+      >
+        {stationTypeIcon ? <tspan fontFamily={njmetroDingsFontStack}>{stationTypeIcon}</tspan> : null}
+        {chName}
+      </text>
+    );
+  }
+
+  const spacing = letterSpacing ?? 0;
+  const iconWidth = measureBadgeTextWidth(stationTypeIcon, njmetroDingsFontStack, routeZhNameFontSize);
+  const nameWidth = measureBadgeTextWidth(chName, sansZhFontStack, routeZhNameFontSize, spacing, scaleX);
+  const totalWidth = iconWidth + spacing + nameWidth;
+  const originX = -totalWidth / 2;
+  const nameTranslateX = originX + iconWidth + spacing;
+
+  return (
+    <g>
+      <text
+        x={originX}
+        y={routeZhNameFontSize}
+        textAnchor="start"
+        fontSize={`${routeZhNameFontSize}px`}
+        style={{ fontFamily: njmetroDingsFontStack, fill }}
+      >
+        {stationTypeIcon}
+      </text>
+      <g transform={`translate(${nameTranslateX} 0) scale(${scaleX}, 1)`}>
+        <text
+          x="0"
+          y={routeZhNameFontSize}
+          textAnchor="start"
+          fontSize={`${routeZhNameFontSize}px`}
+          style={zhTextStyle(letterSpacing, fill)}
+        >
+          {chName}
+        </text>
+      </g>
+    </g>
+  );
 };
 
 const lineCenterY = routeBadgeLine.centerY;
@@ -160,17 +242,12 @@ const StationTextBlock = ({ showStationTypeIcons, station }: { showStationTypeIc
 
   return (
     <g>
-      <text
-        x="0"
-        y="51"
-        textAnchor="middle"
-        fontSize="51px"
-        style={zhTextStyle(zhNameCondenseConfig.letterSpacing)}
-        transform={zhNameCondenseConfig.transform}
-      >
-        {stationTypeIcon ? <tspan fontFamily={njmetroDingsFontStack}>{stationTypeIcon}</tspan> : null}
-        {station.chName}
-      </text>
+      <RouteZhNameRow
+        chName={station.chName}
+        condense={zhNameCondenseConfig}
+        letterSpacing={zhNameCondenseConfig.letterSpacing}
+        stationTypeIcon={stationTypeIcon}
+      />
       <text x="0" y="80" textAnchor="middle" fontSize="20px" style={enTextStyle(1.2)}>
         {station.enName.toUpperCase()}
       </text>
@@ -186,17 +263,13 @@ const CurrentStationCardTextBlock = ({ showStationTypeIcons, station }: { showSt
 
   return (
     <g>
-      <text
-        x="0"
-        y="51"
-        textAnchor="middle"
-        fontSize="51px"
-        style={zhTextStyle(shouldCondenseZhName ? zhNameCondenseConfig.letterSpacing : 3, textColor)}
-        transform={zhNameCondenseConfig.transform}
-      >
-        {stationTypeIcon ? <tspan fontFamily={njmetroDingsFontStack}>{stationTypeIcon}</tspan> : null}
-        {station.chName}
-      </text>
+      <RouteZhNameRow
+        chName={station.chName}
+        condense={zhNameCondenseConfig}
+        fill={textColor}
+        letterSpacing={shouldCondenseZhName ? zhNameCondenseConfig.letterSpacing : 3}
+        stationTypeIcon={stationTypeIcon}
+      />
       <text x="0" y="80" textAnchor="middle" fontSize="20px" style={enTextStyle(1, textColor)}>
         {station.enName.toUpperCase()}
       </text>
