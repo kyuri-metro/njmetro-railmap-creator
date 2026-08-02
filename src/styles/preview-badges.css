@@ -1,0 +1,346 @@
+.preview-column-root {
+  position: relative;
+}
+
+.preview-loading-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  border-radius: 0;
+  backdrop-filter: blur(var(--site-frosted-blur));
+  -webkit-backdrop-filter: blur(var(--site-frosted-blur));
+  background: var(--site-frosted-overlay);
+}
+
+.preview-loading-label {
+  padding: 10px 18px;
+  border-radius: 0;
+  font-size: 0.95rem;
+  color: var(--site-fg);
+  background: color-mix(in srgb, var(--site-surface) 88%, transparent);
+}
+
+.preview-live-hint {
+  margin-top: 4px;
+  margin-bottom: 0;
+}
+
+.result-panel {
+  padding-bottom: 12px;
+}
+
+.result-block + .result-block {
+  margin-top: 22px;
+  padding-top: 22px;
+  border-top: 1px solid var(--site-border);
+}
+
+.result-block-heading {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
+}
+
+.result-block-heading h3 {
+  margin: 0;
+  flex: 1 1 auto;
+  min-width: 0;
+  line-height: 1.35;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.badge-preview {
+  margin-top: 12px;
+}
+
+.result-actions {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-shrink: 0;
+  margin-top: 0;
+}
+
+.result-svg-zoom-trigger {
+  flex-shrink: 0;
+}
+
+.result-svg-zoom-icon {
+  display: block;
+}
+
+.mobile-action-sheet-item-icon .app-topbar-action-icon,
+.mobile-action-sheet-item-icon .app-info-circle-icon {
+  display: block;
+}
+
+@media (min-width: 721px) {
+  .fullscreen-overlay.svg-preview-zoom-dialog {
+    width: min(100%, 96rem);
+    height: min(48rem, calc(100dvh - 2.5rem));
+  }
+}
+
+.svg-preview-zoom-overlay-body {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+  padding-bottom: 0.75rem;
+}
+
+.svg-preview-zoom-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-shrink: 0;
+  margin-bottom: 12px;
+}
+
+.svg-preview-zoom-scale-label {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 14px;
+  margin: 0;
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 0.92rem;
+  color: var(--site-content-fg);
+}
+
+.svg-preview-zoom-download {
+  flex: 0 0 auto;
+}
+
+.svg-preview-zoom-range {
+  flex: 1 1 160px;
+  min-width: 120px;
+  max-width: 320px;
+}
+
+.svg-preview-zoom-scale-value {
+  flex: 0 0 auto;
+  min-width: 3.25rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.svg-preview-zoom-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  border: 1px solid var(--site-border);
+  border-radius: 0;
+  background: var(--site-surface);
+}
+
+.svg-preview-zoom-scaled {
+  min-width: 0;
+}
+
+.svg-preview-zoom-scaled svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.badge-svg {
+  width: 100%;
+  height: auto;
+  display: block;
+  border: 1px solid var(--site-border);
+  background: var(--site-surface);
+}
+
+/* DirectionBadge：预览包装 + 线路号方块 HTML 说明层（不进入序列化 SVG） */
+.direction-badge-preview-wrap {
+  position: relative;
+  width: 100%;
+}
+
+.direction-badge-preview-wrap > .badge-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.line-id-attribution-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.line-id-attribution-anchor {
+  position: absolute;
+  box-sizing: border-box;
+  pointer-events: none;
+}
+
+.line-id-attribution-hit {
+  position: absolute;
+  left: 4%;
+  top: 6%;
+  width: clamp(36px, 26%, 56px);
+  aspect-ratio: 1;
+  box-sizing: border-box;
+  border-radius: 50%;
+  overflow: hidden;
+  pointer-events: auto;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+}
+
+.line-id-attribution-dot {
+  position: relative;
+  z-index: 1;
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--site-muted-fg) 18%, transparent);
+  border: 2px solid color-mix(in srgb, var(--site-muted-fg) 42%, transparent);
+  transform-origin: 50% 50%;
+}
+
+.line-id-attribution-ripple {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  z-index: 0;
+  box-sizing: border-box;
+  background: color-mix(in srgb, var(--site-muted-fg) 34%, transparent);
+  opacity: 0.5;
+  transform: scale(0.2);
+  transform-origin: 50% 50%;
+  animation: line-id-attribution-ripple-wave 2.4s ease-out infinite;
+  pointer-events: none;
+}
+
+.line-id-attribution-ripple--delayed {
+  animation-delay: 1.2s;
+}
+
+.line-id-attribution-layer--tooltip-open .line-id-attribution-hit .line-id-attribution-dot,
+.line-id-attribution-layer--tooltip-open .line-id-attribution-hit .line-id-attribution-ripple {
+  animation-play-state: paused;
+}
+
+@keyframes line-id-attribution-ripple-wave {
+  0% {
+    transform: scale(0.2);
+    opacity: 0.48;
+  }
+
+  100% {
+    transform: scale(1.9);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .line-id-attribution-dot,
+  .line-id-attribution-ripple {
+    animation: none;
+  }
+
+  .line-id-attribution-ripple {
+    display: none;
+  }
+
+  .line-id-attribution-dot {
+    opacity: 0.95;
+  }
+}
+
+.line-id-attribution-tooltip {
+  position: absolute;
+  z-index: 3;
+  box-sizing: border-box;
+  max-width: min(22rem, calc(100vw - 2rem));
+  padding: 10px 12px;
+  border: 1px solid var(--site-border);
+  background: var(--site-surface);
+  color: var(--site-content-fg);
+  font-size: 0.82rem;
+  line-height: 1.55;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.18s ease;
+  word-break: break-word;
+}
+
+.line-id-attribution-tooltip.is-visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.line-id-attribution-tooltip-line {
+  margin: 0;
+}
+
+.line-id-attribution-tooltip-line + .line-id-attribution-tooltip-line {
+  margin-top: 8px;
+}
+
+.line-id-attribution-tooltip a {
+  color: var(--site-accent);
+  text-decoration: underline;
+}
+
+.line-id-attribution-tooltip a:hover {
+  color: var(--site-accent-hover);
+}
+
+.about-dialog-section-text > p {
+  margin: 0;
+}
+
+.about-dialog-section-text > p + p {
+  margin-top: 0.75em;
+}
+
+/*
+ * AboutDialog ships as ConfirmDialogOverlay size=compact (400px). Package only
+ * sets max-width, so the panel stays narrow and long nowrap URLs force a
+ * horizontal scrollbar inside the scrollable body.
+ */
+@media (min-width: 721px) {
+  .fullscreen-overlay.about-dialog {
+    width: min(100%, 48rem);
+    max-width: min(calc(100vw - 48px), 48rem);
+  }
+}
+
+.fullscreen-overlay.about-dialog .fullscreen-overlay__body {
+  overflow-x: clip;
+}
+
+.about-dialog-section-text,
+.about-dialog-meta dd,
+.about-dialog-meta dd a {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.about-dialog-meta-row dd a,
+.about-dialog-meta-row:first-child dd a {
+  white-space: normal;
+}

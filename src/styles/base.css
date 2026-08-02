@@ -1,0 +1,151 @@
+@font-face {
+  font-family: "Umamichi's Njmetro Dings";
+  src: url('/assets/UmamichiNjmetroDings.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: block;
+}
+
+h1 {
+  margin-bottom: 8px;
+  font-size: clamp(1.8rem, 4vw, 2.7rem);
+  line-height: 1.12;
+}
+
+.app-layout {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  margin: 0;
+  background: var(--site-bg);
+  color: var(--site-fg);
+}
+
+.app-columns {
+  display: grid;
+  /* 桌面默认 1:1；右栏能分到 ≥540px 时再固定左栏 540px（见下方 @container） */
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 28px;
+  align-items: start;
+  flex: 1;
+  min-height: 0;
+}
+
+/* 540 + gap 28 + 540：右栏至少也能拿到 540px 时固定左栏 */
+@container app-layout (min-width: 1108px) {
+  .app-columns {
+    grid-template-columns: 540px minmax(0, 1fr);
+  }
+}
+
+.app-column-main {
+  min-width: 0;
+}
+
+.app-content-intro {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin: 0 0 var(--section-gap);
+  color: var(--site-content-fg);
+  font-size: var(--site-content-font-size);
+  line-height: var(--site-content-line-height);
+}
+
+.app-content-intro p {
+  margin: 0;
+}
+
+.app-content-intro .inline-links {
+  margin-top: 0;
+}
+
+.app-column-preview {
+  position: sticky;
+  top: 12px;
+  align-self: start;
+  max-height: calc(100vh - 24px);
+  /*
+   * Chromatic fringe on result actions (下载 / 放大) translates a few px past the
+   * button box; overflow:auto would inflate scrollWidth and show a horizontal bar.
+   * clip (not hidden) lets overflow-y stay independent per CSS Overflow L3.
+   */
+  overflow-x: clip;
+  overflow-y: auto;
+  min-width: 0;
+}
+
+.app-column-preview .panel:first-of-type {
+  margin-top: 18px;
+}
+
+@media (max-width: 900px) {
+  .app-columns {
+    grid-template-columns: 1fr;
+  }
+
+  .app-column-preview {
+    position: static;
+    max-height: none;
+    overflow-x: clip;
+    overflow-y: visible;
+  }
+
+  .app-column-preview .panel:first-of-type {
+    margin-top: 22px;
+    padding-top: 18px;
+    border-top: 1px solid var(--site-content-border);
+  }
+}
+
+h3 {
+  margin-bottom: 10px;
+  font-size: 1rem;
+}
+
+.docs-callout strong {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 0.98rem;
+}
+
+.docs-callout p {
+  margin: 0;
+  color: var(--site-muted-fg);
+  line-height: 1.6;
+}
+@media (prefers-reduced-transparency: reduce) {
+  .preview-loading-overlay {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    background: var(--site-backdrop);
+  }
+}
+/* Chromatic fringe: app tokens and chrome exclusions (@umamichi-ui/chromatic-fringe). */
+.outline-button.chromatic-fringe-box--fade-border {
+  --chromatic-fringe-border: var(--site-border);
+}
+
+/*
+ * Durable guard: package sets position:relative on .chromatic-fringe-box.
+ * Portaled floating menus must stay fixed (misplaced panel + horizontal scroll).
+ */
+.chromatic-fringe-box.chromatic-fringe-box--overlay {
+  position: fixed;
+}
+
+/*
+ * Long FloatingMenus set overflow-y:auto and become scroll containers. Chromatic
+ * fringe ::before/::after then translate a few px outside the box and inflate
+ * scrollWidth, showing a spurious horizontal scrollbar (e.g. 按线路填充站点).
+ */
+.dropdown-menu-panel.chromatic-fringe-box--overlay,
+.download-format-menu-panel.chromatic-fringe-box--overlay {
+  overflow-x: clip;
+}
+
+/* Topbar controls: no box fringe (also skipped in initAppChromaticFringe). */
+.app-topbar .chromatic-fringe-box::before,
+.app-topbar .chromatic-fringe-box::after {
+  content: none;
+}

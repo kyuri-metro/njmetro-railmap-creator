@@ -1,0 +1,240 @@
+.app-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  flex-shrink: 0;
+  width: 100%;
+  margin: 0;
+  /* overflow-x: clip keeps lens hairline ghosts; y stays visible for Beta mark */
+  overflow-x: clip;
+  overflow-y: visible;
+  background: var(--site-header-bg);
+  color: var(--site-header-fg);
+  box-sizing: border-box;
+}
+
+.app-topbar-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 56px;
+  padding: 10px var(--page-gutter);
+  box-sizing: border-box;
+}
+
+.app-topbar-title-wrap {
+  position: relative;
+  display: inline-block;
+  /* 不要 flex-grow：否则块会被顶栏拉满，Beta 的 left:% 会相对整块算，飘到很靠右 */
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: none;
+  vertical-align: middle;
+}
+
+.app-topbar-file-commands {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-inline-size: 0;
+}
+
+.app-topbar-file-commands .dropdown-menu {
+  display: inline-flex;
+}
+
+.app-topbar-divider {
+  flex-shrink: 0;
+  align-self: center;
+  width: 1px;
+  height: 24px;
+  margin: 0;
+  border: 0;
+  background: var(--site-border);
+}
+
+.app-topbar-title {
+  display: inline;
+  margin: 0;
+  /* Match umamichi.moe SiteFrame: Chakra Heading size="lg" → textStyle lg (fontSizes.lg + lineHeight) */
+  font-size: 1.125rem;
+  line-height: 1.75rem;
+  letter-spacing: -0.025em;
+  font-weight: 400;
+  color: inherit;
+}
+
+.app-topbar-beta-mark {
+  position: absolute;
+  z-index: 1;
+  top: -0.25em;
+  left: 0;
+  padding: 3px 11px;
+  border: 1px solid var(--site-accent-border);
+  border-radius: 2px;
+  background: var(--site-surface);
+  color: var(--site-accent);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  line-height: 1;
+  white-space: nowrap;
+  pointer-events: none;
+  /* 仅水平平移 + 倾斜：锚在标题左缘（「南京」起笔），translateX 向左收回半个标签宽以压在字左上方 */
+  transform: translateX(-35%) rotate(-20deg);
+  transform-origin: left center;
+}
+
+.app-topbar-actions {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 4px;
+  overflow: visible;
+}
+
+/* 顶栏操作：宽屏展示设置/关于，窄屏改「更多」。阈值 TOPBAR_COMPACT_MAX_WIDTH_PX（720） */
+.app-topbar .app-topbar-icon-button.app-topbar-action--mobile-only {
+  display: none;
+}
+
+.app-topbar .app-topbar-info-button,
+.app-topbar .app-topbar-icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  min-width: 38px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--site-header-fg);
+  overflow: visible;
+  flex-shrink: 0;
+  line-height: 0;
+}
+
+.app-topbar .app-topbar-info-button:hover,
+.app-topbar .app-topbar-icon-button:hover:not(:disabled) {
+  background: var(--site-hover-bg);
+}
+
+.app-topbar .app-topbar-info-button:active,
+.app-topbar .app-topbar-icon-button:active:not(:disabled) {
+  background: var(--site-active-bg);
+}
+
+.app-topbar .app-topbar-icon-button:disabled {
+  opacity: 0.38;
+  cursor: not-allowed;
+}
+
+.app-topbar-action-icon {
+  display: block;
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  overflow: visible;
+}
+
+.app-info-circle-icon {
+  display: block;
+}
+
+.app-topbar .theme-toggle.app-topbar-theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  min-width: 38px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--site-header-fg);
+  overflow: visible;
+  flex-shrink: 0;
+  line-height: 0;
+}
+
+.app-topbar .theme-toggle.app-topbar-theme-toggle:hover {
+  border: none;
+  background: var(--site-hover-bg);
+}
+
+.app-topbar .theme-toggle.app-topbar-theme-toggle:active {
+  border: none;
+  background: var(--site-active-bg);
+}
+
+.app-theme-icon {
+  display: block;
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.app-main {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 24px var(--page-gutter) var(--page-padding-bottom);
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  container-type: inline-size;
+  container-name: app-layout;
+}
+
+@media (max-width: 720px) {
+  .app-main {
+    padding-inline: 20px;
+  }
+
+  .app-topbar-inner {
+    padding-inline: 20px;
+  }
+
+  .app-topbar-title {
+    display: block;
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  .app-topbar-title-text {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 100%;
+  }
+
+  .app-topbar-title-wrap {
+    max-width: calc(100% - 168px);
+  }
+
+  .app-topbar .app-topbar-icon-button.app-topbar-action--mobile-only,
+  .app-topbar .app-topbar-more-button {
+    display: inline-flex;
+  }
+
+  .app-topbar-file-commands,
+  .app-topbar-divider {
+    display: none;
+  }
+
+  .app-topbar .app-topbar-icon-button.app-topbar-action--desktop-only,
+  .app-topbar .app-topbar-info-button.app-topbar-action--desktop-only {
+    display: none;
+  }
+}

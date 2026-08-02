@@ -1,0 +1,338 @@
+/* common-css .form-scope sets label / .field-label to 600; use normal weight for app forms */
+.form-scope label.field-label,
+.form-scope .field-label {
+  font-weight: 400;
+}
+
+.form-grid.generator-settings-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  max-width: none;
+  width: 100%;
+}
+
+.form-scope.form-grid.generator-settings-grid .field-label .text-input,
+.form-scope.form-grid.generator-settings-grid .field-label .select-input,
+.form-scope.form-grid.generator-settings-grid .field-label input[type='color'] {
+  max-width: none;
+  width: 100%;
+}
+
+.form-grid.generator-settings-grid > .field-label.field-label-checkbox {
+  grid-column: 1 / -1;
+  max-width: none;
+}
+
+.form-grid.generator-settings-grid > .field-label.field-label-checkbox span {
+  flex: 1;
+  min-width: 0;
+}
+
+@media (max-width: 720px) {
+  .form-grid.generator-settings-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .form-grid.generator-settings-grid > .field-label.field-label-checkbox {
+    grid-column: auto;
+  }
+}
+
+.form-grid.single-column {
+  max-width: none;
+  width: 100%;
+}
+
+.form-scope.form-grid.single-column .field-label .text-input,
+.form-scope.form-grid.single-column .field-label .select-input,
+.form-scope.form-grid.single-column .field-label input[type='color'] {
+  max-width: 280px;
+  width: 100%;
+}
+
+.form-grid.single-column > .field-hint,
+.form-grid.single-column > .field-label.field-label-checkbox {
+  grid-column: 1 / -1;
+  max-width: none;
+}
+
+.form-grid.single-column > .field-label.field-label-checkbox span {
+  flex: 1;
+  min-width: 0;
+}
+
+@media (max-width: 640px) {
+  .example-trigger {
+    margin-left: 0;
+  }
+}
+
+.toolbar-hint {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.station-list-heading {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+  min-width: 0;
+}
+
+.station-list-heading h2.site-content-heading {
+  margin: 0;
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.station-list-heading-end {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 14px;
+  flex-shrink: 0;
+  min-width: 0;
+}
+
+.station-list-heading-end .primary-button,
+.station-list-heading-end .dropdown-menu {
+  flex-shrink: 0;
+}
+
+.dropdown-menu-section-heading {
+  display: block;
+  font-size: 0.82rem;
+  font-weight: 600;
+  line-height: 1.35;
+  white-space: normal;
+}
+
+.dropdown-menu-item:disabled:has(.dropdown-menu-section-heading) {
+  opacity: 0.72;
+  cursor: default;
+}
+
+.fill-line-menu-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.fill-line-menu-item__swatch {
+  flex-shrink: 0;
+  width: 0.625rem;
+  height: 0.625rem;
+  border-radius: 9999px;
+}
+
+.dropdown-menu-chevron {
+  display: block;
+  flex-shrink: 0;
+}
+
+/* 顶栏图标下拉：主图标仍居中，右下角小号 v 仅作提示 */
+.app-topbar .dropdown-menu-trigger--icon {
+  position: relative;
+}
+
+.dropdown-menu-trigger-caret {
+  position: absolute;
+  right: 4px;
+  bottom: 6px;
+  line-height: 0;
+  pointer-events: none;
+  color: inherit;
+}
+
+.dropdown-menu-trigger-caret .dropdown-menu-chevron {
+  width: 8px;
+  height: 8px;
+}
+
+.station-section-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px 16px;
+  margin-bottom: 12px;
+}
+
+.station-toolbar-cluster {
+  flex: 1 1 auto;
+  min-width: min(100%, 280px);
+}
+
+.station-reverse-list-button {
+  flex: 0 0 auto;
+  margin-left: auto;
+}
+
+/* 避免在 grid/flex 列内被内容撑破视口；外框用 --site-border（不用 --site-content-border） */
+.table-wrap {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  border: 1px solid var(--site-border);
+}
+
+.station-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.station-col-name {
+  width: 28%;
+}
+
+.station-col-en {
+  width: 34%;
+}
+
+.station-col-transfer {
+  width: auto;
+}
+
+.station-col-action {
+  width: 56px;
+}
+
+.station-table th,
+.station-table td {
+  padding: 10px 12px;
+  text-align: left;
+  vertical-align: middle;
+  font-size: 0.92rem;
+  border: 0;
+}
+
+.station-table td {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.station-table th {
+  color: var(--gray-700);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  background: var(--theme-200);
+  white-space: nowrap;
+}
+
+.station-table thead tr {
+  border-bottom: 1px solid var(--site-border);
+}
+
+html.dark .station-table th {
+  color: var(--gray-300);
+  background: var(--theme-800);
+}
+
+.station-table tbody td {
+  background: var(--site-surface);
+  transition: background-color var(--transition-fast);
+}
+
+.station-table tbody tr + tr td {
+  border-top: 1px solid var(--site-border);
+}
+
+.station-table:not(.modal-transfer-table) tbody tr {
+  cursor: pointer;
+}
+
+.station-table:not(.modal-transfer-table) tbody tr:hover td {
+  background: var(--site-hover-bg);
+}
+
+.station-table tbody tr.is-current td {
+  background: var(--site-accent-soft);
+}
+
+.station-table:not(.modal-transfer-table) tbody tr.is-current:hover td {
+  background: var(--site-accent-soft);
+}
+
+.station-name-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.station-name-text {
+  font-weight: 700;
+  color: var(--site-fg);
+}
+
+.station-en-name {
+  display: inline-block;
+  max-width: 100%;
+  color: var(--site-muted-fg);
+  overflow-wrap: anywhere;
+}
+
+.transfer-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.transfer-chip {
+  --transfer-color: #8c989f;
+  display: inline-flex;
+  align-items: center;
+  min-height: 20px;
+  padding: 0 7px;
+  border: 1px solid color-mix(in srgb, var(--transfer-color) 78%, black);
+  border-radius: 999px;
+  background: var(--transfer-color);
+  color: var(--transfer-text, color-mix(in srgb, var(--transfer-color) 68%, black));
+  font-size: 0.78rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.station-action-cell {
+  text-align: center;
+}
+
+.station-action-cell .icon-button {
+  margin-left: auto;
+  border: none;
+  background: transparent;
+  color: var(--site-muted-fg);
+}
+
+.station-action-cell .icon-button:hover {
+  border: none;
+  background: var(--site-hover-bg);
+  color: var(--site-fg);
+}
+
+.station-table tbody tr.is-current .station-action-cell .icon-button:hover {
+  border: none;
+  background: var(--site-button-active-bg);
+  color: var(--site-accent);
+}
+
+.current-badge {
+  padding: 1px 8px;
+  border: 1px solid var(--site-accent-border);
+  border-radius: 999px;
+  color: var(--site-accent);
+  background: var(--site-accent-soft);
+  font-size: 0.74rem;
+  font-weight: 700;
+}
