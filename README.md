@@ -22,6 +22,18 @@
 
 欢迎通过 [GitHub Issues](https://github.com/kyuri-metro/njmetro-railmap-creator/issues) 报告 bug、提出功能建议或分享使用体验。
 
+## 开发
+
+```bash
+npm install
+npm run dev
+npm test
+npm run test:coverage
+npm run build
+```
+
+CI（`.github/workflows/ci.yml`）会在 push/PR 到 `main` 时跑构建与单测。SonarCloud 扫描需要仓库密钥 `SONAR_TOKEN`：在 [SonarCloud](https://sonarcloud.io) → My Account → Security 生成，写入 GitHub repo secrets。首次 CI 分析成功后，建议在 SonarCloud 项目 Administration → Analysis Method 关闭 Automatic Analysis，并确认已绑定 Quality Gate。
+
 ## 项目内容
 
 - 基于 Vite + React + TypeScript 构建

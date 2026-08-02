@@ -1,0 +1,65 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck and build
+        run: npm run build
+
+      - name: Unit tests with coverage
+        run: npm run test:coverage
+
+      - name: Upload coverage artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-lcov
+          path: coverage/lcov.info
+          if-no-files-found: error
+
+  sonarcloud:
+    needs: test
+    runs-on: ubuntu-latest
+    # Requires repository secret SONAR_TOKEN (SonarCloud → My Account → Security).
+    # After first successful CI analysis, disable Automatic Analysis in SonarCloud
+    # Administration → Analysis Method to avoid double analysis, and ensure a
+    # Quality Gate is assigned to the project.
+    if: ${{ secrets.SONAR_TOKEN != '' }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Unit tests with coverage
+        run: npm run test:coverage
+
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarqube-scan-action@v5.3.2
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
