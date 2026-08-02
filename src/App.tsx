@@ -2,15 +2,15 @@ import {
   startTransition,
   useDeferredValue,
   useEffect,
-  useRef,
   useState,
   type ChangeEvent,
 } from 'react';
-import { ConfirmDialogOverlay } from '@umamichi-ui/common-components/dialog';
-import { FullscreenOverlay } from '@umamichi-ui/common-components/overlay';
 import { usePreviewLoadingOverlay } from './hooks/usePreviewLoadingOverlay';
 import { useLineThemePalette } from './hooks/useLineThemePalette';
 import { useGeneratorControlDrafts } from './hooks/useGeneratorControlDrafts';
+import { useThemeMode } from './hooks/useThemeMode';
+import { AppConfirmOverlays } from './components/AppConfirmOverlays';
+import { AppTopbar } from './components/AppTopbar';
 import { PreviewResultsPane } from './components/PreviewResultsPane';
 import { StationFormModal, stationToDraft, type StationFormDraft } from './components/StationFormModal';
 import { StationTable } from './components/StationTable';
@@ -19,9 +19,6 @@ import { KyuriMetroStudioToolModal } from './components/KyuriMetroStudioToolModa
 import { AboutDialog } from './components/AboutDialog';
 import { AutosaveListDialog } from './components/AutosaveListDialog';
 import { SettingsDialog } from './components/SettingsDialog';
-import { InfoCircleIcon } from '@umamichi-ui/common-components/icons';
-import { MobileActionSheet } from '@umamichi-ui/common-components/menu';
-import { TopbarFileCommands, ExportIcon, ImportIcon, NewFileIcon } from './components/topbar/TopbarFileCommands';
 import { KYURI_RMG_IFRAME_ORIGIN } from './config/kyuriRmgIframe';
 import { KYURI_METRO_STUDIO_IFRAME_ORIGIN } from './config/kyuriMetroStudioIframe';
 import { getBuiltinOpenedStationsByLineId } from './builtinOpenedLineStations';
@@ -50,8 +47,6 @@ import { detectTargetFonts, targetFontSignatures, type FontDetectionResult } fro
 import { getNjmetroLineForegroundColor } from './njmetroLinePalette';
 import { parseRailmapYaml, serializeRailmapYaml, type RailmapYamlImport } from './stationListYaml';
 import { useAppDispatch, useAppSelector, selectCanRedo, selectCanUndo, selectGeneratorPresent } from './hooks';
-import { topbarCompactMediaQuery } from './layout/topbarLayout';
-import { OVERLAY_IDS } from './overlay/overlayIds';
 import { store, UndoActionCreators } from './store';
 
 type ModalState =
@@ -67,10 +62,6 @@ type ModalState =
     }
   | null;
 
-type ThemeMode = 'light' | 'dark';
-
-const themeStorageKey = 'site-theme';
-const themeTransitionLockClassName = 'theme-transition-lock';
 const docsReferenceUrl = 'https://github.com/kyuri-metro/njmetro-railmap-creator/tree/main/docs';
 const fallbackFontDetectionResults: FontDetectionResult[] = Object.entries(targetFontSignatures).map(([fontFamily, expectedWidths]) => ({
   fontFamily: fontFamily as FontDetectionResult['fontFamily'],
@@ -78,71 +69,6 @@ const fallbackFontDetectionResults: FontDetectionResult[] = Object.entries(targe
   expectedWidths,
   detected: false,
 }));
-const sampleImages = [
-  {
-    title: '终点站示例',
-    description: '线路标识与 Terminus 贴纸',
-    src: `${import.meta.env.BASE_URL}assets/terminus-badge.webp`,
-  },
-  {
-    title: '方向贴纸示例',
-    description: '往某站 / 下一站 组合样式',
-    src: `${import.meta.env.BASE_URL}assets/direction-badge.webp`,
-  },
-  {
-    title: '路线图示例',
-    description: '含当前站、换乘与后续站点的线路图',
-    src: `${import.meta.env.BASE_URL}assets/route-badge.webp`,
-  },
-] as const;
-
-const getInitialThemeMode = (): ThemeMode => {
-  if (typeof window === 'undefined') {
-    return 'light';
-  }
-
-  const storedTheme = window.localStorage.getItem(themeStorageKey);
-
-  if (storedTheme === 'light' || storedTheme === 'dark') {
-    return storedTheme;
-  }
-
-  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-};
-
-let themeTransitionLockToken = 0;
-
-const scheduleThemeTransitionUnlock = () => {
-  themeTransitionLockToken += 1;
-  const currentLockToken = themeTransitionLockToken;
-
-  window.requestAnimationFrame(() => {
-    window.requestAnimationFrame(() => {
-      if (themeTransitionLockToken !== currentLockToken) {
-        return;
-      }
-
-      document.documentElement.classList.remove(themeTransitionLockClassName);
-    });
-  });
-};
-
-const applyThemeMode = (themeMode: ThemeMode, disableTransitions = false) => {
-  const rootElement = document.documentElement;
-
-  if (disableTransitions) {
-    rootElement.classList.add(themeTransitionLockClassName);
-  }
-
-  rootElement.classList.toggle('dark', themeMode === 'dark');
-  rootElement.classList.toggle('light', themeMode === 'light');
-  rootElement.style.colorScheme = themeMode;
-
-  if (disableTransitions) {
-    scheduleThemeTransitionUnlock();
-  }
-};
-
 const sanitizeTransfer = (value: TransferLine[]): TransferLine[] =>
   value
     .map((entry) => {
@@ -252,7 +178,7 @@ function App() {
     idTextColor: idTextColorField,
     syncFromGenerator: syncControlDraftsFromGenerator,
   } = useGeneratorControlDrafts(generator);
-  const [themeMode, setThemeMode] = useState<ThemeMode>('light');
+  const { themeMode, toggleTheme } = useThemeMode();
   const [isAboutOpen, setIsAboutOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isTopbarMoreMenuOpen, setIsTopbarMoreMenuOpen] = useState(false);
@@ -269,7 +195,6 @@ function App() {
   const [kyuriRmgModal, setKyuriRmgModal] = useState<null | { mode: 'import' | 'export' }>(null);
   const [kyuriRmgOpen, setKyuriRmgOpen] = useState(false);
   const [kyuriMetroStudioOpen, setKyuriMetroStudioOpen] = useState(false);
-  const yamlFileInputRef = useRef<HTMLInputElement>(null);
   const [fontDetectionResults, setFontDetectionResults] = useState<FontDetectionResult[]>(fallbackFontDetectionResults);
   const [fontDetectionState, setFontDetectionState] = useState<'idle' | 'checking' | 'done'>('idle');
 
@@ -291,12 +216,6 @@ function App() {
   };
 
   useEffect(() => {
-    const initialThemeMode = getInitialThemeMode();
-    setThemeMode(initialThemeMode);
-    applyThemeMode(initialThemeMode);
-  }, []);
-
-  useEffect(() => {
     let cancelled = false;
 
     setFontDetectionState('checking');
@@ -315,20 +234,6 @@ function App() {
     return () => {
       cancelled = true;
     };
-  }, []);
-
-  useEffect(() => {
-    const mq = window.matchMedia(topbarCompactMediaQuery);
-
-    const onLayoutChange = () => {
-      if (!mq.matches) {
-        setIsTopbarMoreMenuOpen(false);
-      }
-    };
-
-    onLayoutChange();
-    mq.addEventListener('change', onLayoutChange);
-    return () => mq.removeEventListener('change', onLayoutChange);
   }, []);
 
   useEffect(() => {
@@ -472,13 +377,6 @@ function App() {
     if (modalState?.kind === 'create') {
       dispatch(updateStation(toStationItem(draft, modalState.stationId)));
     }
-  };
-
-  const handleThemeToggle = () => {
-    const nextThemeMode: ThemeMode = themeMode === 'dark' ? 'light' : 'dark';
-    setThemeMode(nextThemeMode);
-    window.localStorage.setItem(themeStorageKey, nextThemeMode);
-    applyThemeMode(nextThemeMode, true);
   };
 
   const handleFillStationsByLineId = (network: BuiltinStationNetwork, lineId: string) => {
@@ -626,104 +524,32 @@ function App() {
 
   return (
     <main className="app-layout">
-      <header className="app-topbar" data-lens-border="bottom" data-lens-depth="0.9">
-        <div className="app-topbar-inner">
-          <div className="app-topbar-title-wrap">
-            <h1 className="app-topbar-title">
-              <span className="app-topbar-title-text">南京地铁屏蔽门吊板生成器</span>
-              <span className="visually-hidden">（Beta 测试版）</span>
-            </h1>
-            <span className="app-topbar-beta-mark" aria-hidden="true">
-              Beta
-            </span>
-          </div>
-          <TopbarFileCommands
-            yamlFileInputRef={yamlFileInputRef}
-            rmgToolConfigured={Boolean(KYURI_RMG_IFRAME_ORIGIN)}
-            metroStudioToolConfigured={Boolean(KYURI_METRO_STUDIO_IFRAME_ORIGIN)}
-            onNew={() => setIsNewProjectConfirmOpen(true)}
-            onDownloadYaml={handleExportStationYaml}
-            onOpenRmgImport={() => {
-              setKyuriRmgModal({ mode: 'import' });
-              setKyuriRmgOpen(true);
-            }}
-            onOpenMetroStudioImport={() => {
-              setKyuriMetroStudioOpen(true);
-            }}
-            onOpenRmgExport={() => {
-              setKyuriRmgModal({ mode: 'export' });
-              setKyuriRmgOpen(true);
-            }}
-          />
-          <div
-            className="app-topbar-divider app-topbar-action--desktop-only"
-            role="separator"
-            aria-orientation="vertical"
-            aria-hidden="true"
-          />
-          <input
-            ref={yamlFileInputRef}
-            type="file"
-            accept=".yml,.yaml,text/yaml,application/yaml"
-            className="visually-hidden"
-            onChange={handleYamlFileChange}
-          />
-          <div className="app-topbar-actions">
-            <button
-              type="button"
-              className="icon-button app-topbar-icon-button"
-              aria-label="撤销"
-              disabled={!canUndo}
-              onClick={applyUndo}
-            >
-              <UndoIcon />
-            </button>
-            <button
-              type="button"
-              className="icon-button app-topbar-icon-button"
-              aria-label="重做"
-              disabled={!canRedo}
-              onClick={applyRedo}
-            >
-              <RedoIcon />
-            </button>
-            <button
-              type="button"
-              className="icon-button app-topbar-icon-button app-topbar-action--desktop-only"
-              aria-label="设置"
-              onClick={() => setIsSettingsOpen(true)}
-            >
-              <SettingsIcon />
-            </button>
-            <button
-              type="button"
-              className="icon-button app-topbar-info-button app-topbar-action--desktop-only"
-              aria-label="关于本生成器"
-              onClick={() => setIsAboutOpen(true)}
-            >
-              <InfoCircleIcon />
-            </button>
-            <button
-              className="theme-toggle app-topbar-theme-toggle"
-              type="button"
-              onClick={handleThemeToggle}
-              aria-label={themeMode === 'dark' ? '切换到浅色模式' : '切换到深色模式'}
-            >
-              {themeMode === 'dark' ? <SunIcon /> : <MoonIcon />}
-            </button>
-            <button
-              type="button"
-              className="icon-button app-topbar-icon-button app-topbar-action--mobile-only app-topbar-more-button"
-              aria-label="更多"
-              aria-haspopup="dialog"
-              aria-expanded={isTopbarMoreMenuOpen}
-              onClick={() => setIsTopbarMoreMenuOpen(true)}
-            >
-              <MoreIcon />
-            </button>
-          </div>
-        </div>
-      </header>
+      <AppTopbar
+        canUndo={canUndo}
+        canRedo={canRedo}
+        themeMode={themeMode}
+        isTopbarMoreMenuOpen={isTopbarMoreMenuOpen}
+        onTopbarMoreMenuOpenChange={setIsTopbarMoreMenuOpen}
+        onUndo={applyUndo}
+        onRedo={applyRedo}
+        onNew={() => setIsNewProjectConfirmOpen(true)}
+        onDownloadYaml={handleExportStationYaml}
+        onYamlFileChange={handleYamlFileChange}
+        onOpenRmgImport={() => {
+          setKyuriRmgModal({ mode: 'import' });
+          setKyuriRmgOpen(true);
+        }}
+        onOpenMetroStudioImport={() => {
+          setKyuriMetroStudioOpen(true);
+        }}
+        onOpenRmgExport={() => {
+          setKyuriRmgModal({ mode: 'export' });
+          setKyuriRmgOpen(true);
+        }}
+        onOpenSettings={() => setIsSettingsOpen(true)}
+        onOpenAbout={() => setIsAboutOpen(true)}
+        onToggleTheme={toggleTheme}
+      />
 
       <div className="app-main">
         <div className="app-columns">
@@ -925,134 +751,31 @@ function App() {
         }}
       />
 
-      <ConfirmDialogOverlay
-        open={isNewProjectConfirmOpen}
-        overlayId={OVERLAY_IDS.newProjectConfirm}
-        onDismiss={() => setIsNewProjectConfirmOpen(false)}
-        title="确认新建"
-        titleId="new-project-confirm-title"
-      >
-        <p id="new-project-confirm-desc" className="confirm-dialog-body">
-          新建将创建空白线路图（无站点，保留默认线路编号与生成设置），覆盖当前编辑内容，并清空撤销历史，无法撤销至操作前。
-        </p>
-        <div className="confirm-dialog-actions">
-          <button type="button" className="secondary-button" onClick={() => setIsNewProjectConfirmOpen(false)}>
-            取消
-          </button>
-          <button type="button" className="primary-button" onClick={confirmNewProject}>
-            新建
-          </button>
-        </div>
-      </ConfirmDialogOverlay>
-
-      <ConfirmDialogOverlay
-        open={isYamlImportConfirmOpen}
-        overlayId={OVERLAY_IDS.yamlImportConfirm}
-        onDismiss={() => {
+      <AppConfirmOverlays
+        isNewProjectConfirmOpen={isNewProjectConfirmOpen}
+        onDismissNewProject={() => setIsNewProjectConfirmOpen(false)}
+        onConfirmNewProject={confirmNewProject}
+        isYamlImportConfirmOpen={isYamlImportConfirmOpen}
+        onDismissYamlImport={() => {
           setIsYamlImportConfirmOpen(false);
           setPendingRailmapImport(null);
         }}
-        title="确认导入 YAML"
-        titleId="yaml-import-confirm-title"
-      >
-        <p id="yaml-import-confirm-desc" className="confirm-dialog-body">
-          导入将覆盖当前站点列表、线路编号、标识色、线路编号字体色与生成设置（总长、方向等），并清空撤销历史，无法撤销至导入前。
-        </p>
-        <div className="confirm-dialog-actions">
-          <button
-            type="button"
-            className="secondary-button"
-            onClick={() => {
-              setIsYamlImportConfirmOpen(false);
-              setPendingRailmapImport(null);
-            }}
-          >
-            取消
-          </button>
-          <button type="button" className="primary-button" onClick={confirmYamlStationImport}>
-            继续
-          </button>
-        </div>
-      </ConfirmDialogOverlay>
-
-      <ConfirmDialogOverlay
-        open={yamlImportError !== null}
-        overlayId={OVERLAY_IDS.yamlImportError}
-        onDismiss={() => setYamlImportError(null)}
-        title="YAML 导入失败"
-        titleId="yaml-import-error-title"
-      >
-        {yamlImportError ? (
-          <>
-            <p id="yaml-import-error-desc" className="confirm-dialog-body">
-              {yamlImportError}
-            </p>
-            <div className="confirm-dialog-actions">
-              <button type="button" className="primary-button" onClick={() => setYamlImportError(null)}>
-                知道了
-              </button>
-            </div>
-          </>
-        ) : null}
-      </ConfirmDialogOverlay>
-
-      <ConfirmDialogOverlay
-        open={isOverwriteStationsConfirmOpen}
-        overlayId={OVERLAY_IDS.overwriteStations}
-        onDismiss={() => {
+        onConfirmYamlImport={confirmYamlStationImport}
+        yamlImportError={yamlImportError}
+        onDismissYamlError={() => setYamlImportError(null)}
+        isOverwriteStationsConfirmOpen={isOverwriteStationsConfirmOpen}
+        onDismissOverwriteStations={() => {
           setIsOverwriteStationsConfirmOpen(false);
           setPendingBuiltinFill(null);
         }}
-        title="确认覆盖站点列表"
-        titleId="overwrite-stations-confirm-title"
-      >
-        <p id="overwrite-stations-confirm-desc" className="confirm-dialog-body">
-          此操作将会覆盖站点列表，并清空撤销历史，无法撤销至覆盖前。
-        </p>
-        <div className="confirm-dialog-actions">
-          <button
-            type="button"
-            className="secondary-button"
-            onClick={() => {
-              setIsOverwriteStationsConfirmOpen(false);
-              setPendingBuiltinFill(null);
-            }}
-          >
-            取消
-          </button>
-          <button type="button" className="primary-button" onClick={confirmBuiltinStationOverwrite}>
-            继续
-          </button>
-        </div>
-      </ConfirmDialogOverlay>
-
-      <FullscreenOverlay
-        open={isExampleModalOpen}
-        overlayId={OVERLAY_IDS.exampleModal}
-        onDismiss={() => setIsExampleModalOpen(false)}
-        title="参考样例"
-        titleId="example-modal-title"
-        size="page"
-        closeAriaLabel="关闭示例浮窗"
-        panelClassName="example-modal-overlay"
-        bodyClassName="example-modal-overlay-body"
-      >
-        <p className="dialog-note example-modal-note">
-          <InfoCircleIcon className="dialog-note-icon" />
-          <span>以下图片来自 public/assets，仅用于版式参考，并非当前表单的实时输出。</span>
-        </p>
-        <div className="example-gallery">
-          {sampleImages.map((sample) => (
-            <figure key={sample.title} className="example-card">
-              <img src={sample.src} alt={sample.title} loading="lazy" />
-              <figcaption>
-                <strong>{sample.title}</strong>
-                <span>{sample.description}</span>
-              </figcaption>
-            </figure>
-          ))}
-        </div>
-      </FullscreenOverlay>
+        onConfirmOverwriteStations={confirmBuiltinStationOverwrite}
+        isExampleModalOpen={isExampleModalOpen}
+        onDismissExampleModal={() => setIsExampleModalOpen(false)}
+        isAutosaveRestoreConfirmOpen={isAutosaveRestoreConfirmOpen}
+        pendingAutosaveEntry={pendingAutosaveEntry}
+        onDismissAutosaveRestore={dismissAutosaveRestoreConfirm}
+        onConfirmAutosaveRestore={confirmAutosaveRestore}
+      />
 
       <SettingsDialog
         open={isSettingsOpen}
@@ -1064,121 +787,6 @@ function App() {
         open={isAutosaveListOpen}
         onClose={() => setIsAutosaveListOpen(false)}
         onSelectEntry={handleAutosaveEntrySelect}
-      />
-
-      <ConfirmDialogOverlay
-        open={isAutosaveRestoreConfirmOpen}
-        overlayId={OVERLAY_IDS.autosaveRestore}
-        onDismiss={dismissAutosaveRestoreConfirm}
-        title="恢复自动保存"
-        titleId="autosave-restore-confirm-title"
-      >
-        <p id="autosave-restore-confirm-desc" className="confirm-dialog-body">
-          {pendingAutosaveEntry
-            ? `将用 ${pendingAutosaveEntry.summary}（${new Date(pendingAutosaveEntry.savedAt).toLocaleString('zh-CN')}）覆盖当前编辑内容，并清空撤销历史。`
-            : ''}
-        </p>
-        <div className="confirm-dialog-actions">
-          <button type="button" className="secondary-button" onClick={dismissAutosaveRestoreConfirm}>
-            取消
-          </button>
-          <button type="button" className="primary-button" onClick={confirmAutosaveRestore}>
-            继续
-          </button>
-        </div>
-      </ConfirmDialogOverlay>
-
-      <MobileActionSheet
-        open={isTopbarMoreMenuOpen}
-        overlayId={OVERLAY_IDS.topbarMoreMenu}
-        ariaLabel="顶栏更多"
-        onDismiss={() => setIsTopbarMoreMenuOpen(false)}
-        entries={[
-          {
-            kind: 'item',
-            id: 'new',
-            label: '新建',
-            icon: <NewFileIcon />,
-            onSelect: () => setIsNewProjectConfirmOpen(true),
-          },
-          {
-            kind: 'submenu',
-            id: 'import',
-            label: '导入',
-            icon: <ImportIcon />,
-            items: [
-              {
-                kind: 'item',
-                id: 'import-yaml',
-                label: '从 YAML 文件导入…',
-                onSelect: () => yamlFileInputRef.current?.click(),
-              },
-              {
-                kind: 'item',
-                id: 'import-rmg',
-                label: '导入 RMG JSON 存档',
-                disabled: !KYURI_RMG_IFRAME_ORIGIN,
-                title: !KYURI_RMG_IFRAME_ORIGIN ? 'RMG 转换窗口未配置，无法使用此选项' : undefined,
-                onSelect: () => {
-                  setKyuriRmgModal({ mode: 'import' });
-                  setKyuriRmgOpen(true);
-                },
-              },
-              {
-                kind: 'item',
-                id: 'import-metro-studio',
-                label: '导入 Metro Studio 工程',
-                disabled: !KYURI_METRO_STUDIO_IFRAME_ORIGIN,
-                title: !KYURI_METRO_STUDIO_IFRAME_ORIGIN
-                  ? 'Metro Studio 转换窗口未配置，无法使用此选项'
-                  : undefined,
-                onSelect: () => {
-                  setKyuriMetroStudioOpen(true);
-                },
-              },
-            ],
-          },
-          {
-            kind: 'submenu',
-            id: 'export',
-            label: '导出',
-            icon: <ExportIcon />,
-            items: [
-              {
-                kind: 'item',
-                id: 'export-yaml',
-                label: '下载 YAML',
-                onSelect: handleExportStationYaml,
-              },
-              {
-                kind: 'item',
-                id: 'export-rmg',
-                label: '导出 RMG JSON 存档',
-                disabled: !KYURI_RMG_IFRAME_ORIGIN,
-                title: !KYURI_RMG_IFRAME_ORIGIN ? 'RMG 转换窗口未配置，无法使用此选项' : undefined,
-                onSelect: () => {
-                  setKyuriRmgModal({ mode: 'export' });
-                  setKyuriRmgOpen(true);
-                },
-              },
-            ],
-          },
-          { kind: 'separator', id: 'topbar-file-separator' },
-          {
-            kind: 'item',
-            id: 'settings',
-            label: '设置',
-            icon: <SettingsIcon />,
-            onSelect: () => setIsSettingsOpen(true),
-          },
-          {
-            kind: 'item',
-            id: 'about',
-            label: '关于',
-            icon: <InfoCircleIcon />,
-            onSelect: () => setIsAboutOpen(true),
-          },
-        ]}
       />
 
       <AboutDialog open={isAboutOpen} onClose={() => setIsAboutOpen(false)} />
