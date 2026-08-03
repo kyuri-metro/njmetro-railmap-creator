@@ -15,6 +15,7 @@
 
 ### Fixed
 
+- 「按线路填充站点」等可滚动 `FloatingMenu`：Android Chromium 上 RGB fringe 随内容滚动错位。升级 `@umamichi-ui/common-components` 至 `^0.4.2`（滚动移至内层列表）、`@umamichi-ui/common-css` 至 `^0.19.3`。
 - 线路图站名在中文压缩（`scaleX`）时，火车站 / 机场站类型图标（dings 字）不再与站名一并水平压扁；图标单独测宽后与压缩站名整组居中。
 - 市域 D 型方向标画布宽度：先前 3400 只包括线路号和「往 xx」，未计入「下一站」段，属错误；改为 5100。
 

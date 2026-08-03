@@ -135,9 +135,9 @@ h3 {
 }
 
 /*
- * Long FloatingMenus set overflow-y:auto and become scroll containers. Chromatic
- * fringe ::before/::after then translate a few px outside the box and inflate
- * scrollWidth, showing a spurious horizontal scrollbar (e.g. 按线路填充站点).
+ * Fringe ::before/::after translate a few px past the shell. Clip horizontal
+ * overflow on the shell (scroll is on `.dropdown-menu-panel__list` since
+ * common-components 0.4.2) so fringe cannot inflate a horizontal scrollbar.
  */
 .dropdown-menu-panel.chromatic-fringe-box--overlay,
 .download-format-menu-panel.chromatic-fringe-box--overlay {
