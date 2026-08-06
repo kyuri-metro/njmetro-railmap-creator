@@ -17,6 +17,7 @@ export function initAppChromaticFringe(): void {
     fadeBorderSelector: '.outline-button',
     depths: {
       dropdown: 1.35,
+      dialog: 1.55,
       button: 0.65,
       default: 1,
     },
