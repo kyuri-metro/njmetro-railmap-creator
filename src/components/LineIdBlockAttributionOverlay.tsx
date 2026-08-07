@@ -46,7 +46,7 @@ export function LineIdBlockAttributionOverlay({ viewWidth, viewHeight, box }: Li
   const heightPct = (box.height / viewHeight) * 100;
 
   return (
-    <div className={`line-id-attribution-layer${tooltipVisible ? ' line-id-attribution-layer--tooltip-open' : ''}`}>
+    <div className="line-id-attribution-layer">
       <div
         className="line-id-attribution-anchor"
         style={{
@@ -61,8 +61,6 @@ export function LineIdBlockAttributionOverlay({ viewWidth, viewHeight, box }: Li
           onMouseEnter={showTooltip}
           onMouseLeave={scheduleHideTooltip}
         >
-          <span className="line-id-attribution-ripple" aria-hidden />
-          <span className="line-id-attribution-ripple line-id-attribution-ripple--delayed" aria-hidden />
           <span className="line-id-attribution-dot" aria-hidden />
         </div>
       </div>
