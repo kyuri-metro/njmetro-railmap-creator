@@ -202,7 +202,9 @@
   }
 
   .app-topbar-inner {
-    padding-inline: 20px;
+    /* Start needs extra room for the overhanging Beta mark; end stays page gutter. */
+    padding-inline-start: 20px;
+    padding-inline-end: var(--page-gutter);
   }
 
   .app-topbar-title {
