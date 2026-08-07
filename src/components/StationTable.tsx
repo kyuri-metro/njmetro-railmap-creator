@@ -270,20 +270,6 @@ export function StationTable({
             之后插入
           </button>
         </li>
-        <li className="dropdown-menu-separator" role="separator" aria-orientation="horizontal" />
-        <li role="none">
-          <button
-            type="button"
-            className="dropdown-menu-item"
-            role="menuitem"
-            onClick={() => {
-              onRequestDelete(contextMenu.station);
-              closeContextMenu();
-            }}
-          >
-            删除
-          </button>
-        </li>
       </ul>
     </div>
   ) : null;
@@ -325,7 +311,7 @@ export function StationTable({
               <th>中文名</th>
               <th>英文名</th>
               <th>换乘线路</th>
-              <th aria-label="编辑换乘与类型" />
+              <th aria-label="行操作" />
             </tr>
           </thead>
           <tbody>
@@ -390,17 +376,30 @@ export function StationTable({
                     )}
                   </td>
                   <td className="station-action-cell">
-                    <button
-                      type="button"
-                      className="icon-button"
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        onEdit(station);
-                      }}
-                      aria-label={`编辑换乘与类型：${displayName}`}
-                    >
-                      <PencilIcon />
-                    </button>
+                    <div className="station-action-buttons">
+                      <button
+                        type="button"
+                        className="icon-button"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          onEdit(station);
+                        }}
+                        aria-label={`编辑换乘与类型：${displayName}`}
+                      >
+                        <PencilIcon />
+                      </button>
+                      <button
+                        type="button"
+                        className="icon-button"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          onRequestDelete(station);
+                        }}
+                        aria-label={`删除站点：${displayName}`}
+                      >
+                        x
+                      </button>
+                    </div>
                   </td>
                 </tr>
               );

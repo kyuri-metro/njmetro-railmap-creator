@@ -209,7 +209,7 @@
 }
 
 .station-col-action {
-  width: 56px;
+  width: 96px;
 }
 
 .station-table th,
@@ -347,11 +347,29 @@
   text-align: center;
 }
 
+.station-action-buttons {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  width: 100%;
+}
+
 .station-action-cell .icon-button {
-  margin-left: auto;
+  flex: 0 0 34px;
+  box-sizing: border-box;
+  width: 34px;
+  height: 34px;
+  min-width: 34px;
+  min-height: 34px;
+  padding: 0;
   border: none;
+  border-radius: var(--radius-sm);
   background: transparent;
   color: var(--site-muted-fg);
+  font-size: 1rem;
+  font-weight: 500;
+  line-height: 1;
 }
 
 .station-action-cell .icon-button:hover {
