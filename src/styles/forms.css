@@ -62,12 +62,6 @@
   min-width: 0;
 }
 
-@media (max-width: 640px) {
-  .example-trigger {
-    margin-left: 0;
-  }
-}
-
 .toolbar-hint {
   margin: 0;
   font-size: 0.9rem;
