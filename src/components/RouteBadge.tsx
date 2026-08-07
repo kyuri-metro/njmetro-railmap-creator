@@ -407,9 +407,10 @@ const RouteStationRow = ({
   const stationPointId = `station-point-${index}`;
   const stationMarkerId = getStationMarkerId(isCurrent, isEndpoint, index);
   const transferIconAnchorId = `station-transfer-icon-${index}`;
-  const transferIconHeight = getTransferCircleDiameter(isCurrent, isEndpoint) * 0.8;
   const useCapsule =
     useCapsuleTransferMarkers && station.transfer.length > 0 && !isCurrent && !isEndpoint;
+  // 胶囊内图标 rotate(90) 后视觉宽度 = 未旋转高度；固定为 32（SVG 用户单位）。
+  const transferIconHeight = useCapsule ? 32 : getTransferCircleDiameter(isCurrent, isEndpoint) * 0.8;
 
   const labelAnchor = isCurrent
     ? anchor(
