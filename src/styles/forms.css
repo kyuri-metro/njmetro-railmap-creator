@@ -175,6 +175,29 @@
   margin-left: auto;
 }
 
+@media (max-width: 720px) {
+  .station-section-toolbar {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .station-toolbar-cluster,
+  .station-section-toolbar .toolbar-buttons {
+    display: contents;
+  }
+
+  .station-section-toolbar .outline-button {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .station-reverse-list-button {
+    grid-column: 1 / -1;
+    margin-left: 0;
+  }
+}
+
 /* 避免在 grid/flex 列内被内容撑破视口；外框用 --site-border（不用 --site-content-border） */
 .table-wrap {
   width: 100%;
