@@ -9,6 +9,22 @@
 
 ## [Unreleased]
 
+## [0.4.1] - 2026-08-08
+
+对应 `package.json` 中的 `0.4.1`。相对 [0.4.0]：站点列表**表格内联改名**与行右键插入，以及 spreadsheet 风格表样式。
+
+### Added
+
+- 站点列表行右键菜单：「之前插入」「之后插入」。
+- 中文名 / 英文名可在表格内直接编辑（失焦或 Enter 提交，Esc 取消）；新建站点不再打开弹窗，插入后聚焦新行中文名。
+- 铅笔按钮打开的弹窗改为仅编辑站点类型与换乘线路；行最右侧 `x` 删除站点（删除前确认）。
+
+### Changed
+
+- 站点表改为无外框、行间灰色横线、表头与正文同色且字号接近的 spreadsheet 风格；触控友好的整格输入热区；去掉「当前」胶囊（当前站仍以行高亮表示）。
+- 窄屏站点工具栏：四个插入按钮两两各占一行，「反转列表」单独占满一行。
+- 「关于」等界面展示的版本号为 `0.4.1`。
+
 ## [0.4.0] - 2026-08-08
 
 对应 `package.json` 中的 `0.4.0`。相对 [0.3.0]：线路图**非当前换乘中间站胶囊标记**、YAML 缺省外观选项改为保持旧版外观，以及 Unreleased 积压的车型默认 / 依赖与绘制修复。
@@ -208,7 +224,8 @@
 - 部署至 Cloudflare Pages（[njmetro-railmap-creator.umamichi.moe](https://njmetro-railmap-creator.umamichi.moe/)）。
 - 基于 [@umamichi-ui/common-css](https://www.npmjs.com/package/@umamichi-ui/common-css) 的界面样式与弹层交互。
 
-[Unreleased]: https://github.com/kyuri-metro/njmetro-railmap-creator/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/kyuri-metro/njmetro-railmap-creator/compare/v0.4.1...HEAD
+[0.4.1]: https://github.com/kyuri-metro/njmetro-railmap-creator/compare/v0.4.0...v0.4.1
 [0.4.0]: https://github.com/kyuri-metro/njmetro-railmap-creator/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/kyuri-metro/njmetro-railmap-creator/compare/v0.2.1...v0.3.0
 [0.2.1]: https://github.com/kyuri-metro/njmetro-railmap-creator/compare/v0.2.0...v0.2.1
