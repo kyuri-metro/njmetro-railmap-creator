@@ -39,6 +39,8 @@ export type GeneratorState = {
   /** 线路编号块上的数字/文字颜色（与 @kyuri-metro/njmetro-palette 的 foreground 一致） */
   idTextColor: string;
   showStationTypeIcons: boolean;
+  /** 非当前换乘中间站使用水平胶囊标记（当前站与终点站样式不变） */
+  useCapsuleTransferMarkers: boolean;
   trainType: TrainType;
 };
 
@@ -75,6 +77,7 @@ const initialState: GeneratorState = {
   idColor: getNjmetroLineBackgroundColor(initialLineId) ?? '#009a44',
   idTextColor: getNjmetroLineForegroundColor(initialLineId) ?? '#ffffff',
   showStationTypeIcons: false,
+  useCapsuleTransferMarkers: false,
   trainType: DEFAULT_TRAIN_TYPE,
 };
 
@@ -96,6 +99,7 @@ export const getEmptyGeneratorState = (): GeneratorState => ({
   idColor: initialState.idColor,
   idTextColor: initialState.idTextColor,
   showStationTypeIcons: initialState.showStationTypeIcons,
+  useCapsuleTransferMarkers: initialState.useCapsuleTransferMarkers,
   trainType: initialState.trainType,
 });
 
@@ -144,6 +148,9 @@ const generatorSlice = createSlice({
     },
     setShowStationTypeIcons(state, action: PayloadAction<boolean>) {
       state.showStationTypeIcons = action.payload;
+    },
+    setUseCapsuleTransferMarkers(state, action: PayloadAction<boolean>) {
+      state.useCapsuleTransferMarkers = action.payload;
     },
     setTrainType(state, action: PayloadAction<TrainType>) {
       const nextType = action.payload;
@@ -207,6 +214,7 @@ export const {
   setIdTextColor,
   setLineId,
   setShowStationTypeIcons,
+  setUseCapsuleTransferMarkers,
   setTotalLength,
   setTrainType,
   replaceStations,

@@ -12,6 +12,7 @@ import generatorReducer, {
   setIdTextColor,
   setLineId,
   setShowStationTypeIcons,
+  setUseCapsuleTransferMarkers,
   setTotalLength,
   setTrainType,
   updateStation,
@@ -65,12 +66,14 @@ describe('generatorSlice', () => {
     state = generatorReducer(state, setIdColor('#112233'));
     state = generatorReducer(state, setIdTextColor('#aabbcc'));
     state = generatorReducer(state, setShowStationTypeIcons(true));
+    state = generatorReducer(state, setUseCapsuleTransferMarkers(true));
 
     expect(state.totalLength).toBe(1200);
     expect(state.direction).toBe('r');
     expect(state.idColor).toBe('#112233');
     expect(state.idTextColor).toBe('#aabbcc');
     expect(state.showStationTypeIcons).toBe(true);
+    expect(state.useCapsuleTransferMarkers).toBe(true);
   });
 
   it('setTrainType adjusts totalLength by route canvas delta', () => {

@@ -17,6 +17,7 @@ export type NjMetroSettingsYaml = {
   direction: TrainDirection;
   currentStnId: string;
   showStationTypeIcons: boolean;
+  useCapsuleTransferMarkers: boolean;
   trainType: TrainType;
 };
 
@@ -301,16 +302,21 @@ const mergeNjMetroSettings = (raw: unknown, fb: GeneratorState): NjMetroSettings
   const showStationTypeIcons =
     typeof o.showStationTypeIcons === 'boolean' ? o.showStationTypeIcons : fb.showStationTypeIcons;
 
+  const useCapsuleTransferMarkers =
+    typeof o.useCapsuleTransferMarkers === 'boolean'
+      ? o.useCapsuleTransferMarkers
+      : fb.useCapsuleTransferMarkers;
+
   const trainType = isTrainType(o.trainType) ? o.trainType : fb.trainType;
 
-  return { totalLength, direction, currentStnId, showStationTypeIcons, trainType };
+  return { totalLength, direction, currentStnId, showStationTypeIcons, useCapsuleTransferMarkers, trainType };
 };
 
 /** version 3：`njMetroSettings` 仅含南京特有项（不含 direction、currentStnId） */
 const mergeNjMetroSettingsV3Partial = (
   raw: unknown,
   fb: GeneratorState,
-): Pick<NjMetroSettingsYaml, 'totalLength' | 'showStationTypeIcons' | 'trainType'> => {
+): Pick<NjMetroSettingsYaml, 'totalLength' | 'showStationTypeIcons' | 'useCapsuleTransferMarkers' | 'trainType'> => {
   const o = raw !== null && typeof raw === 'object' && !Array.isArray(raw) ? (raw as Record<string, unknown>) : {};
 
   let totalLength = fb.totalLength;
@@ -321,9 +327,14 @@ const mergeNjMetroSettingsV3Partial = (
   const showStationTypeIcons =
     typeof o.showStationTypeIcons === 'boolean' ? o.showStationTypeIcons : fb.showStationTypeIcons;
 
+  const useCapsuleTransferMarkers =
+    typeof o.useCapsuleTransferMarkers === 'boolean'
+      ? o.useCapsuleTransferMarkers
+      : fb.useCapsuleTransferMarkers;
+
   const trainType = isTrainType(o.trainType) ? o.trainType : fb.trainType;
 
-  return { totalLength, showStationTypeIcons, trainType };
+  return { totalLength, showStationTypeIcons, useCapsuleTransferMarkers, trainType };
 };
 
 const resolveCurrentStnId = (requested: string, stations: StationItem[], fallback: string): string => {
@@ -363,6 +374,7 @@ export const serializeRailmapYaml = (state: GeneratorState): string => {
     njMetroSettings: {
       totalLength: state.totalLength,
       showStationTypeIcons: state.showStationTypeIcons,
+      useCapsuleTransferMarkers: state.useCapsuleTransferMarkers,
       trainType: state.trainType,
     },
     stations: stationsToYamlBodies(state.stnList),

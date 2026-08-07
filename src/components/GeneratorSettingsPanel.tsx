@@ -1,7 +1,13 @@
 import { startTransition } from 'react';
 import type { DebouncedGeneratorField } from '../hooks/useDebouncedGeneratorField';
 import { useAppDispatch } from '../hooks';
-import { setDirection, setShowStationTypeIcons, setTrainType, type GeneratorState } from '../features/generatorSlice';
+import {
+  setDirection,
+  setShowStationTypeIcons,
+  setTrainType,
+  setUseCapsuleTransferMarkers,
+  type GeneratorState,
+} from '../features/generatorSlice';
 import { TRAIN_TYPE_OPTIONS, type TrainType } from '../trainTypeLayout';
 
 export type GeneratorSettingsPanelProps = {
@@ -110,6 +116,18 @@ export const GeneratorSettingsPanel = ({
             }}
           />
           <span>在火车站或机场站名前添加图标（测试）</span>
+        </label>
+        <label className="field-label field-label-checkbox">
+          <input
+            type="checkbox"
+            checked={generator.useCapsuleTransferMarkers}
+            onChange={(event) => {
+              startTransition(() => {
+                dispatch(setUseCapsuleTransferMarkers(event.target.checked));
+              });
+            }}
+          />
+          <span>非当前换乘中间站使用胶囊标记</span>
         </label>
       </div>
     </section>

@@ -22,6 +22,7 @@ export const railmapImportToGeneratorState = (
   idColor: data.color,
   idTextColor: data.lineIdTextColor,
   showStationTypeIcons: data.njMetroSettings.showStationTypeIcons,
+  useCapsuleTransferMarkers: data.njMetroSettings.useCapsuleTransferMarkers,
   trainType: data.njMetroSettings.trainType,
 });
 

@@ -174,6 +174,12 @@ const EndStationMarker = ({ fill }: { fill: string }) => (
 
 const StationMarker = () => <circle cx="0" cy="0" r={smallStationRadius} fill="#ffffff" />;
 
+/** 水平 1:2 胶囊：短轴 h = 圆直径，中间正方形边长 a = h，总宽 2h。 */
+const CapsuleStationMarker = () => {
+  const h = smallStationRadius * 2;
+  return <rect x={-h} y={-h / 2} width={2 * h} height={h} rx={h / 2} ry={h / 2} fill="#ffffff" />;
+};
+
 const CurrentStationMarker = () => (
   <g>
     <circle cx="0" cy="0" r={currentOuterRadius} fill="#ff0000" />
@@ -193,10 +199,20 @@ const DirectionArrow = ({ direction }: { direction: 'l' | 'r' }) => {
   );
 };
 
-const TransferStationIcon = ({ color, symbolId, targetHeight }: { color: string; symbolId: string; targetHeight: number }) => {
+const TransferStationIcon = ({
+  color,
+  symbolId,
+  targetHeight,
+  rotateDeg = 0,
+}: {
+  color: string;
+  symbolId: string;
+  targetHeight: number;
+  rotateDeg?: number;
+}) => {
   const scaledWidth = (transferIconViewBoxWidth / transferIconViewBoxHeight) * targetHeight;
 
-  return (
+  const icon = (
     <use
       href={`#${symbolId}`}
       x={-scaledWidth / 2}
@@ -206,6 +222,12 @@ const TransferStationIcon = ({ color, symbolId, targetHeight }: { color: string;
       color={color}
     />
   );
+
+  if (rotateDeg === 0) {
+    return icon;
+  }
+
+  return <g transform={`rotate(${rotateDeg})`}>{icon}</g>;
 };
 
 const TransferBadgeGroup = ({ lines }: { lines: TransferLine[] }) => {
@@ -357,6 +379,7 @@ type RouteStationRowProps = Readonly<{
   stnListLength: number;
   safeCurrentIndex: number;
   showStationTypeIcons: boolean;
+  useCapsuleTransferMarkers: boolean;
   transferIconSymbolId: string;
   getTransferStationIconColor: (index: number) => string;
   anchor: ReturnType<typeof useSvgPositioner>['anchor'];
@@ -373,6 +396,7 @@ const RouteStationRow = ({
   stnListLength,
   safeCurrentIndex,
   showStationTypeIcons,
+  useCapsuleTransferMarkers,
   transferIconSymbolId,
   getTransferStationIconColor,
   anchor,
@@ -384,6 +408,8 @@ const RouteStationRow = ({
   const stationMarkerId = getStationMarkerId(isCurrent, isEndpoint, index);
   const transferIconAnchorId = `station-transfer-icon-${index}`;
   const transferIconHeight = getTransferCircleDiameter(isCurrent, isEndpoint) * 0.8;
+  const useCapsule =
+    useCapsuleTransferMarkers && station.transfer.length > 0 && !isCurrent && !isEndpoint;
 
   const labelAnchor = isCurrent
     ? anchor(
@@ -415,7 +441,7 @@ const RouteStationRow = ({
   return (
     <g key={station.id}>
       {!isCurrent && !isEndpoint
-        ? anchor(stationMarkerId, <StationMarker />, {
+        ? anchor(stationMarkerId, useCapsule ? <CapsuleStationMarker /> : <StationMarker />, {
             centerX: { to: stationPointId, offset: 0 },
             centerY: { to: stationPointId, offset: 0 },
           })
@@ -433,7 +459,12 @@ const RouteStationRow = ({
       {station.transfer.length > 0
         ? anchor(
             transferIconAnchorId,
-            <TransferStationIcon color={getTransferStationIconColor(index)} symbolId={transferIconSymbolId} targetHeight={transferIconHeight} />,
+            <TransferStationIcon
+              color={getTransferStationIconColor(index)}
+              symbolId={transferIconSymbolId}
+              targetHeight={transferIconHeight}
+              rotateDeg={useCapsule ? 90 : 0}
+            />,
             {
               centerX: { to: stationMarkerId, offset: 0 },
               centerY: { to: stationMarkerId, offset: 0 },
@@ -447,7 +478,8 @@ const RouteStationRow = ({
 };
 
 export function RouteBadge({ data }: RouteBadgeProps) {
-  const { currentStnId, direction, idColor, showStationTypeIcons, totalLength, stnList, trainType } = data;
+  const { currentStnId, direction, idColor, showStationTypeIcons, useCapsuleTransferMarkers, totalLength, stnList, trainType } =
+    data;
   const { route: width, height } = getBadgeCanvasSizes(trainType);
   const { anchor } = useSvgPositioner(width, height);
   const transferIconSymbolId = useId().replaceAll(':', '');
@@ -555,6 +587,7 @@ export function RouteBadge({ data }: RouteBadgeProps) {
           stnListLength={stnList.length}
           safeCurrentIndex={safeCurrentIndex}
           showStationTypeIcons={showStationTypeIcons}
+          useCapsuleTransferMarkers={useCapsuleTransferMarkers}
           transferIconSymbolId={transferIconSymbolId}
           getTransferStationIconColor={getTransferStationIconColor}
           anchor={anchor}

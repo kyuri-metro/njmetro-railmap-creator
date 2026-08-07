@@ -24,6 +24,7 @@ describe('migrateRailmapYamlV1ToV2', () => {
         direction: 'l',
         currentStnId: 'a',
         showStationTypeIcons: false,
+        useCapsuleTransferMarkers: false,
         trainType: 'a',
       },
       stations: [
@@ -67,6 +68,55 @@ describe('parseRailmapYaml / serializeRailmapYaml', () => {
     expect(parsed.data.stations).toHaveLength(2);
     expect(parsed.data.njMetroSettings.currentStnId).toBe(state.currentStnId);
     expect(parsed.data.njMetroSettings.trainType).toBe('b-long');
+    expect(parsed.data.njMetroSettings.useCapsuleTransferMarkers).toBe(false);
+  });
+
+  it('round-trips useCapsuleTransferMarkers when enabled', () => {
+    const state = getDefaultGeneratorState();
+    state.stnList = state.stnList.slice(0, 2);
+    state.currentStnId = state.stnList[0].id;
+    state.useCapsuleTransferMarkers = true;
+
+    const yaml = serializeRailmapYaml(state);
+    expect(yaml).toContain('useCapsuleTransferMarkers: true');
+
+    const parsed = parseRailmapYaml(yaml, fallback());
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) {
+      return;
+    }
+    expect(parsed.data.njMetroSettings.useCapsuleTransferMarkers).toBe(true);
+  });
+
+  it('falls back to previous useCapsuleTransferMarkers when YAML omits it', () => {
+    const yaml = `
+version: 3
+schema: https://umamichi.moe/2026/kyuri-naive
+direction: l
+currentStnId: foo
+lineId: "3"
+color: "#009a44"
+textColor: "#ffffff"
+njMetroSettings:
+  totalLength: 100
+  showStationTypeIcons: false
+stations:
+  - id: foo
+    name:
+      - zh: 甲
+      - en: Foo
+    type: none
+    transfer: []
+`;
+
+    const previous = fallback();
+    previous.useCapsuleTransferMarkers = true;
+    const parsed = parseRailmapYaml(yaml, previous);
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) {
+      return;
+    }
+    expect(parsed.data.njMetroSettings.useCapsuleTransferMarkers).toBe(true);
   });
 
   it('falls back to previous trainType when YAML omits it', () => {
