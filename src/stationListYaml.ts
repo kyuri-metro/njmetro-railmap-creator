@@ -1,6 +1,6 @@
 import YAML from 'yaml';
 import type { GeneratorState, StationItem, StationType, TrainDirection, TransferLine } from './features/generatorSlice';
-import { isTrainType, type TrainType } from './trainTypeLayout';
+import { DEFAULT_TRAIN_TYPE, isTrainType, type TrainType } from './trainTypeLayout';
 
 const STATION_TYPES = new Set<StationType>(['none', 'railway', 'airport']);
 
@@ -299,15 +299,11 @@ const mergeNjMetroSettings = (raw: unknown, fb: GeneratorState): NjMetroSettings
 
   const currentStnId = typeof o.currentStnId === 'string' ? o.currentStnId : fb.currentStnId;
 
-  const showStationTypeIcons =
-    typeof o.showStationTypeIcons === 'boolean' ? o.showStationTypeIcons : fb.showStationTypeIcons;
-
+  // 旧版 YAML 不存在的外观选项：缺省保持旧版外观，不继承当前编辑器状态。
+  const showStationTypeIcons = typeof o.showStationTypeIcons === 'boolean' ? o.showStationTypeIcons : false;
   const useCapsuleTransferMarkers =
-    typeof o.useCapsuleTransferMarkers === 'boolean'
-      ? o.useCapsuleTransferMarkers
-      : fb.useCapsuleTransferMarkers;
-
-  const trainType = isTrainType(o.trainType) ? o.trainType : fb.trainType;
+    typeof o.useCapsuleTransferMarkers === 'boolean' ? o.useCapsuleTransferMarkers : false;
+  const trainType = isTrainType(o.trainType) ? o.trainType : DEFAULT_TRAIN_TYPE;
 
   return { totalLength, direction, currentStnId, showStationTypeIcons, useCapsuleTransferMarkers, trainType };
 };
@@ -324,15 +320,11 @@ const mergeNjMetroSettingsV3Partial = (
     totalLength = Math.max(0, Math.trunc(o.totalLength));
   }
 
-  const showStationTypeIcons =
-    typeof o.showStationTypeIcons === 'boolean' ? o.showStationTypeIcons : fb.showStationTypeIcons;
-
+  // 旧版 YAML 不存在的外观选项：缺省保持旧版外观，不继承当前编辑器状态。
+  const showStationTypeIcons = typeof o.showStationTypeIcons === 'boolean' ? o.showStationTypeIcons : false;
   const useCapsuleTransferMarkers =
-    typeof o.useCapsuleTransferMarkers === 'boolean'
-      ? o.useCapsuleTransferMarkers
-      : fb.useCapsuleTransferMarkers;
-
-  const trainType = isTrainType(o.trainType) ? o.trainType : fb.trainType;
+    typeof o.useCapsuleTransferMarkers === 'boolean' ? o.useCapsuleTransferMarkers : false;
+  const trainType = isTrainType(o.trainType) ? o.trainType : DEFAULT_TRAIN_TYPE;
 
   return { totalLength, showStationTypeIcons, useCapsuleTransferMarkers, trainType };
 };

@@ -88,7 +88,7 @@ describe('parseRailmapYaml / serializeRailmapYaml', () => {
     expect(parsed.data.njMetroSettings.useCapsuleTransferMarkers).toBe(true);
   });
 
-  it('falls back to previous useCapsuleTransferMarkers when YAML omits it', () => {
+  it('defaults omitted appearance options to legacy look when YAML omits them', () => {
     const yaml = `
 version: 3
 schema: https://umamichi.moe/2026/kyuri-naive
@@ -99,7 +99,6 @@ color: "#009a44"
 textColor: "#ffffff"
 njMetroSettings:
   totalLength: 100
-  showStationTypeIcons: false
 stations:
   - id: foo
     name:
@@ -110,44 +109,17 @@ stations:
 `;
 
     const previous = fallback();
+    previous.showStationTypeIcons = true;
     previous.useCapsuleTransferMarkers = true;
-    const parsed = parseRailmapYaml(yaml, previous);
-    expect(parsed.ok).toBe(true);
-    if (!parsed.ok) {
-      return;
-    }
-    expect(parsed.data.njMetroSettings.useCapsuleTransferMarkers).toBe(true);
-  });
-
-  it('falls back to previous trainType when YAML omits it', () => {
-    const yaml = `
-version: 3
-schema: https://umamichi.moe/2026/kyuri-naive
-direction: l
-currentStnId: foo
-lineId: "3"
-color: "#009a44"
-textColor: "#ffffff"
-njMetroSettings:
-  totalLength: 100
-  showStationTypeIcons: false
-stations:
-  - id: foo
-    name:
-      - zh: 甲
-      - en: Foo
-    type: none
-    transfer: []
-`;
-
-    const previous = fallback();
     previous.trainType = 'suburban-d';
     const parsed = parseRailmapYaml(yaml, previous);
     expect(parsed.ok).toBe(true);
     if (!parsed.ok) {
       return;
     }
-    expect(parsed.data.njMetroSettings.trainType).toBe('suburban-d');
+    expect(parsed.data.njMetroSettings.showStationTypeIcons).toBe(false);
+    expect(parsed.data.njMetroSettings.useCapsuleTransferMarkers).toBe(false);
+    expect(parsed.data.njMetroSettings.trainType).toBe('a');
   });
 
   it('accepts legacy http schema alias on import', () => {
