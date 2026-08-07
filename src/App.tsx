@@ -167,6 +167,7 @@ function App() {
   const previewGenerator = useDeferredValue(generator);
   const [modalState, setModalState] = useState<ModalState>(null);
   const [stationModalVisible, setStationModalVisible] = useState(false);
+  const [pendingDeleteStation, setPendingDeleteStation] = useState<StationItem | null>(null);
   const previewLoading = usePreviewLoadingOverlay(generator, 16);
   const {
     totalLength: totalLengthField,
@@ -274,9 +275,10 @@ function App() {
     workspace.dismissUndeterminedTrainTypeNotice,
   ]);
 
-  const openInsertModal = (position: 'before' | 'after' | 'start' | 'end') => {
+  const openInsertModal = (position: 'before' | 'after' | 'start' | 'end', basisStationId?: string) => {
     const nextId = `station-${crypto.randomUUID()}`;
-    const basisId = position === 'before' || position === 'after' ? generator.currentStnId : undefined;
+    const basisId =
+      position === 'before' || position === 'after' ? (basisStationId ?? generator.currentStnId) : undefined;
 
     dispatch(
       insertStation({
@@ -418,6 +420,12 @@ function App() {
                   setStationModalVisible(true);
                 }}
                 onInsert={openInsertModal}
+                onInsertRelativeTo={(stationId, position) => {
+                  openInsertModal(position, stationId);
+                }}
+                onRequestDelete={(station) => {
+                  setPendingDeleteStation(station);
+                }}
                 onReverseList={() => {
                   startTransition(() => {
                     dispatch(reverseStnList());
@@ -504,6 +512,15 @@ function App() {
         pendingAutosaveEntry={workspace.pendingAutosaveEntry}
         onDismissAutosaveRestore={workspace.dismissAutosaveRestoreConfirm}
         onConfirmAutosaveRestore={workspace.confirmAutosaveRestore}
+        pendingDeleteStation={pendingDeleteStation}
+        onDismissDeleteStation={() => setPendingDeleteStation(null)}
+        onConfirmDeleteStation={() => {
+          if (!pendingDeleteStation) {
+            return;
+          }
+          dispatch(deleteStation(pendingDeleteStation.id));
+          setPendingDeleteStation(null);
+        }}
       />
 
       <SettingsDialog

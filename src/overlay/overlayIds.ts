@@ -11,6 +11,7 @@ export const OVERLAY_IDS = {
   settings: 'settings',
   topbarMoreMenu: 'topbar-more-menu',
   stationForm: 'station-form',
+  deleteStationConfirm: 'delete-station-confirm',
   undeterminedTrainTypeNotice: 'undetermined-train-type-notice',
   yamlImportConfirm: 'yaml-import-confirm',
   yamlImportError: 'yaml-import-error',

@@ -2,6 +2,7 @@ import { ConfirmDialogOverlay } from '@umamichi-ui/common-components/dialog';
 import { FullscreenOverlay } from '@umamichi-ui/common-components/overlay';
 import { InfoCircleIcon } from '@umamichi-ui/common-components/icons';
 import type { AutosaveEntry } from '../autosaveStorage';
+import type { StationItem } from '../features/generatorSlice';
 import { OVERLAY_IDS } from '../overlay/overlayIds';
 
 const sampleImages = [
@@ -48,6 +49,10 @@ export type AppConfirmOverlaysProps = {
   pendingAutosaveEntry: AutosaveEntry | null;
   onDismissAutosaveRestore: () => void;
   onConfirmAutosaveRestore: () => void;
+
+  pendingDeleteStation: StationItem | null;
+  onDismissDeleteStation: () => void;
+  onConfirmDeleteStation: () => void;
 };
 
 export const AppConfirmOverlays = ({
@@ -70,6 +75,9 @@ export const AppConfirmOverlays = ({
   pendingAutosaveEntry,
   onDismissAutosaveRestore,
   onConfirmAutosaveRestore,
+  pendingDeleteStation,
+  onDismissDeleteStation,
+  onConfirmDeleteStation,
 }: AppConfirmOverlaysProps) => (
   <>
     <ConfirmDialogOverlay
@@ -216,6 +224,30 @@ export const AppConfirmOverlays = ({
         </button>
         <button type="button" className="primary-button" onClick={onConfirmAutosaveRestore}>
           继续
+        </button>
+      </div>
+    </ConfirmDialogOverlay>
+
+    <ConfirmDialogOverlay
+      open={pendingDeleteStation !== null}
+      overlayId={OVERLAY_IDS.deleteStationConfirm}
+      onDismiss={onDismissDeleteStation}
+      title="确认删除站点"
+      titleId="delete-station-confirm-title"
+    >
+      <p id="delete-station-confirm-desc" className="confirm-dialog-body">
+        {pendingDeleteStation
+          ? pendingDeleteStation.chName.trim()
+            ? `确定删除站点「${pendingDeleteStation.chName.trim()}」吗？`
+            : '确定删除该站点吗？'
+          : ''}
+      </p>
+      <div className="confirm-dialog-actions">
+        <button type="button" className="secondary-button" onClick={onDismissDeleteStation}>
+          取消
+        </button>
+        <button type="button" className="danger-button" onClick={onConfirmDeleteStation}>
+          删除
         </button>
       </div>
     </ConfirmDialogOverlay>

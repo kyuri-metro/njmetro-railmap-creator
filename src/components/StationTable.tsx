@@ -1,4 +1,6 @@
-import type { CSSProperties } from 'react';
+import { useEffect, useId, useLayoutEffect, useRef, useState, type CSSProperties, type MouseEvent } from 'react';
+import { createPortal } from 'react-dom';
+import { mergeOverlayRefs, useOverlayPresence, withOverlayOpen } from '@umamichi-ui/common-components/presence';
 import type { StationItem } from '../features/generatorSlice';
 
 const PencilIcon = () => (
@@ -15,11 +17,170 @@ type StationTableProps = Readonly<{
   stations: StationItem[];
   onEdit: (station: StationItem) => void;
   onInsert: (position: 'before' | 'after' | 'start' | 'end') => void;
+  onInsertRelativeTo: (stationId: string, position: 'before' | 'after') => void;
+  onRequestDelete: (station: StationItem) => void;
   onReverseList: () => void;
   onSelect: (stationId: string) => void;
 }>;
 
-export function StationTable({ currentStnId, stations, onEdit, onInsert, onReverseList, onSelect }: StationTableProps) {
+type RowContextMenuState = Readonly<{
+  station: StationItem;
+  clientX: number;
+  clientY: number;
+}>;
+
+const CONTEXT_MENU_PAD = 8;
+
+const clampContextMenuPosition = (clientX: number, clientY: number, menu: HTMLElement) => {
+  const vw = window.innerWidth;
+  const vh = window.innerHeight;
+  const menuWidth = menu.offsetWidth;
+  const menuHeight = menu.offsetHeight;
+  const left = Math.max(CONTEXT_MENU_PAD, Math.min(clientX, vw - menuWidth - CONTEXT_MENU_PAD));
+  const top = Math.max(CONTEXT_MENU_PAD, Math.min(clientY, vh - menuHeight - CONTEXT_MENU_PAD));
+  return { left, top };
+};
+
+export function StationTable({
+  currentStnId,
+  stations,
+  onEdit,
+  onInsert,
+  onInsertRelativeTo,
+  onRequestDelete,
+  onReverseList,
+  onSelect,
+}: StationTableProps) {
+  const menuId = useId();
+  const menuPanelRef = useRef<HTMLDivElement>(null);
+  const [contextMenu, setContextMenu] = useState<RowContextMenuState | null>(null);
+  const [menuGeometry, setMenuGeometry] = useState<{ left: number; top: number } | null>(null);
+  const menuOpen = contextMenu !== null;
+  const { mounted: menuMounted, isOpen: menuShown, overlayRef: menuOverlayRef } = useOverlayPresence(menuOpen);
+
+  const closeContextMenu = () => {
+    setContextMenu(null);
+    setMenuGeometry(null);
+  };
+
+  const openRowContextMenu = (event: MouseEvent<HTMLTableRowElement>, station: StationItem) => {
+    event.preventDefault();
+    event.stopPropagation();
+    setMenuGeometry(null);
+    setContextMenu({
+      station,
+      clientX: event.clientX,
+      clientY: event.clientY,
+    });
+  };
+
+  useLayoutEffect(() => {
+    if (!contextMenu || !menuMounted) {
+      return;
+    }
+
+    const menu = menuPanelRef.current;
+    if (!menu) {
+      return;
+    }
+
+    setMenuGeometry(clampContextMenuPosition(contextMenu.clientX, contextMenu.clientY, menu));
+  }, [contextMenu, menuMounted]);
+
+  useEffect(() => {
+    if (!menuOpen) {
+      return;
+    }
+
+    const onDocumentMouseDown = (event: globalThis.MouseEvent) => {
+      const target = event.target;
+      if (!(target instanceof Node)) {
+        return;
+      }
+      if (menuPanelRef.current?.contains(target)) {
+        return;
+      }
+      closeContextMenu();
+    };
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.stopPropagation();
+        closeContextMenu();
+      }
+    };
+
+    const onScrollOrResize = () => {
+      closeContextMenu();
+    };
+
+    document.addEventListener('mousedown', onDocumentMouseDown);
+    window.addEventListener('keydown', onKeyDown, true);
+    window.addEventListener('resize', onScrollOrResize);
+    document.querySelector('.app-main')?.addEventListener('scroll', onScrollOrResize, { passive: true });
+
+    return () => {
+      document.removeEventListener('mousedown', onDocumentMouseDown);
+      window.removeEventListener('keydown', onKeyDown, true);
+      window.removeEventListener('resize', onScrollOrResize);
+      document.querySelector('.app-main')?.removeEventListener('scroll', onScrollOrResize);
+    };
+  }, [menuOpen]);
+
+  const menuPanel = menuMounted && contextMenu ? (
+    <div
+      ref={mergeOverlayRefs(menuOverlayRef, menuPanelRef)}
+      className={withOverlayOpen('dropdown-menu-panel', menuShown && menuGeometry !== null)}
+      style={{
+        top: menuGeometry?.top ?? -9999,
+        left: menuGeometry?.left ?? -9999,
+      }}
+    >
+      <ul id={menuId} className="dropdown-menu-panel__list" role="menu" aria-label="站点行操作">
+        <li role="none">
+          <button
+            type="button"
+            className="dropdown-menu-item"
+            role="menuitem"
+            onClick={() => {
+              onInsertRelativeTo(contextMenu.station.id, 'before');
+              closeContextMenu();
+            }}
+          >
+            之前插入
+          </button>
+        </li>
+        <li role="none">
+          <button
+            type="button"
+            className="dropdown-menu-item"
+            role="menuitem"
+            onClick={() => {
+              onInsertRelativeTo(contextMenu.station.id, 'after');
+              closeContextMenu();
+            }}
+          >
+            之后插入
+          </button>
+        </li>
+        <li className="dropdown-menu-separator" role="separator" aria-orientation="horizontal" />
+        <li role="none">
+          <button
+            type="button"
+            className="dropdown-menu-item"
+            role="menuitem"
+            onClick={() => {
+              onRequestDelete(contextMenu.station);
+              closeContextMenu();
+            }}
+          >
+            删除
+          </button>
+        </li>
+      </ul>
+    </div>
+  ) : null;
+
   return (
     <section className="panel-section">
       <div className="section-toolbar station-section-toolbar">
@@ -69,6 +230,7 @@ export function StationTable({ currentStnId, stations, onEdit, onInsert, onRever
                   key={station.id}
                   className={isCurrent ? 'is-current' : undefined}
                   onClick={() => onSelect(station.id)}
+                  onContextMenu={(event) => openRowContextMenu(event, station)}
                 >
                   <td>
                     <div className="station-name-cell">
@@ -120,6 +282,8 @@ export function StationTable({ currentStnId, stations, onEdit, onInsert, onRever
           </tbody>
         </table>
       </div>
+
+      {menuPanel ? createPortal(menuPanel, document.body) : null}
     </section>
   );
 }
