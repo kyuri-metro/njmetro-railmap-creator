@@ -281,6 +281,11 @@
   background: var(--site-accent-soft);
 }
 
+.station-table:not(.modal-transfer-table) th,
+.station-table:not(.modal-transfer-table) td {
+  padding: 8px;
+}
+
 /*
  * Keep row height: move most cell padding into the input so the hit
  * target fills nearly the whole cell (touch-friendly) without growing rows.
@@ -296,8 +301,8 @@
 }
 
 .station-table:not(.modal-transfer-table) thead th {
-  /* Match inset of .station-cell-input text (td 4px + input 10px). */
-  padding-inline: 14px;
+  /* Match inset of .station-cell-input text (td 4px + input 6px). */
+  padding-inline: 10px;
   height: calc(var(--station-row-inner-min-height) + 4px);
   box-sizing: border-box;
 }
@@ -308,7 +313,7 @@
   min-width: 0;
   min-height: var(--station-row-inner-min-height);
   margin: 0;
-  padding: 9px 10px;
+  padding: 9px 6px;
   border: 1px solid transparent;
   border-radius: 4px;
   background: transparent;

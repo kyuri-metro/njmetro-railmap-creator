@@ -188,7 +188,7 @@
   width: 100%;
   max-width: none;
   margin: 0;
-  padding: 24px var(--page-gutter) var(--page-padding-bottom);
+  padding: 20px 16px var(--page-padding-bottom);
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
@@ -198,7 +198,7 @@
 
 @media (max-width: 720px) {
   .app-main {
-    padding-inline: 20px;
+    padding-inline: 16px;
   }
 
   .app-topbar-inner {
