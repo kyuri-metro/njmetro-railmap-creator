@@ -303,7 +303,8 @@
 .station-table:not(.modal-transfer-table) thead th {
   /* Match inset of .station-cell-input text (td 4px + input 6px). */
   padding-inline: 10px;
-  height: calc(var(--station-row-inner-min-height) + 4px);
+  min-height: calc(var(--station-row-inner-min-height) + 4px);
+  height: auto;
   box-sizing: border-box;
 }
 
@@ -322,6 +323,11 @@
   font-size: inherit;
   line-height: 1.35;
   box-sizing: border-box;
+  resize: none;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+  field-sizing: content;
 }
 
 .station-cell-input--ch {

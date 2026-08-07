@@ -60,10 +60,17 @@ type StationCellInputProps = Readonly<{
   className: string;
   ariaLabel: string;
   placeholder?: string;
-  inputRef?: (element: HTMLInputElement | null) => void;
+  inputRef?: (element: HTMLTextAreaElement | null) => void;
   onSelectStation: () => void;
   onCommit: (value: string) => void;
 }>;
+
+const normalizeStationNameDraft = (raw: string) => raw.replace(/\r?\n/g, '').trim();
+
+const autosizeStationCell = (element: HTMLTextAreaElement) => {
+  element.style.height = 'auto';
+  element.style.height = `${element.scrollHeight}px`;
+};
 
 function StationCellInput({
   value,
@@ -76,6 +83,15 @@ function StationCellInput({
 }: StationCellInputProps) {
   const [draft, setDraft] = useState(value);
   const focusedRef = useRef(false);
+  const localRef = useRef<HTMLTextAreaElement | null>(null);
+
+  const setRefs = (element: HTMLTextAreaElement | null) => {
+    localRef.current = element;
+    inputRef?.(element);
+    if (element) {
+      autosizeStationCell(element);
+    }
+  };
 
   useEffect(() => {
     if (!focusedRef.current) {
@@ -83,8 +99,14 @@ function StationCellInput({
     }
   }, [value]);
 
+  useLayoutEffect(() => {
+    if (localRef.current) {
+      autosizeStationCell(localRef.current);
+    }
+  }, [draft, value]);
+
   const commit = () => {
-    const next = draft.trim();
+    const next = normalizeStationNameDraft(draft);
     setDraft(next);
     if (next !== value) {
       onCommit(next);
@@ -95,7 +117,7 @@ function StationCellInput({
     setDraft(value);
   };
 
-  const onKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
+  const onKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
     if (event.key === 'Enter') {
       event.preventDefault();
       event.currentTarget.blur();
@@ -110,10 +132,11 @@ function StationCellInput({
   };
 
   return (
-    <input
-      ref={inputRef}
+    <textarea
+      ref={setRefs}
       className={className}
       value={draft}
+      rows={1}
       aria-label={ariaLabel}
       placeholder={placeholder}
       onClick={(event) => event.stopPropagation()}
@@ -121,7 +144,7 @@ function StationCellInput({
         focusedRef.current = true;
         onSelectStation();
       }}
-      onChange={(event) => setDraft(event.target.value)}
+      onChange={(event) => setDraft(event.target.value.replace(/\r?\n/g, ''))}
       onBlur={() => {
         focusedRef.current = false;
         commit();
@@ -146,7 +169,7 @@ export function StationTable({
 }: StationTableProps) {
   const menuId = useId();
   const menuPanelRef = useRef<HTMLDivElement>(null);
-  const chNameInputRefs = useRef(new Map<string, HTMLInputElement>());
+  const chNameInputRefs = useRef(new Map<string, HTMLTextAreaElement>());
   const [contextMenu, setContextMenu] = useState<RowContextMenuState | null>(null);
   const [menuGeometry, setMenuGeometry] = useState<{ left: number; top: number } | null>(null);
   const menuOpen = contextMenu !== null;
