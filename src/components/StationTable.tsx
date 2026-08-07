@@ -1,4 +1,13 @@
-import { useEffect, useId, useLayoutEffect, useRef, useState, type CSSProperties, type MouseEvent } from 'react';
+import {
+  useEffect,
+  useId,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+  type KeyboardEvent,
+  type MouseEvent,
+} from 'react';
 import { createPortal } from 'react-dom';
 import { mergeOverlayRefs, useOverlayPresence, withOverlayOpen } from '@umamichi-ui/common-components/presence';
 import type { StationItem } from '../features/generatorSlice';
@@ -12,15 +21,20 @@ const PencilIcon = () => (
   </svg>
 );
 
+type StationNameField = 'chName' | 'enName';
+
 type StationTableProps = Readonly<{
   currentStnId: string;
   stations: StationItem[];
+  focusChNameStationId?: string | null;
+  onFocusChNameHandled?: () => void;
   onEdit: (station: StationItem) => void;
   onInsert: (position: 'before' | 'after' | 'start' | 'end') => void;
   onInsertRelativeTo: (stationId: string, position: 'before' | 'after') => void;
   onRequestDelete: (station: StationItem) => void;
   onReverseList: () => void;
   onSelect: (stationId: string) => void;
+  onCommitName: (stationId: string, field: StationNameField, value: string) => void;
 }>;
 
 type RowContextMenuState = Readonly<{
@@ -41,18 +55,98 @@ const clampContextMenuPosition = (clientX: number, clientY: number, menu: HTMLEl
   return { left, top };
 };
 
+type StationCellInputProps = Readonly<{
+  value: string;
+  className: string;
+  ariaLabel: string;
+  placeholder?: string;
+  inputRef?: (element: HTMLInputElement | null) => void;
+  onSelectStation: () => void;
+  onCommit: (value: string) => void;
+}>;
+
+function StationCellInput({
+  value,
+  className,
+  ariaLabel,
+  placeholder,
+  inputRef,
+  onSelectStation,
+  onCommit,
+}: StationCellInputProps) {
+  const [draft, setDraft] = useState(value);
+  const focusedRef = useRef(false);
+
+  useEffect(() => {
+    if (!focusedRef.current) {
+      setDraft(value);
+    }
+  }, [value]);
+
+  const commit = () => {
+    const next = draft.trim();
+    setDraft(next);
+    if (next !== value) {
+      onCommit(next);
+    }
+  };
+
+  const cancel = () => {
+    setDraft(value);
+  };
+
+  const onKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      event.currentTarget.blur();
+      return;
+    }
+
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      cancel();
+      event.currentTarget.blur();
+    }
+  };
+
+  return (
+    <input
+      ref={inputRef}
+      className={className}
+      value={draft}
+      aria-label={ariaLabel}
+      placeholder={placeholder}
+      onClick={(event) => event.stopPropagation()}
+      onFocus={() => {
+        focusedRef.current = true;
+        onSelectStation();
+      }}
+      onChange={(event) => setDraft(event.target.value)}
+      onBlur={() => {
+        focusedRef.current = false;
+        commit();
+      }}
+      onKeyDown={onKeyDown}
+    />
+  );
+}
+
 export function StationTable({
   currentStnId,
   stations,
+  focusChNameStationId = null,
+  onFocusChNameHandled,
   onEdit,
   onInsert,
   onInsertRelativeTo,
   onRequestDelete,
   onReverseList,
   onSelect,
+  onCommitName,
 }: StationTableProps) {
   const menuId = useId();
   const menuPanelRef = useRef<HTMLDivElement>(null);
+  const chNameInputRefs = useRef(new Map<string, HTMLInputElement>());
   const [contextMenu, setContextMenu] = useState<RowContextMenuState | null>(null);
   const [menuGeometry, setMenuGeometry] = useState<{ left: number; top: number } | null>(null);
   const menuOpen = contextMenu !== null;
@@ -73,6 +167,19 @@ export function StationTable({
       clientY: event.clientY,
     });
   };
+
+  useLayoutEffect(() => {
+    if (!focusChNameStationId) {
+      return;
+    }
+
+    const input = chNameInputRefs.current.get(focusChNameStationId);
+    if (input) {
+      input.focus();
+      input.select();
+    }
+    onFocusChNameHandled?.();
+  }, [focusChNameStationId, stations]); // onFocusChNameHandled intentionally omitted (parent inline setter)
 
   useLayoutEffect(() => {
     if (!contextMenu || !menuMounted) {
@@ -103,7 +210,7 @@ export function StationTable({
       closeContextMenu();
     };
 
-    const onKeyDown = (event: KeyboardEvent) => {
+    const onKeyDown = (event: globalThis.KeyboardEvent) => {
       if (event.key === 'Escape') {
         event.stopPropagation();
         closeContextMenu();
@@ -218,12 +325,13 @@ export function StationTable({
               <th>中文名</th>
               <th>英文名</th>
               <th>换乘线路</th>
-              <th aria-label="编辑操作" />
+              <th aria-label="编辑换乘与类型" />
             </tr>
           </thead>
           <tbody>
             {stations.map((station) => {
               const isCurrent = station.id === currentStnId;
+              const displayName = station.chName.trim() || '未命名';
 
               return (
                 <tr
@@ -233,13 +341,31 @@ export function StationTable({
                   onContextMenu={(event) => openRowContextMenu(event, station)}
                 >
                   <td>
-                    <div className="station-name-cell">
-                      <span className="station-name-text">{station.chName}</span>
-                      {isCurrent ? <span className="current-badge">当前</span> : null}
-                    </div>
+                    <StationCellInput
+                      className="station-cell-input station-cell-input--ch"
+                      value={station.chName}
+                      ariaLabel={`${displayName} 中文名`}
+                      placeholder="中文名"
+                      inputRef={(element) => {
+                        if (element) {
+                          chNameInputRefs.current.set(station.id, element);
+                        } else {
+                          chNameInputRefs.current.delete(station.id);
+                        }
+                      }}
+                      onSelectStation={() => onSelect(station.id)}
+                      onCommit={(value) => onCommitName(station.id, 'chName', value)}
+                    />
                   </td>
                   <td>
-                    <span className="station-en-name">{station.enName}</span>
+                    <StationCellInput
+                      className="station-cell-input station-cell-input--en"
+                      value={station.enName}
+                      ariaLabel={`${displayName} 英文名`}
+                      placeholder="英文名"
+                      onSelectStation={() => onSelect(station.id)}
+                      onCommit={(value) => onCommitName(station.id, 'enName', value)}
+                    />
                   </td>
                   <td>
                     {station.transfer.length > 0 ? (
@@ -271,7 +397,7 @@ export function StationTable({
                         event.stopPropagation();
                         onEdit(station);
                       }}
-                      aria-label={`编辑 ${station.chName}`}
+                      aria-label={`编辑换乘与类型：${displayName}`}
                     >
                       <PencilIcon />
                     </button>

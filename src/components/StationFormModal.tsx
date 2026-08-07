@@ -5,9 +5,7 @@ import { FullscreenOverlay } from '@umamichi-ui/common-components/overlay';
 import { readAutosaveSettings } from '../autosaveStorage';
 import { getNjmetroLineBackgroundColor, getNjmetroLineForegroundColor } from '../njmetroLinePalette';
 
-export type StationFormDraft = {
-  chName: string;
-  enName: string;
+export type StationMetaDraft = {
   type: StationType;
   transfer: TransferLine[];
 };
@@ -26,13 +24,13 @@ const createEmptyTransferLine = (): TransferLine => ({
 
 type StationFormModalProps = Readonly<{
   allowDelete: boolean;
-  initialValue: StationFormDraft;
+  initialValue: StationMetaDraft;
   modeLabel: string;
   open: boolean;
   onClose: () => void;
   onExited?: () => void;
   onDelete?: () => void;
-  onChange: (draft: StationFormDraft) => void;
+  onChange: (draft: StationMetaDraft) => void;
 }>;
 
 export function StationFormModal({
@@ -46,9 +44,9 @@ export function StationFormModal({
   onChange,
 }: StationFormModalProps) {
   const [draft, setDraft] = useState(initialValue);
-  const chNameInputRef = useRef<HTMLInputElement>(null);
+  const typeSelectRef = useRef<HTMLSelectElement>(null);
 
-  const patchDraft = (updater: (current: StationFormDraft) => StationFormDraft) => {
+  const patchDraft = (updater: (current: StationMetaDraft) => StationMetaDraft) => {
     setDraft((current) => {
       const next = updater(current);
       onChange(next);
@@ -109,7 +107,7 @@ export function StationFormModal({
       titleId="station-modal-title"
       size="page"
       closeAriaLabel="关闭弹窗"
-      initialFocusRef={chNameInputRef}
+      initialFocusRef={typeSelectRef}
       panelClassName="station-form-overlay"
       bodyClassName="form-scope station-form-overlay-body"
     >
@@ -122,32 +120,10 @@ export function StationFormModal({
       <hr className="dialog-section-rule" />
 
       <div className="modal-form">
-        <div className="dialog-field-row">
-          <label className="field-label">
-            <span>chName（中文名）</span>
-            <input
-              ref={chNameInputRef}
-              className="text-input"
-              value={draft.chName}
-              onChange={(event) => patchDraft((current) => ({ ...current, chName: event.target.value }))}
-              placeholder="例如：新街口"
-              required
-            />
-          </label>
-          <label className="field-label">
-            <span>enName（英文名）</span>
-            <input
-              className="text-input"
-              value={draft.enName}
-              onChange={(event) => patchDraft((current) => ({ ...current, enName: event.target.value }))}
-              placeholder="例如：Xinjiekou"
-              required
-            />
-          </label>
-        </div>
         <label className="field-label">
           <span>type（站点类型）</span>
           <select
+            ref={typeSelectRef}
             className="select-input"
             value={draft.type}
             onChange={(event) => patchDraft((current) => ({ ...current, type: event.target.value as StationType }))}
@@ -240,9 +216,7 @@ export function StationFormModal({
   );
 }
 
-export const stationToDraft = (station?: StationItem): StationFormDraft => ({
-  chName: station?.chName ?? '',
-  enName: station?.enName ?? '',
-  type: station?.type ?? 'none',
-  transfer: station?.transfer.map((line) => ({ ...line })) ?? [],
+export const stationToMetaDraft = (station: StationItem): StationMetaDraft => ({
+  type: station.type,
+  transfer: station.transfer.map((line) => ({ ...line })),
 });

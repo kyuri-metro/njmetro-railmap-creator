@@ -13,7 +13,7 @@ import { AppConfirmOverlays } from './components/AppConfirmOverlays';
 import { AppTopbar } from './components/AppTopbar';
 import { GeneratorSettingsPanel } from './components/GeneratorSettingsPanel';
 import { PreviewResultsPane } from './components/PreviewResultsPane';
-import { StationFormModal, stationToDraft, type StationFormDraft } from './components/StationFormModal';
+import { StationFormModal, stationToMetaDraft, type StationMetaDraft } from './components/StationFormModal';
 import { StationTable } from './components/StationTable';
 import { KyuriRmgToolModal } from './components/KyuriRmgToolModal';
 import { KyuriMetroStudioToolModal } from './components/KyuriMetroStudioToolModal';
@@ -41,18 +41,9 @@ import { serializeRailmapYaml } from './stationListYaml';
 import { useAppDispatch, useAppSelector, selectCanRedo, selectCanUndo, selectGeneratorPresent } from './hooks';
 import { store, UndoActionCreators } from './store';
 
-type ModalState =
-  | {
-      kind: 'create';
-      stationId: string;
-      position: 'before' | 'after' | 'start' | 'end';
-      basisId?: string;
-    }
-  | {
-      kind: 'edit';
-      station: StationItem;
-    }
-  | null;
+type ModalState = {
+  station: StationItem;
+} | null;
 
 const docsReferenceUrl = 'https://github.com/kyuri-metro/njmetro-railmap-creator/tree/main/docs';
 const fallbackFontDetectionResults: FontDetectionResult[] = Object.entries(targetFontSignatures).map(([fontFamily, expectedWidths]) => ({
@@ -64,12 +55,12 @@ const fallbackFontDetectionResults: FontDetectionResult[] = Object.entries(targe
 const sanitizeTransfer = (value: TransferLine[]): TransferLine[] =>
   normalizeTransferLines(value, { fallbackColor: '#8c989f' });
 
-const toStationItem = (draft: StationFormDraft, id: string): StationItem => ({
+const createEmptyStation = (id: string): StationItem => ({
   id,
-  chName: draft.chName.trim(),
-  enName: draft.enName.trim(),
-  type: draft.type,
-  transfer: sanitizeTransfer(draft.transfer),
+  chName: '',
+  enName: '',
+  type: 'none',
+  transfer: [],
 });
 
 type WorkspaceKeyboardContext = Pick<
@@ -168,6 +159,7 @@ function App() {
   const [modalState, setModalState] = useState<ModalState>(null);
   const [stationModalVisible, setStationModalVisible] = useState(false);
   const [pendingDeleteStation, setPendingDeleteStation] = useState<StationItem | null>(null);
+  const [focusChNameStationId, setFocusChNameStationId] = useState<string | null>(null);
   const previewLoading = usePreviewLoadingOverlay(generator, 16);
   const {
     totalLength: totalLengthField,
@@ -275,7 +267,7 @@ function App() {
     workspace.dismissUndeterminedTrainTypeNotice,
   ]);
 
-  const openInsertModal = (position: 'before' | 'after' | 'start' | 'end', basisStationId?: string) => {
+  const insertStationRow = (position: 'before' | 'after' | 'start' | 'end', basisStationId?: string) => {
     const nextId = `station-${crypto.randomUUID()}`;
     const basisId =
       position === 'before' || position === 'after' ? (basisStationId ?? generator.currentStnId) : undefined;
@@ -284,27 +276,13 @@ function App() {
       insertStation({
         position,
         basisId,
-        station: toStationItem(stationToDraft(), nextId),
+        station: createEmptyStation(nextId),
       }),
     );
-    setModalState({
-      kind: 'create',
-      stationId: nextId,
-      position,
-      basisId,
-    });
-    setStationModalVisible(true);
+    setFocusChNameStationId(nextId);
   };
 
   const closeStationModal = () => {
-    if (modalState?.kind === 'create') {
-      const station = generator.stnList.find((item) => item.id === modalState.stationId);
-
-      if (station && station.chName.trim() === '' && station.enName.trim() === '') {
-        dispatch(deleteStation(modalState.stationId));
-      }
-    }
-
     setStationModalVisible(false);
   };
 
@@ -312,15 +290,33 @@ function App() {
     setModalState(null);
   };
 
-  const handleStationDraftChange = (draft: StationFormDraft) => {
-    if (modalState?.kind === 'edit') {
-      dispatch(updateStation(toStationItem(draft, modalState.station.id)));
+  const handleStationMetaChange = (draft: StationMetaDraft) => {
+    if (!modalState) {
       return;
     }
 
-    if (modalState?.kind === 'create') {
-      dispatch(updateStation(toStationItem(draft, modalState.stationId)));
+    const live = generator.stnList.find((item) => item.id === modalState.station.id) ?? modalState.station;
+    dispatch(
+      updateStation({
+        ...live,
+        type: draft.type,
+        transfer: sanitizeTransfer(draft.transfer),
+      }),
+    );
+  };
+
+  const handleCommitStationName = (stationId: string, field: 'chName' | 'enName', value: string) => {
+    const live = generator.stnList.find((item) => item.id === stationId);
+    if (!live || live[field] === value) {
+      return;
     }
+
+    dispatch(
+      updateStation({
+        ...live,
+        [field]: value,
+      }),
+    );
   };
 
   return (
@@ -415,13 +411,15 @@ function App() {
               <StationTable
                 currentStnId={generator.currentStnId}
                 stations={generator.stnList}
+                focusChNameStationId={focusChNameStationId}
+                onFocusChNameHandled={() => setFocusChNameStationId(null)}
                 onEdit={(station) => {
-                  setModalState({ kind: 'edit', station });
+                  setModalState({ station });
                   setStationModalVisible(true);
                 }}
-                onInsert={openInsertModal}
+                onInsert={insertStationRow}
                 onInsertRelativeTo={(stationId, position) => {
-                  openInsertModal(position, stationId);
+                  insertStationRow(position, stationId);
                 }}
                 onRequestDelete={(station) => {
                   setPendingDeleteStation(station);
@@ -436,6 +434,7 @@ function App() {
                     dispatch(setCurrentStation(stationId));
                   });
                 }}
+                onCommitName={handleCommitStationName}
               />
 
               <p className="panel-subtitle preview-live-hint">右侧预览随表单与站点列表实时更新。</p>
@@ -448,22 +447,18 @@ function App() {
 
       {modalState ? (
         <StationFormModal
-          key={modalState.kind === 'edit' ? modalState.station.id : modalState.stationId}
-          allowDelete={modalState.kind === 'edit'}
-          initialValue={modalState.kind === 'edit' ? stationToDraft(modalState.station) : stationToDraft()}
-          modeLabel={modalState.kind === 'edit' ? '编辑站点' : '新增站点'}
+          key={modalState.station.id}
+          allowDelete
+          initialValue={stationToMetaDraft(modalState.station)}
+          modeLabel="编辑换乘与类型"
           open={stationModalVisible}
           onClose={closeStationModal}
           onExited={clearStationModal}
-          onDelete={
-            modalState.kind === 'edit'
-              ? () => {
-                  dispatch(deleteStation(modalState.station.id));
-                  closeStationModal();
-                }
-              : undefined
-          }
-          onChange={handleStationDraftChange}
+          onDelete={() => {
+            dispatch(deleteStation(modalState.station.id));
+            closeStationModal();
+          }}
+          onChange={handleStationMetaChange}
         />
       ) : null}
 

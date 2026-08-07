@@ -184,10 +184,16 @@
   border: 1px solid var(--site-border);
 }
 
+.table-wrap:has(.station-table) {
+  border: none;
+}
+
 .station-table {
   width: 100%;
   border-collapse: collapse;
   table-layout: fixed;
+  color: var(--site-fg);
+  font-size: 0.92rem;
 }
 
 .station-col-name {
@@ -211,8 +217,11 @@
   padding: 10px 12px;
   text-align: left;
   vertical-align: middle;
-  font-size: 0.92rem;
+  font-size: inherit;
   border: 0;
+  border-bottom: 1px solid var(--site-border);
+  background: transparent;
+  color: inherit;
 }
 
 .station-table td {
@@ -221,31 +230,16 @@
 }
 
 .station-table th {
-  color: var(--gray-700);
-  font-size: 0.8rem;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  background: var(--theme-200);
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: normal;
+  text-transform: none;
   white-space: nowrap;
-}
-
-.station-table thead tr {
-  border-bottom: 1px solid var(--site-border);
-}
-
-html.dark .station-table th {
-  color: var(--gray-300);
-  background: var(--theme-800);
+  border-bottom-color: color-mix(in srgb, var(--site-border) 72%, var(--site-fg));
 }
 
 .station-table tbody td {
-  background: var(--site-surface);
   transition: background-color var(--transition-fast);
-}
-
-.station-table tbody tr + tr td {
-  border-top: 1px solid var(--site-border);
 }
 
 .station-table:not(.modal-transfer-table) tbody tr {
@@ -264,23 +258,68 @@ html.dark .station-table th {
   background: var(--site-accent-soft);
 }
 
-.station-name-cell {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
+/*
+ * Keep row height: move most cell padding into the input so the hit
+ * target fills nearly the whole cell (touch-friendly) without growing rows.
+ * Header uses the same vertical budget so it matches body row height.
+ */
+.station-table:not(.modal-transfer-table) {
+  --station-row-inner-min-height: calc(1.35 * 0.92rem + 18px);
 }
 
-.station-name-text {
-  font-weight: 700;
-  color: var(--site-fg);
+.station-table:not(.modal-transfer-table) thead th,
+.station-table:not(.modal-transfer-table) tbody td:has(> .station-cell-input) {
+  padding: 2px 4px;
 }
 
-.station-en-name {
-  display: inline-block;
-  max-width: 100%;
+.station-table:not(.modal-transfer-table) thead th {
+  /* Match inset of .station-cell-input text (td 4px + input 10px). */
+  padding-inline: 14px;
+  height: calc(var(--station-row-inner-min-height) + 4px);
+  box-sizing: border-box;
+}
+
+.station-cell-input {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  min-height: var(--station-row-inner-min-height);
+  margin: 0;
+  padding: 9px 10px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: inherit;
+  line-height: 1.35;
+  box-sizing: border-box;
+}
+
+.station-cell-input--ch {
+  font-weight: 600;
+}
+
+.station-cell-input--en {
+  font-weight: 400;
+}
+
+.station-cell-input::placeholder {
   color: var(--site-muted-fg);
-  overflow-wrap: anywhere;
+  opacity: 0.72;
+  font-weight: 400;
+}
+
+.station-cell-input:hover,
+.station-cell-input:focus {
+  border-color: var(--site-border);
+  outline: none;
+  background: var(--site-surface);
+}
+
+.station-table tbody tr.is-current .station-cell-input:hover,
+.station-table tbody tr.is-current .station-cell-input:focus {
+  background: var(--site-surface);
 }
 
 .transfer-list {
@@ -325,14 +364,4 @@ html.dark .station-table th {
   border: none;
   background: var(--site-button-active-bg);
   color: var(--site-accent);
-}
-
-.current-badge {
-  padding: 1px 8px;
-  border: 1px solid var(--site-accent-border);
-  border-radius: 999px;
-  color: var(--site-accent);
-  background: var(--site-accent-soft);
-  font-size: 0.74rem;
-  font-weight: 700;
 }
