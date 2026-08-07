@@ -9,13 +9,28 @@
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-08-08
+
+对应 `package.json` 中的 `0.4.0`。相对 [0.3.0]：线路图**非当前换乘中间站胶囊标记**、YAML 缺省外观选项改为保持旧版外观，以及 Unreleased 积压的车型默认 / 依赖与绘制修复。
+
+### Added
+
+- 生成设置「非当前换乘中间站使用胶囊标记」（默认关）：开启后，非当前且非首末站的换乘站用水平 1:2 白胶囊替代白圆，换乘箭头相对现图顺时针旋转 90°（视觉宽度 32）；当前站与终点站样式不变。
+- YAML `njMetroSettings.useCapsuleTransferMarkers` 读写。
+- 参考素材：`docs/capsule transfer icon.svg`、`docs/origin photos/` 示例照片。
+- 对话框等叠层接入 `@umamichi-ui/chromatic-fringe` 深度色差描边。
+
 ### Changed
 
 - 「按线路填充站点」：S2 默认车型由 B 型改为 B 型（长线路图）。
+- 导入 YAML 时，若缺少 `showStationTypeIcons` / `useCapsuleTransferMarkers` / `trainType`，不再继承当前编辑器状态，分别回落为 `false` / `false` / `A型`，以保持旧版外观。
+- 线路号标识块去掉 attribution 涟漪动画。
+- 依赖：`@umamichi-ui/chromatic-fringe` ^0.4.4、`@umamichi-ui/common-components` ^0.4.6、`@umamichi-ui/common-css` ^0.19.4（含 FloatingMenu / action-sheet / tap-highlight 等修复）。
+- 「关于」等界面展示的版本号为 `0.4.0`。
 
 ### Fixed
 
-- 「按线路填充站点」等可滚动 `FloatingMenu`：Android Chromium 上 RGB fringe 随内容滚动错位。升级 `@umamichi-ui/common-components` 至 `^0.4.2`（滚动移至内层列表）、`@umamichi-ui/common-css` 至 `^0.19.3`。
+- 「按线路填充站点」等可滚动 `FloatingMenu`：Android Chromium 上 RGB fringe 随内容滚动错位。
 - 线路图站名在中文压缩（`scaleX`）时，火车站 / 机场站类型图标（dings 字）不再与站名一并水平压扁；图标单独测宽后与压缩站名整组居中。
 - 市域 D 型方向标画布宽度：先前 3400 只包括线路号和「往 xx」，未计入「下一站」段，属错误；改为 5100。
 
@@ -193,7 +208,8 @@
 - 部署至 Cloudflare Pages（[njmetro-railmap-creator.umamichi.moe](https://njmetro-railmap-creator.umamichi.moe/)）。
 - 基于 [@umamichi-ui/common-css](https://www.npmjs.com/package/@umamichi-ui/common-css) 的界面样式与弹层交互。
 
-[Unreleased]: https://github.com/kyuri-metro/njmetro-railmap-creator/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/kyuri-metro/njmetro-railmap-creator/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/kyuri-metro/njmetro-railmap-creator/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/kyuri-metro/njmetro-railmap-creator/compare/v0.2.1...v0.3.0
 [0.2.1]: https://github.com/kyuri-metro/njmetro-railmap-creator/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/kyuri-metro/njmetro-railmap-creator/compare/v0.1.3...v0.2.0
