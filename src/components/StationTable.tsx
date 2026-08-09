@@ -11,6 +11,7 @@ import {
 import { createPortal } from 'react-dom';
 import { mergeOverlayRefs, useOverlayPresence, withOverlayOpen } from '@umamichi-ui/common-components/presence';
 import type { StationItem } from '../features/generatorSlice';
+import { walkStations, type StationListEntry } from '../stationListTopology';
 
 const PencilIcon = () => (
   <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
@@ -25,7 +26,8 @@ type StationNameField = 'chName' | 'enName';
 
 type StationTableProps = Readonly<{
   currentStnId: string;
-  stations: StationItem[];
+  /** 异构站点列表（含开口支线块）；表格按 walk 顺序展示 */
+  entries: StationListEntry[];
   focusChNameStationId?: string | null;
   onFocusChNameHandled?: () => void;
   onEdit: (station: StationItem) => void;
@@ -158,9 +160,31 @@ function StationCellInput({
   );
 }
 
+const StationRailMark = ({
+  isBranch,
+  isCurrent,
+}: {
+  isBranch: boolean;
+  isCurrent: boolean;
+}) => (
+  <span
+    className={[
+      'station-rail',
+      isBranch ? 'station-rail--branch' : 'station-rail--main',
+      isCurrent ? 'is-current' : '',
+    ]
+      .filter(Boolean)
+      .join(' ')}
+    aria-hidden="true"
+  >
+    <span className="station-rail__line" />
+    <span className="station-rail__dot" />
+  </span>
+);
+
 export function StationTable({
   currentStnId,
-  stations,
+  entries,
   focusChNameStationId = null,
   onFocusChNameHandled,
   onEdit,
@@ -182,6 +206,7 @@ export function StationTable({
   const [menuGeometry, setMenuGeometry] = useState<{ left: number; top: number } | null>(null);
   const menuOpen = contextMenu !== null;
   const { mounted: menuMounted, isOpen: menuShown, overlayRef: menuOverlayRef } = useOverlayPresence(menuOpen);
+  const rows = walkStations(entries);
 
   const closeContextMenu = () => {
     setContextMenu(null);
@@ -210,7 +235,7 @@ export function StationTable({
       input.select();
     }
     onFocusChNameHandled?.();
-  }, [focusChNameStationId, stations]); // onFocusChNameHandled intentionally omitted (parent inline setter)
+  }, [focusChNameStationId, entries]); // onFocusChNameHandled intentionally omitted (parent inline setter)
 
   useLayoutEffect(() => {
     if (!contextMenu || !menuMounted) {
@@ -380,6 +405,7 @@ export function StationTable({
       <div className="table-wrap">
         <table className="station-table">
           <colgroup>
+            <col className="station-col-rail" />
             <col className="station-col-name" />
             <col className="station-col-en" />
             <col className="station-col-transfer" />
@@ -387,6 +413,7 @@ export function StationTable({
           </colgroup>
           <thead>
             <tr>
+              <th aria-label="拓扑" />
               <th>中文名</th>
               <th>英文名</th>
               <th>换乘线路</th>
@@ -394,9 +421,10 @@ export function StationTable({
             </tr>
           </thead>
           <tbody>
-            {stations.map((station) => {
+            {rows.map(({ station, branchIndex }) => {
               const isCurrent = station.id === currentStnId;
               const displayName = station.chName.trim() || '未命名';
+              const isBranch = branchIndex !== null;
 
               return (
                 <tr
@@ -405,6 +433,9 @@ export function StationTable({
                   onClick={() => onSelect(station.id)}
                   onContextMenu={(event) => openRowContextMenu(event, station)}
                 >
+                  <td className="station-rail-cell">
+                    <StationRailMark isBranch={isBranch} isCurrent={isCurrent} />
+                  </td>
                   <td>
                     <StationCellInput
                       className="station-cell-input station-cell-input--ch"

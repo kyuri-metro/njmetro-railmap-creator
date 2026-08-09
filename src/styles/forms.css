@@ -213,12 +213,16 @@
   font-size: 0.92rem;
 }
 
+.station-col-rail {
+  width: 28px;
+}
+
 .station-col-name {
-  width: 28%;
+  width: 26%;
 }
 
 .station-col-en {
-  width: 34%;
+  width: 32%;
 }
 
 .station-col-transfer {
@@ -227,6 +231,68 @@
 
 .station-col-action {
   width: 96px;
+}
+
+.station-rail-cell {
+  padding: 0 !important;
+  width: 28px;
+  vertical-align: stretch;
+}
+
+.station-rail {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-height: var(--station-row-inner-min-height, 2rem);
+}
+
+.station-rail__line {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  transform: translateX(-50%);
+  background: var(--site-border);
+}
+
+.station-rail--branch .station-rail__line {
+  left: calc(50% + 4px);
+  background: color-mix(in srgb, var(--site-muted-fg) 55%, var(--site-border));
+}
+
+.station-rail__dot {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 9px;
+  height: 9px;
+  box-sizing: border-box;
+  border: 2px solid var(--site-muted-fg);
+  border-radius: 50%;
+  background: var(--site-surface, var(--site-bg));
+  transform: translate(-50%, -50%);
+}
+
+.station-rail--branch .station-rail__dot {
+  left: calc(50% + 4px);
+  width: 8px;
+  height: 8px;
+}
+
+.station-rail.is-current .station-rail__dot {
+  width: 11px;
+  height: 11px;
+  border: 2px solid var(--site-accent);
+  background: var(--site-accent);
+  outline: 2px solid var(--site-accent);
+  outline-offset: 2px;
+}
+
+.station-rail--branch.is-current .station-rail__dot {
+  width: 10px;
+  height: 10px;
 }
 
 .station-table th,

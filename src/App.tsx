@@ -41,7 +41,6 @@ import { normalizeTransferLines } from './normalizeTransfer';
 import { serializeRailmapYaml } from './stationListYaml';
 import {
   findStationInEntries,
-  flattenStationList,
   hasOpeningBranches,
   resolveBranchInsertTarget,
 } from './stationListTopology';
@@ -448,7 +447,7 @@ function App() {
 
               <StationTable
                 currentStnId={generator.currentStnId}
-                stations={flattenStationList(generator.stnList)}
+                entries={generator.stnList}
                 focusChNameStationId={focusChNameStationId}
                 onFocusChNameHandled={() => setFocusChNameStationId(null)}
                 onEdit={(station) => {
