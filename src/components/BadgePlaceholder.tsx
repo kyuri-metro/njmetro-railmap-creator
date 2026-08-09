@@ -1,4 +1,5 @@
 import type { GeneratorState } from '../features/generatorSlice';
+import { flattenStationList } from '../stationListTopology';
 
 type BadgePlaceholderProps = Readonly<{
   title: string;
@@ -7,8 +8,9 @@ type BadgePlaceholderProps = Readonly<{
 }>;
 
 export function BadgePlaceholder({ title, description, data }: BadgePlaceholderProps) {
-  const currentStation = data.stnList.find((station) => station.id === data.currentStnId);
-  const segmentCount = Math.max(data.stnList.length - 1, 0);
+  const stations = flattenStationList(data.stnList);
+  const currentStation = stations.find((station) => station.id === data.currentStnId);
+  const segmentCount = Math.max(stations.length - 1, 0);
   const stnDis = segmentCount === 0 ? 0 : data.totalLength / segmentCount;
 
   return (
@@ -25,7 +27,7 @@ export function BadgePlaceholder({ title, description, data }: BadgePlaceholderP
         当前站点: {currentStation?.chName ?? '未选择'} / {currentStation?.enName ?? 'N/A'}
       </text>
       <text x="24" y="154" fill="#51616a" fontSize="16">
-        站点数: {data.stnList.length} | 总长: {data.totalLength}px | 站间距: {stnDis.toFixed(2)}px | 方向: {data.direction}
+        站点数: {stations.length} | 总长: {data.totalLength}px | 站间距: {stnDis.toFixed(2)}px | 方向: {data.direction}
       </text>
       <circle cx="548" cy="42" r="12" fill={data.idColor} stroke="#9fb0b9" />
       <text x="568" y="47" fill="#51616a" fontSize="14">

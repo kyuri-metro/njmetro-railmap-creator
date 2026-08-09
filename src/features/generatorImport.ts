@@ -3,22 +3,25 @@ import { resolveJianbanLineBackgroundColor, resolveJianbanLineForegroundColor } 
 import { lookupLineTrainType } from '../njmetroLineTrainTypes';
 import { normalizeTransferLines } from '../normalizeTransfer';
 import type { RailmapYamlImport } from '../stationListYaml';
-import { flattenStationList } from '../stationListTopology';
+import { flattenStationList, mapStationsInEntries, type StationListEntry } from '../stationListTopology';
 import { adjustTotalLengthForTrainTypeChange } from '../trainTypeLayout';
-import type { GeneratorState } from './generatorSlice';
+import type { GeneratorState, StationItem } from './generatorSlice';
 
-/** C3 前：导入异构站点列表时先 flatten，支线拓扑暂不进入 generator state。 */
+const normalizeEntryTransfers = (entries: StationListEntry[]): StationListEntry[] =>
+  mapStationsInEntries(entries, (station) => ({
+    ...station,
+    transfer: normalizeTransferLines(station.transfer),
+  }));
+
 export const railmapImportToGeneratorState = (
   data: RailmapYamlImport,
   previous: GeneratorState,
 ): GeneratorState => ({
   ...previous,
-  stnList: flattenStationList(data.stations).map((station) => ({
-    ...station,
-    transfer: normalizeTransferLines(station.transfer),
-  })),
+  stnList: normalizeEntryTransfers(data.stations),
   currentStnId: data.njMetroSettings.currentStnId,
   totalLength: data.njMetroSettings.totalLength,
+  branchHeight: data.njMetroSettings.branchHeight,
   direction: data.njMetroSettings.direction,
   lineId: data.lineId,
   idColor: data.color,
@@ -32,7 +35,7 @@ export type BuiltinLineFillNetwork = 'opened' | 'jianban';
 
 export const builtinLineToGeneratorState = (
   lineId: string,
-  stations: GeneratorState['stnList'],
+  stations: StationItem[],
   previous: GeneratorState,
   network: BuiltinLineFillNetwork = 'opened',
 ): GeneratorState => {
@@ -63,3 +66,5 @@ export const builtinLineToGeneratorState = (
     totalLength,
   };
 };
+
+export { flattenStationList };

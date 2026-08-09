@@ -4,6 +4,18 @@ import { readAutosaveSettings } from '../autosaveStorage';
 import { normalizeTransferLines } from '../normalizeTransfer';
 import { getNjmetroLineBackgroundColor, getNjmetroLineForegroundColor } from '../njmetroLinePalette';
 import {
+  cloneStationListEntries,
+  DEFAULT_BRANCH_HEIGHT,
+  deleteStationFromEntries,
+  flattenStationList,
+  insertStationInEntries,
+  mapStationsInEntries,
+  reverseEntries,
+  updateStationInEntries,
+  type InsertStationPosition,
+  type StationListEntry,
+} from '../stationListTopology';
+import {
   adjustTotalLengthForTrainTypeChange,
   DEFAULT_TRAIN_TYPE,
   type TrainType,
@@ -27,12 +39,14 @@ export type StationItem = {
 
 export type TrainDirection = 'l' | 'r';
 
-export type { TrainType };
+export type { TrainType, StationListEntry };
 
 export type GeneratorState = {
-  stnList: StationItem[];
+  stnList: StationListEntry[];
   currentStnId: string;
   totalLength: number;
+  /** 开口支线竖直间距（px） */
+  branchHeight: number;
   direction: TrainDirection;
   lineId: string;
   idColor: string;
@@ -44,16 +58,14 @@ export type GeneratorState = {
   trainType: TrainType;
 };
 
-type InsertPosition = 'before' | 'after' | 'start' | 'end';
-
 type InsertStationPayload = {
-  position: InsertPosition;
+  position: InsertStationPosition;
   basisId?: string;
   station: StationItem;
 };
 
 type ReplaceStationsPayload = {
-  stations: StationItem[];
+  stations: StationListEntry[];
 };
 
 const builtinLine3Stations = getBuiltinOpenedStationsByLineId('3');
@@ -72,6 +84,7 @@ const initialState: GeneratorState = {
   stnList: initialStations,
   currentStnId: initialCurrentStnId,
   totalLength: 6550,
+  branchHeight: DEFAULT_BRANCH_HEIGHT,
   direction: 'l',
   lineId: initialLineId,
   idColor: getNjmetroLineBackgroundColor(initialLineId) ?? '#009a44',
@@ -83,10 +96,7 @@ const initialState: GeneratorState = {
 
 export const getDefaultGeneratorState = (): GeneratorState => ({
   ...initialState,
-  stnList: initialState.stnList.map((station) => ({
-    ...station,
-    transfer: station.transfer.map((line) => ({ ...line })),
-  })),
+  stnList: cloneStationListEntries(initialState.stnList),
 });
 
 /** 空白线路图：默认生成参数，站点列表为空。 */
@@ -94,6 +104,7 @@ export const getEmptyGeneratorState = (): GeneratorState => ({
   stnList: [],
   currentStnId: '',
   totalLength: initialState.totalLength,
+  branchHeight: initialState.branchHeight,
   direction: initialState.direction,
   lineId: initialState.lineId,
   idColor: initialState.idColor,
@@ -103,13 +114,20 @@ export const getEmptyGeneratorState = (): GeneratorState => ({
   trainType: initialState.trainType,
 });
 
-const fallbackCurrentId = (stations: StationItem[], currentId: string) => {
-  if (stations.some((station) => station.id === currentId)) {
+const fallbackCurrentId = (entries: StationListEntry[], currentId: string) => {
+  const flat = flattenStationList(entries);
+  if (flat.some((station) => station.id === currentId)) {
     return currentId;
   }
 
-  return stations[0]?.id ?? '';
+  return flat[0]?.id ?? '';
 };
+
+const normalizeEntryTransfers = (entries: StationListEntry[]): StationListEntry[] =>
+  mapStationsInEntries(entries, (station) => ({
+    ...station,
+    transfer: normalizeTransferLines(station.transfer),
+  }));
 
 const generatorSlice = createSlice({
   name: 'generator',
@@ -117,6 +135,9 @@ const generatorSlice = createSlice({
   reducers: {
     setTotalLength(state, action: PayloadAction<number>) {
       state.totalLength = action.payload;
+    },
+    setBranchHeight(state, action: PayloadAction<number>) {
+      state.branchHeight = Math.max(0, Math.trunc(action.payload));
     },
     setDirection(state, action: PayloadAction<TrainDirection>) {
       state.direction = action.payload;
@@ -162,41 +183,23 @@ const generatorSlice = createSlice({
     },
     insertStation(state, action: PayloadAction<InsertStationPayload>) {
       const { position, basisId, station } = action.payload;
-      const basisIndex = state.stnList.findIndex((item) => item.id === basisId);
-
-      if (position === 'start') {
-        state.stnList.unshift(station);
-      } else if (position === 'end' || basisIndex === -1) {
-        state.stnList.push(station);
-      } else if (position === 'before') {
-        state.stnList.splice(basisIndex, 0, station);
-      } else {
-        state.stnList.splice(basisIndex + 1, 0, station);
-      }
-
+      state.stnList = insertStationInEntries(state.stnList, position, basisId, station);
       state.currentStnId = station.id;
     },
     updateStation(state, action: PayloadAction<StationItem>) {
-      const index = state.stnList.findIndex((item) => item.id === action.payload.id);
-
-      if (index !== -1) {
-        state.stnList[index] = action.payload;
-      }
+      state.stnList = updateStationInEntries(state.stnList, action.payload);
     },
     deleteStation(state, action: PayloadAction<string>) {
-      state.stnList = state.stnList.filter((item) => item.id !== action.payload);
+      state.stnList = deleteStationFromEntries(state.stnList, action.payload);
       state.currentStnId = fallbackCurrentId(state.stnList, state.currentStnId);
     },
     replaceStations(state, action: PayloadAction<ReplaceStationsPayload>) {
       const { stations } = action.payload;
-      state.stnList = stations.map((station) => ({
-        ...station,
-        transfer: normalizeTransferLines(station.transfer),
-      }));
-      state.currentStnId = stations[0]?.id ?? '';
+      state.stnList = normalizeEntryTransfers(stations);
+      state.currentStnId = flattenStationList(stations)[0]?.id ?? '';
     },
     reverseStnList(state) {
-      state.stnList.reverse();
+      state.stnList = reverseEntries(state.stnList);
     },
     restoreGeneratorState(_state, action: PayloadAction<GeneratorState>) {
       return action.payload;
@@ -208,6 +211,7 @@ export const {
   deleteStation,
   insertStation,
   reverseStnList,
+  setBranchHeight,
   setCurrentStation,
   setDirection,
   setIdColor,

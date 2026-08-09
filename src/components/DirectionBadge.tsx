@@ -15,6 +15,7 @@ import {
   type DirectionBadgeStackedTextLayout,
 } from '../directionBadgeLayout';
 import type { GeneratorState } from '../features/generatorSlice';
+import { flattenStationList } from '../stationListTopology';
 import { sansLatinFontStack, sansZhFontStack } from '../fontStacks';
 import { getLineIdBadgeWidth } from '../lineIdBadgeMetrics';
 import { getBadgeCanvasSizes } from '../trainTypeLayout';
@@ -205,6 +206,7 @@ const resolveNextIndex = (currentIndex: number, direction: 'l' | 'r'): number =>
 
 export function DirectionBadge({ data }: DirectionBadgeProps) {
   const { stnList, currentStnId, direction, idColor, idTextColor, lineId, trainType } = data;
+  const stations = flattenStationList(stnList);
   const { direction: canvasWidth, height: canvasHeight } = getBadgeCanvasSizes(trainType);
   const { anchor, resolvedBoxes } = useSvgPositioner(canvasWidth, canvasHeight);
 
@@ -228,12 +230,13 @@ export function DirectionBadge({ data }: DirectionBadgeProps) {
 
   const isRightward = direction === 'r';
 
-  const currentIndex = stnList.findIndex((station) => station.id === currentStnId);
+  const currentIndex = stations.findIndex((station) => station.id === currentStnId);
   const nextIndex = resolveNextIndex(currentIndex, direction);
-  const nextStation = stnList[nextIndex] ?? stnList[currentIndex] ?? null;
-  const toStation = direction === 'r' ? stnList.at(-1) : stnList[0];
+  const nextStation = stations[nextIndex] ?? stations[currentIndex] ?? null;
+  const toStation = direction === 'r' ? stations.at(-1) : stations[0];
   const isTerminus =
-    currentIndex !== -1 && ((direction === 'r' && currentIndex === stnList.length - 1) || (direction === 'l' && currentIndex === 0));
+    currentIndex !== -1 &&
+    ((direction === 'r' && currentIndex === stations.length - 1) || (direction === 'l' && currentIndex === 0));
   const safeToStation = toStation ?? { chName: '不存在或未定义', enName: 'Bucunzai Huo Weidingyi' };
   const safeNextStation = nextStation ?? { chName: '不存在或未定义', enName: 'Bucunzai Huo Weidingyi' };
 

@@ -1,10 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import type { StationItem } from './features/generatorSlice';
 import {
+  deleteStationFromEntries,
   findStationInEntries,
   flattenStationList,
   getBranchOpeningSide,
   hasOpeningBranches,
+  insertStationInEntries,
   isBranchGroup,
   isStationEntry,
   reverseEntries,
@@ -124,5 +126,23 @@ describe('stationListTopology', () => {
       expect(group.main).toBe(0);
       expect(group.branches.map((branch) => branch.map((item) => item.id))).toEqual([['b'], ['a']]);
     }
+  });
+
+  it('inserts into a branch list and deletes empty branch groups', () => {
+    const withInsert = insertStationInEntries(leftBranchExample(), 'after', 'a', station('a2'));
+    expect(flattenStationList(withInsert).map((item) => item.id)).toEqual(['a', 'a2', 'b', 'c']);
+
+    const removedSide = deleteStationFromEntries(leftBranchExample(), 'a');
+    expect(isBranchGroup(removedSide[0])).toBe(true);
+    if (isBranchGroup(removedSide[0])) {
+      expect(removedSide[0].branches[0]).toEqual([]);
+      expect(removedSide[0].branches[1][0].id).toBe('b');
+    }
+
+    const removedAll = deleteStationFromEntries(
+      deleteStationFromEntries(leftBranchExample(), 'a'),
+      'b',
+    );
+    expect(removedAll.map((entry) => (isStationEntry(entry) ? entry.id : 'group'))).toEqual(['c']);
   });
 });

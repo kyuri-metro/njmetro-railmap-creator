@@ -1,4 +1,5 @@
 import { serializeRailmapYaml } from '../stationListYaml';
+import { flattenStationList } from '../stationListTopology';
 import { appendAutosaveEntry, readAutosaveSettings, type AutosaveSettings } from '../autosaveStorage';
 import type { GeneratorState } from './generatorSlice';
 type StoreLike = {
@@ -21,7 +22,7 @@ export const markAutosaveDirty = () => {
 export const getAutosaveDirty = () => dirty;
 
 const buildEntrySummary = (state: GeneratorState) =>
-  `${state.lineId} 号线 · ${state.stnList.length} 站`;
+  `${state.lineId} 号线 · ${flattenStationList(state.stnList).length} 站`;
 
 const flushAutosave = () => {
   if (!dirty || !boundStore) {

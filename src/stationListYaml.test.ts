@@ -51,14 +51,19 @@ describe('parseRailmapYaml / serializeRailmapYaml', () => {
   it('round-trips a minimal version 4 document', () => {
     const state = getDefaultGeneratorState();
     state.stnList = state.stnList.slice(0, 2);
-    state.currentStnId = state.stnList[0].id;
+    const first = state.stnList[0];
+    if (!('id' in first)) {
+      throw new Error('expected station entry');
+    }
+    state.currentStnId = first.id;
     state.trainType = 'b-long';
+    state.branchHeight = 96;
 
     const yaml = serializeRailmapYaml(state);
     expect(yaml).toContain('schema: https://umamichi.moe/2026/kyuri-naive');
     expect(yaml).toContain('version: 4');
     expect(yaml).toContain('trainType: b-long');
-    expect(yaml).toContain(`branchHeight: ${DEFAULT_BRANCH_HEIGHT}`);
+    expect(yaml).toContain('branchHeight: 96');
 
     const parsed = parseRailmapYaml(yaml, fallback());
     expect(parsed.ok).toBe(true);
@@ -73,7 +78,7 @@ describe('parseRailmapYaml / serializeRailmapYaml', () => {
     expect(parsed.data.njMetroSettings.currentStnId).toBe(state.currentStnId);
     expect(parsed.data.njMetroSettings.trainType).toBe('b-long');
     expect(parsed.data.njMetroSettings.useCapsuleTransferMarkers).toBe(false);
-    expect(parsed.data.njMetroSettings.branchHeight).toBe(DEFAULT_BRANCH_HEIGHT);
+    expect(parsed.data.njMetroSettings.branchHeight).toBe(96);
   });
 
   it('parses version 4 opening branches and rejects illegal topology', () => {
@@ -177,7 +182,11 @@ stations:
   it('round-trips useCapsuleTransferMarkers when enabled', () => {
     const state = getDefaultGeneratorState();
     state.stnList = state.stnList.slice(0, 2);
-    state.currentStnId = state.stnList[0].id;
+    const first = state.stnList[0];
+    if (!('id' in first)) {
+      throw new Error('expected station entry');
+    }
+    state.currentStnId = first.id;
     state.useCapsuleTransferMarkers = true;
 
     const yaml = serializeRailmapYaml(state);

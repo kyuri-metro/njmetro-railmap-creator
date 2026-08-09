@@ -1,5 +1,8 @@
 import type { StationItem } from './features/generatorSlice';
 
+/** 开口支线竖直间距默认值（px）；45° 边长为 branchHeight√2 */
+export const DEFAULT_BRANCH_HEIGHT = 120;
+
 /** 根站点列表中的开口支线块（1A：仅两端；块内不嵌套）。 */
 export type BranchGroup = {
   branches: StationItem[][];
@@ -194,3 +197,108 @@ export const reverseEntries = (entries: readonly StationListEntry[]): StationLis
       };
     })
     .reverse();
+
+export const cloneStationListEntries = (entries: readonly StationListEntry[]): StationListEntry[] =>
+  entries.map((entry) => {
+    if (isStationEntry(entry)) {
+      return {
+        ...entry,
+        transfer: entry.transfer.map((line) => ({ ...line })),
+      };
+    }
+    return {
+      branches: entry.branches.map((branch) =>
+        branch.map((station) => ({
+          ...station,
+          transfer: station.transfer.map((line) => ({ ...line })),
+        })),
+      ),
+      main: entry.main,
+    };
+  });
+
+export const mapStationsInEntries = (
+  entries: readonly StationListEntry[],
+  mapStation: (station: StationItem) => StationItem,
+): StationListEntry[] =>
+  entries.map((entry) => {
+    if (isStationEntry(entry)) {
+      return mapStation(entry);
+    }
+    return {
+      ...entry,
+      branches: entry.branches.map((branch) => branch.map(mapStation)),
+    };
+  });
+
+export type InsertStationPosition = 'before' | 'after' | 'start' | 'end';
+
+/** 在根级或支线列表内插入站点（basis 命中支线内站时插入该支线）。 */
+export const insertStationInEntries = (
+  entries: readonly StationListEntry[],
+  position: InsertStationPosition,
+  basisId: string | undefined,
+  station: StationItem,
+): StationListEntry[] => {
+  if (position === 'start') {
+    return [station, ...entries];
+  }
+
+  if (position === 'end') {
+    return [...entries, station];
+  }
+
+  const located = basisId ? findStationInEntries(entries, basisId) : null;
+  if (!located) {
+    return [...entries, station];
+  }
+
+  if (located.branchIndex === null) {
+    const next = [...entries];
+    const insertAt = position === 'before' ? located.entryIndex : located.entryIndex + 1;
+    next.splice(insertAt, 0, station);
+    return next;
+  }
+
+  return entries.map((entry, entryIndex) => {
+    if (entryIndex !== located.entryIndex || !isBranchGroup(entry)) {
+      return entry;
+    }
+    const branches = entry.branches.map((branch, branchIndex) => {
+      if (branchIndex !== located.branchIndex) {
+        return branch;
+      }
+      const nextBranch = [...branch];
+      const indexInBranch = located.indexInBranch ?? 0;
+      const insertAt = position === 'before' ? indexInBranch : indexInBranch + 1;
+      nextBranch.splice(insertAt, 0, station);
+      return nextBranch;
+    });
+    return { ...entry, branches };
+  });
+};
+
+export const updateStationInEntries = (
+  entries: readonly StationListEntry[],
+  station: StationItem,
+): StationListEntry[] =>
+  mapStationsInEntries(entries, (item) => (item.id === station.id ? station : item));
+
+/** 删除站点；若某支线变空且整块只剩空支线则去掉该块。支线块在删后若全部支线为空则移除块。 */
+export const deleteStationFromEntries = (
+  entries: readonly StationListEntry[],
+  stationId: string,
+): StationListEntry[] =>
+  entries
+    .map((entry) => {
+      if (isStationEntry(entry)) {
+        return entry.id === stationId ? null : entry;
+      }
+      const branches = entry.branches.map((branch) => branch.filter((station) => station.id !== stationId));
+      if (branches.every((branch) => branch.length === 0)) {
+        return null;
+      }
+      const main = Math.min(entry.main, Math.max(0, branches.length - 1));
+      return { branches, main };
+    })
+    .filter((entry): entry is StationListEntry => entry !== null);

@@ -1,6 +1,7 @@
 import { useId, useLayoutEffect, useRef, useState, type CSSProperties } from 'react';
 import { getRouteZhNameCondense, type BadgeTextCondenseConfig } from '../badgeTextCondense';
 import type { GeneratorState, StationItem, TransferLine } from '../features/generatorSlice';
+import { flattenStationList } from '../stationListTopology';
 import { njmetroDingsFontStack, sansLatinFontStack, sansZhFontStack } from '../fontStacks';
 import { getLineIdBadgeWidth } from '../lineIdBadgeMetrics';
 import { measureBadgeTextWidth } from '../measureBadgeText';
@@ -481,19 +482,21 @@ const RouteStationRow = ({
 export function RouteBadge({ data }: RouteBadgeProps) {
   const { currentStnId, direction, idColor, showStationTypeIcons, useCapsuleTransferMarkers, totalLength, stnList, trainType } =
     data;
+  /** C5 前：支线拓扑先 flatten 为线性吊板。 */
+  const stations = flattenStationList(stnList);
   const { route: width, height } = getBadgeCanvasSizes(trainType);
   const { anchor } = useSvgPositioner(width, height);
   const transferIconSymbolId = useId().replaceAll(':', '');
-  const currentIndex = stnList.findIndex((station) => station.id === currentStnId);
+  const currentIndex = stations.findIndex((station) => station.id === currentStnId);
   const safeCurrentIndex = currentIndex === -1 ? 0 : currentIndex;
-  const terminusIndex = direction === 'l' ? 0 : Math.max(stnList.length - 1, 0);
+  const terminusIndex = direction === 'l' ? 0 : Math.max(stations.length - 1, 0);
   const terminusPointId = `station-point-${terminusIndex}`;
-  const endpointIndices = stnList.length > 0 ? [...new Set([0, stnList.length - 1])] : [];
-  const segmentCount = Math.max(stnList.length - 1, 0);
+  const endpointIndices = stations.length > 0 ? [...new Set([0, stations.length - 1])] : [];
+  const segmentCount = Math.max(stations.length - 1, 0);
   const lineLength = Math.max(0, totalLength);
   const stnDis = segmentCount === 0 ? 0 : lineLength / segmentCount;
   const inactiveColor = '#d9d9d9';
-  const activeSegmentWidth = direction === 'l' ? safeCurrentIndex * stnDis : (stnList.length - 1 - safeCurrentIndex) * stnDis;
+  const activeSegmentWidth = direction === 'l' ? safeCurrentIndex * stnDis : (stations.length - 1 - safeCurrentIndex) * stnDis;
   const inactiveSegmentWidth = Math.max(0, lineLength - activeSegmentWidth);
   const lineCenterYOffset = lineCenterY - height / 2;
   const routeContentOffsetX = direction === 'l' ? routeLayoutOffsetX : -routeLayoutOffsetX;
@@ -535,7 +538,7 @@ export function RouteBadge({ data }: RouteBadgeProps) {
             centerY: { to: terminusPointId, offset: 0 },
           })}
 
-      {stnList.slice(1).map((station, index) =>
+      {stations.slice(1).map((_station, index) =>
         anchor(`station-point-${index + 1}`, <StationAnchorPoint />, {
           centerX: { to: `station-point-${index}`, offset: stnDis },
           centerY: { to: `station-point-${index}`, offset: 0 },
@@ -580,12 +583,12 @@ export function RouteBadge({ data }: RouteBadgeProps) {
         });
       })}
 
-      {stnList.map((station, index) => (
+      {stations.map((station, index) => (
         <RouteStationRow
           key={station.id}
           station={station}
           index={index}
-          stnListLength={stnList.length}
+          stnListLength={stations.length}
           safeCurrentIndex={safeCurrentIndex}
           showStationTypeIcons={showStationTypeIcons}
           useCapsuleTransferMarkers={useCapsuleTransferMarkers}

@@ -38,6 +38,7 @@ import { FontDetectionHubTiles } from './components/FontDetectionHubTiles';
 import { detectTargetFonts, targetFontSignatures, type FontDetectionResult } from './fontSignature';
 import { normalizeTransferLines } from './normalizeTransfer';
 import { serializeRailmapYaml } from './stationListYaml';
+import { findStationInEntries, flattenStationList } from './stationListTopology';
 import { useAppDispatch, useAppSelector, selectCanRedo, selectCanUndo, selectGeneratorPresent } from './hooks';
 import { store, UndoActionCreators } from './store';
 
@@ -295,7 +296,7 @@ function App() {
       return;
     }
 
-    const live = generator.stnList.find((item) => item.id === modalState.station.id) ?? modalState.station;
+    const live = findStationInEntries(generator.stnList, modalState.station.id)?.station ?? modalState.station;
     dispatch(
       updateStation({
         ...live,
@@ -306,7 +307,7 @@ function App() {
   };
 
   const handleCommitStationName = (stationId: string, field: 'chName' | 'enName', value: string) => {
-    const live = generator.stnList.find((item) => item.id === stationId);
+    const live = findStationInEntries(generator.stnList, stationId)?.station;
     if (!live || live[field] === value) {
       return;
     }
@@ -410,7 +411,7 @@ function App() {
 
               <StationTable
                 currentStnId={generator.currentStnId}
-                stations={generator.stnList}
+                stations={flattenStationList(generator.stnList)}
                 focusChNameStationId={focusChNameStationId}
                 onFocusChNameHandled={() => setFocusChNameStationId(null)}
                 onEdit={(station) => {

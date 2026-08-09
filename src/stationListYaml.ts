@@ -1,12 +1,15 @@
 import YAML from 'yaml';
 import type { GeneratorState, StationItem, StationType, TrainDirection, TransferLine } from './features/generatorSlice';
 import {
+  DEFAULT_BRANCH_HEIGHT,
   isStationEntry,
   validateStationListTopology,
   type BranchGroup,
   type StationListEntry,
 } from './stationListTopology';
 import { DEFAULT_TRAIN_TYPE, isTrainType, type TrainType } from './trainTypeLayout';
+
+export { DEFAULT_BRANCH_HEIGHT };
 
 const STATION_TYPES = new Set<StationType>(['none', 'railway', 'airport']);
 
@@ -17,9 +20,6 @@ const KYURI_NAIVE_SCHEMA = 'https://umamichi.moe/2026/kyuri-naive';
 
 /** 将历史明文协议标识规范为 https，避免源码中保留 http 字面量。 */
 const canonicalizeSchemaUri = (raw: string) => raw.trim().replace(/^http:\/\//i, 'https://');
-
-/** 开口支线竖直间距默认值（px）；45° 边长为 branchHeight√2 */
-export const DEFAULT_BRANCH_HEIGHT = 120;
 
 type DocVersion = 1 | 2 | 3 | 4;
 
@@ -541,7 +541,7 @@ export const serializeRailmapYaml = (state: GeneratorState): string => {
       showStationTypeIcons: state.showStationTypeIcons,
       useCapsuleTransferMarkers: state.useCapsuleTransferMarkers,
       trainType: state.trainType,
-      branchHeight: DEFAULT_BRANCH_HEIGHT,
+      branchHeight: state.branchHeight,
     },
     stations: entriesToYamlBodies(state.stnList),
   };
