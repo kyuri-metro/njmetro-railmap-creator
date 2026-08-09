@@ -373,3 +373,98 @@ export const layoutBranchRoute = (
 
 export const hasBranchGeometry = (entries: readonly StationListEntry[]): boolean =>
   entries.some((entry) => isBranchGroup(entry));
+
+export type TrackEdge = {
+  fromStationId: string;
+  toStationId: string;
+  kind: 'horizontal' | 'diagonal';
+};
+
+/** 主线/支线水平边 + 45° 边（用于绘制）。 */
+export const collectTrackEdges = (entries: readonly StationListEntry[]): TrackEdge[] => {
+  const model = parseBranchRouteModel(entries);
+  const edges: TrackEdge[] = [];
+
+  const pushHorizontalChain = (ids: string[]) => {
+    for (let i = 0; i < ids.length - 1; i += 1) {
+      edges.push({ fromStationId: ids[i], toStationId: ids[i + 1], kind: 'horizontal' });
+    }
+  };
+
+  if (model.left) {
+    model.left.branches.forEach((branch, branchIndex) => {
+      const ids = branch.map((station) => station.id);
+      pushHorizontalChain(ids);
+      if (ids.length > 0) {
+        if (branchIndex === model.left!.main) {
+          edges.push({
+            fromStationId: ids[ids.length - 1],
+            toStationId: model.left!.mergeStationId,
+            kind: 'horizontal',
+          });
+        } else {
+          edges.push({
+            fromStationId: ids[ids.length - 1],
+            toStationId: model.left!.mergeStationId,
+            kind: 'diagonal',
+          });
+        }
+      }
+    });
+  }
+
+  pushHorizontalChain(model.middle.map((station) => station.id));
+
+  if (model.right) {
+    model.right.branches.forEach((branch, branchIndex) => {
+      const ids = branch.map((station) => station.id);
+      if (ids.length > 0) {
+        if (branchIndex === model.right!.main) {
+          edges.push({
+            fromStationId: model.right!.mergeStationId,
+            toStationId: ids[0],
+            kind: 'horizontal',
+          });
+        } else {
+          edges.push({
+            fromStationId: model.right!.mergeStationId,
+            toStationId: ids[0],
+            kind: 'diagonal',
+          });
+        }
+      }
+      pushHorizontalChain(ids);
+    });
+  }
+
+  return edges;
+};
+
+/** 各开口支线远端站 + 无对应开口时的主线端点，用作终点环。 */
+export const collectTerminusStationIds = (entries: readonly StationListEntry[]): Set<string> => {
+  const model = parseBranchRouteModel(entries);
+  const tips = new Set<string>();
+
+  if (model.left) {
+    for (const branch of model.left.branches) {
+      if (branch[0]) {
+        tips.add(branch[0].id);
+      }
+    }
+  } else if (model.middle[0]) {
+    tips.add(model.middle[0].id);
+  }
+
+  if (model.right) {
+    for (const branch of model.right.branches) {
+      const tip = branch[branch.length - 1];
+      if (tip) {
+        tips.add(tip.id);
+      }
+    }
+  } else if (model.middle[model.middle.length - 1]) {
+    tips.add(model.middle[model.middle.length - 1].id);
+  }
+
+  return tips;
+};

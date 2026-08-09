@@ -1,5 +1,11 @@
 import { useId, useLayoutEffect, useRef, useState, type CSSProperties } from 'react';
 import { getRouteZhNameCondense, type BadgeTextCondenseConfig } from '../badgeTextCondense';
+import {
+  collectTerminusStationIds,
+  collectTrackEdges,
+  hasBranchGeometry,
+  layoutBranchRoute,
+} from '../branchLayout';
 import type { GeneratorState, StationItem, TransferLine } from '../features/generatorSlice';
 import { flattenStationList } from '../stationListTopology';
 import { njmetroDingsFontStack, sansLatinFontStack, sansZhFontStack } from '../fontStacks';
@@ -157,10 +163,6 @@ const currentStationAccent = routeBadgeCurrentCard.accent;
 const transferIconPath = routeBadgeTransferIcon.path;
 
 const StationAnchorPoint = () => <rect x="-0.5" y="-0.5" width="1" height="1" fill="transparent" />;
-
-const RouteLineSegment = ({ color, width: segmentWidth }: { color: string; width: number }) => (
-  <rect x="0" y={-lineThickness / 2} width={segmentWidth} height={lineThickness} fill={color} />
-);
 
 const RouteLineReference = ({ width: segmentWidth }: { width: number }) => (
   <rect x="0" y={-lineThickness / 2} width={segmentWidth} height={lineThickness} fill="transparent" />
@@ -377,8 +379,9 @@ const getTransferCircleDiameter = (isCurrent: boolean, isEndpoint: boolean): num
 type RouteStationRowProps = Readonly<{
   station: StationItem;
   index: number;
-  stnListLength: number;
   safeCurrentIndex: number;
+  isEndpoint: boolean;
+  placeAbove: boolean;
   showStationTypeIcons: boolean;
   useCapsuleTransferMarkers: boolean;
   transferIconSymbolId: string;
@@ -394,8 +397,9 @@ const getVerticalCardConstraints = (placeAbove: boolean, anchorId: string, gap: 
 const RouteStationRow = ({
   station,
   index,
-  stnListLength,
   safeCurrentIndex,
+  isEndpoint,
+  placeAbove,
   showStationTypeIcons,
   useCapsuleTransferMarkers,
   transferIconSymbolId,
@@ -403,8 +407,6 @@ const RouteStationRow = ({
   anchor,
 }: RouteStationRowProps) => {
   const isCurrent = index === safeCurrentIndex;
-  const isEndpoint = index === 0 || index === stnListLength - 1;
-  const placeAbove = index % 2 === 0;
   const stationPointId = `station-point-${index}`;
   const stationMarkerId = getStationMarkerId(isCurrent, isEndpoint, index);
   const transferIconAnchorId = `station-transfer-icon-${index}`;
@@ -480,28 +482,49 @@ const RouteStationRow = ({
 };
 
 export function RouteBadge({ data }: RouteBadgeProps) {
-  const { currentStnId, direction, idColor, showStationTypeIcons, useCapsuleTransferMarkers, totalLength, stnList, trainType } =
-    data;
-  /** C5 前：支线拓扑先 flatten 为线性吊板。 */
+  const {
+    currentStnId,
+    direction,
+    idColor,
+    showStationTypeIcons,
+    useCapsuleTransferMarkers,
+    totalLength,
+    branchHeight,
+    stnList,
+    trainType,
+  } = data;
   const stations = flattenStationList(stnList);
+  const stationById = new Map(stations.map((station) => [station.id, station]));
+  const layout = layoutBranchRoute(stnList, totalLength, branchHeight);
+  const pointById = new Map(layout.stations.map((point) => [point.stationId, point]));
+  const drawOrder = layout.stations
+    .map((point) => stationById.get(point.stationId))
+    .filter((station): station is StationItem => station !== undefined);
+  const indexById = new Map(drawOrder.map((station, index) => [station.id, index]));
+  const terminusIds = collectTerminusStationIds(stnList);
+  const trackEdges = collectTrackEdges(stnList);
+  const branched = hasBranchGeometry(stnList);
+
   const { route: width, height } = getBadgeCanvasSizes(trainType);
   const { anchor } = useSvgPositioner(width, height);
   const transferIconSymbolId = useId().replaceAll(':', '');
-  const currentIndex = stations.findIndex((station) => station.id === currentStnId);
+  const currentIndex = drawOrder.findIndex((station) => station.id === currentStnId);
   const safeCurrentIndex = currentIndex === -1 ? 0 : currentIndex;
-  const terminusIndex = direction === 'l' ? 0 : Math.max(stations.length - 1, 0);
+  const travelTerminusId =
+    direction === 'l'
+      ? [...terminusIds].sort((a, b) => (pointById.get(a)?.x ?? 0) - (pointById.get(b)?.x ?? 0))[0]
+      : [...terminusIds].sort((a, b) => (pointById.get(b)?.x ?? 0) - (pointById.get(a)?.x ?? 0))[0];
+  const terminusIndex = travelTerminusId !== undefined ? (indexById.get(travelTerminusId) ?? 0) : 0;
   const terminusPointId = `station-point-${terminusIndex}`;
-  const endpointIndices = stations.length > 0 ? [...new Set([0, stations.length - 1])] : [];
-  const segmentCount = Math.max(stations.length - 1, 0);
   const lineLength = Math.max(0, totalLength);
-  const stnDis = segmentCount === 0 ? 0 : lineLength / segmentCount;
   const inactiveColor = '#d9d9d9';
-  const activeSegmentWidth = direction === 'l' ? safeCurrentIndex * stnDis : (stations.length - 1 - safeCurrentIndex) * stnDis;
-  const inactiveSegmentWidth = Math.max(0, lineLength - activeSegmentWidth);
   const lineCenterYOffset = lineCenterY - height / 2;
   const routeContentOffsetX = direction === 'l' ? routeLayoutOffsetX : -routeLayoutOffsetX;
-  const terminusMarkerRadius = currentIndex !== -1 && safeCurrentIndex === terminusIndex ? currentOuterRadius : endStationRadius;
+  const originX = -lineLength / 2 + routeContentOffsetX;
+  const terminusMarkerRadius =
+    currentIndex !== -1 && safeCurrentIndex === terminusIndex ? currentOuterRadius : endStationRadius;
   const arrowToTerminusGap = terminusMarkerRadius + directionArrowGap - 0.5;
+
   const getTransferStationIconColor = (index: number) => {
     if (index === safeCurrentIndex) {
       return currentStationAccent;
@@ -510,6 +533,29 @@ export function RouteBadge({ data }: RouteBadgeProps) {
     const isAheadStation = direction === 'l' ? index < safeCurrentIndex : index > safeCurrentIndex;
 
     return isAheadStation ? transferIconColor : inactiveColor;
+  };
+
+  const edgeColor = (fromId: string, toId: string) => {
+    if (!branched) {
+      const fromIndex = indexById.get(fromId) ?? 0;
+      const toIndex = indexById.get(toId) ?? 0;
+      const lo = Math.min(fromIndex, toIndex);
+      const hi = Math.max(fromIndex, toIndex);
+      if (direction === 'l') {
+        return hi <= safeCurrentIndex ? idColor : inactiveColor;
+      }
+      return lo >= safeCurrentIndex ? idColor : inactiveColor;
+    }
+    // C6 前：含支线时线路暂统一用主题色（可达染色下一步）
+    return idColor;
+  };
+
+  const toView = (stationId: string) => {
+    const point = pointById.get(stationId);
+    return {
+      x: width / 2 + originX + (point?.x ?? 0),
+      y: height / 2 + lineCenterYOffset + (point?.y ?? 0),
+    };
   };
 
   return (
@@ -523,9 +569,12 @@ export function RouteBadge({ data }: RouteBadgeProps) {
       <rect x="0" y="0" width={width} height={height} fill="#ffffff" />
       <rect x="0" y="642.5" width={width} height="157.5" fill={idColor} />
 
-      {anchor('station-point-0', <StationAnchorPoint />, {
-        centerX: -lineLength / 2 + routeContentOffsetX,
-        centerY: lineCenterYOffset,
+      {drawOrder.map((station, index) => {
+        const point = pointById.get(station.id);
+        return anchor(`station-point-${index}`, <StationAnchorPoint />, {
+          centerX: originX + (point?.x ?? 0),
+          centerY: lineCenterYOffset + (point?.y ?? 0),
+        });
       })}
 
       {direction === 'l'
@@ -538,65 +587,73 @@ export function RouteBadge({ data }: RouteBadgeProps) {
             centerY: { to: terminusPointId, offset: 0 },
           })}
 
-      {stations.slice(1).map((_station, index) =>
-        anchor(`station-point-${index + 1}`, <StationAnchorPoint />, {
-          centerX: { to: `station-point-${index}`, offset: stnDis },
-          centerY: { to: `station-point-${index}`, offset: 0 },
-        }),
-      )}
+      {drawOrder.length > 0
+        ? anchor('route-line-reference', <RouteLineReference width={lineLength} />, {
+            left: { to: 'station-point-0', edge: 'left', gap: 0.5 },
+            centerY: { to: 'station-point-0', offset: 0 },
+          })
+        : null}
 
-      {anchor('route-line-reference', <RouteLineReference width={lineLength} />, {
-        left: { to: 'station-point-0', edge: 'left', gap: 0.5 },
-        centerY: { to: 'station-point-0', offset: 0 },
+      {trackEdges.map((edge, edgeIndex) => {
+        const from = toView(edge.fromStationId);
+        const to = toView(edge.toStationId);
+        return (
+          <line
+            key={`track-${edgeIndex}-${edge.fromStationId}-${edge.toStationId}`}
+            x1={from.x}
+            y1={from.y}
+            x2={to.x}
+            y2={to.y}
+            stroke={edgeColor(edge.fromStationId, edge.toStationId)}
+            strokeWidth={lineThickness}
+            strokeLinecap="round"
+          />
+        );
       })}
 
-      {activeSegmentWidth > 0
-        ? anchor('route-line-active', <RouteLineSegment color={idColor} width={activeSegmentWidth} />, {
-            left:
-              direction === 'l'
-                ? { to: 'station-point-0', edge: 'left', gap: 0.5 }
-                : { to: `station-point-${safeCurrentIndex}`, edge: 'left', gap: 0.5 },
-            centerY: { to: 'station-point-0', offset: 0 },
-          })
-        : null}
-
-      {inactiveSegmentWidth > 0
-        ? anchor('route-line-inactive', <RouteLineSegment color={inactiveColor} width={inactiveSegmentWidth} />, {
-            left:
-              direction === 'l'
-                ? { to: `station-point-${safeCurrentIndex}`, edge: 'left', gap: 0.5 }
-                : { to: 'station-point-0', edge: 'left', gap: 0.5 },
-            centerY: { to: 'station-point-0', offset: 0 },
-          })
-        : null}
-
-      {endpointIndices.map((index) => {
-        if (index === safeCurrentIndex) {
+      {drawOrder.map((station, index) => {
+        if (index === safeCurrentIndex || !terminusIds.has(station.id)) {
           return null;
         }
 
-        const fill = getEndpointFill(index, direction, idColor, inactiveColor);
+        const currentX = pointById.get(drawOrder[safeCurrentIndex]?.id)?.x ?? 0;
+        const stationX = pointById.get(station.id)?.x ?? 0;
+        const endpointFill = branched
+          ? direction === 'l'
+            ? stationX <= currentX
+              ? idColor
+              : inactiveColor
+            : stationX >= currentX
+              ? idColor
+              : inactiveColor
+          : getEndpointFill(index, direction, idColor, inactiveColor);
 
-        return anchor(`station-end-${index}`, <EndStationMarker fill={fill} />, {
+        return anchor(`station-end-${index}`, <EndStationMarker fill={endpointFill} />, {
           centerX: { to: `station-point-${index}`, offset: 0 },
           centerY: { to: `station-point-${index}`, offset: 0 },
         });
       })}
 
-      {stations.map((station, index) => (
-        <RouteStationRow
-          key={station.id}
-          station={station}
-          index={index}
-          stnListLength={stations.length}
-          safeCurrentIndex={safeCurrentIndex}
-          showStationTypeIcons={showStationTypeIcons}
-          useCapsuleTransferMarkers={useCapsuleTransferMarkers}
-          transferIconSymbolId={transferIconSymbolId}
-          getTransferStationIconColor={getTransferStationIconColor}
-          anchor={anchor}
-        />
-      ))}
+      {drawOrder.map((station, index) => {
+        const point = pointById.get(station.id);
+        const placeAbove = point && point.y !== 0 ? point.y < 0 : index % 2 === 0;
+
+        return (
+          <RouteStationRow
+            key={station.id}
+            station={station}
+            index={index}
+            safeCurrentIndex={safeCurrentIndex}
+            isEndpoint={terminusIds.has(station.id)}
+            placeAbove={placeAbove}
+            showStationTypeIcons={showStationTypeIcons}
+            useCapsuleTransferMarkers={useCapsuleTransferMarkers}
+            transferIconSymbolId={transferIconSymbolId}
+            getTransferStationIconColor={getTransferStationIconColor}
+            anchor={anchor}
+          />
+        );
+      })}
     </svg>
   );
 }
