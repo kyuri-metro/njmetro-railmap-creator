@@ -28,10 +28,12 @@ import { shouldWarnOnLeave } from './features/leaveGuard';
 import {
   deleteStation,
   insertStation,
+  patchStationName,
   reverseStnList,
   setCurrentStation,
   updateStation,
   type StationItem,
+  type StationNameField,
   type TransferLine,
 } from './features/generatorSlice';
 import { FontDetectionHubTiles } from './components/FontDetectionHubTiles';
@@ -305,16 +307,17 @@ function App() {
     );
   };
 
-  const handleCommitStationName = (stationId: string, field: 'chName' | 'enName', value: string) => {
-    const live = generator.stnList.find((item) => item.id === stationId);
+  const handleCommitStationName = (stationId: string, field: StationNameField, value: string) => {
+    const live = store.getState().generator.present.stnList.find((item) => item.id === stationId);
     if (!live || live[field] === value) {
       return;
     }
 
     dispatch(
-      updateStation({
-        ...live,
-        [field]: value,
+      patchStationName({
+        id: stationId,
+        field,
+        value,
       }),
     );
   };

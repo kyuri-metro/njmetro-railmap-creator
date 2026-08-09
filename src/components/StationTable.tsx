@@ -10,7 +10,8 @@ import {
 } from 'react';
 import { createPortal } from 'react-dom';
 import { mergeOverlayRefs, useOverlayPresence, withOverlayOpen } from '@umamichi-ui/common-components/presence';
-import type { StationItem } from '../features/generatorSlice';
+import type { StationItem, StationNameField } from '../features/generatorSlice';
+import { CONTROL_DEBOUNCE_MS } from '../hooks/useDebouncedGeneratorField';
 
 const PencilIcon = () => (
   <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
@@ -20,8 +21,6 @@ const PencilIcon = () => (
     />
   </svg>
 );
-
-type StationNameField = 'chName' | 'enName';
 
 type StationTableProps = Readonly<{
   currentStnId: string;
@@ -65,7 +64,9 @@ type StationCellInputProps = Readonly<{
   onCommit: (value: string) => void;
 }>;
 
-const normalizeStationNameDraft = (raw: string) => raw.replace(/\r?\n/g, '').trim();
+export const normalizeStationNameDraft = (raw: string) => raw.replace(/\r?\n/g, '').trim();
+
+const stripStationNameNewlines = (raw: string) => raw.replace(/\r?\n/g, '');
 
 const autosizeStationCell = (element: HTMLTextAreaElement) => {
   element.style.height = 'auto';
@@ -84,6 +85,18 @@ function StationCellInput({
   const [draft, setDraft] = useState(value);
   const focusedRef = useRef(false);
   const localRef = useRef<HTMLTextAreaElement | null>(null);
+  const valueAtFocusRef = useRef(value);
+  const draftRef = useRef(draft);
+  const onCommitRef = useRef(onCommit);
+  const debounceRef = useRef(0);
+  const skipBlurCommitRef = useRef(false);
+  const composingRef = useRef(false);
+
+  draftRef.current = draft;
+  onCommitRef.current = onCommit;
+
+  const isImeComposingKey = (event: KeyboardEvent<HTMLTextAreaElement>) =>
+    event.nativeEvent.isComposing || event.keyCode === 229;
 
   const setRefs = (element: HTMLTextAreaElement | null) => {
     localRef.current = element;
@@ -105,19 +118,46 @@ function StationCellInput({
     }
   }, [draft, value]);
 
-  const commit = () => {
-    const next = normalizeStationNameDraft(draft);
+  useEffect(
+    () => () => {
+      window.clearTimeout(debounceRef.current);
+    },
+    [],
+  );
+
+  const flushLive = (next: string) => {
+    onCommitRef.current(next);
+  };
+
+  const scheduleLive = (next: string) => {
+    window.clearTimeout(debounceRef.current);
+    debounceRef.current = window.setTimeout(() => {
+      flushLive(next);
+    }, CONTROL_DEBOUNCE_MS);
+  };
+
+  const commitFinal = () => {
+    window.clearTimeout(debounceRef.current);
+    const next = normalizeStationNameDraft(draftRef.current);
     setDraft(next);
-    if (next !== value) {
-      onCommit(next);
-    }
+    draftRef.current = next;
+    flushLive(next);
   };
 
   const cancel = () => {
-    setDraft(value);
+    window.clearTimeout(debounceRef.current);
+    const restored = valueAtFocusRef.current;
+    setDraft(restored);
+    draftRef.current = restored;
+    flushLive(restored);
+    skipBlurCommitRef.current = true;
   };
 
   const onKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
+    if (isImeComposingKey(event)) {
+      return;
+    }
+
     if (event.key === 'Enter') {
       event.preventDefault();
       event.currentTarget.blur();
@@ -142,12 +182,38 @@ function StationCellInput({
       onClick={(event) => event.stopPropagation()}
       onFocus={() => {
         focusedRef.current = true;
+        valueAtFocusRef.current = value;
+        skipBlurCommitRef.current = false;
+        composingRef.current = false;
         onSelectStation();
       }}
-      onChange={(event) => setDraft(event.target.value.replace(/\r?\n/g, ''))}
+      onCompositionStart={() => {
+        composingRef.current = true;
+        window.clearTimeout(debounceRef.current);
+      }}
+      onCompositionEnd={(event) => {
+        composingRef.current = false;
+        const next = stripStationNameNewlines(event.currentTarget.value);
+        setDraft(next);
+        draftRef.current = next;
+        scheduleLive(next);
+      }}
+      onChange={(event) => {
+        const next = stripStationNameNewlines(event.target.value);
+        setDraft(next);
+        draftRef.current = next;
+        if (!composingRef.current) {
+          scheduleLive(next);
+        }
+      }}
       onBlur={() => {
         focusedRef.current = false;
-        commit();
+        composingRef.current = false;
+        if (skipBlurCommitRef.current) {
+          skipBlurCommitRef.current = false;
+          return;
+        }
+        commitFinal();
       }}
       onKeyDown={onKeyDown}
     />

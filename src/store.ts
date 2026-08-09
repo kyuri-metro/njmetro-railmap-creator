@@ -1,13 +1,15 @@
 import { configureStore, createListenerMiddleware, type UnknownAction } from '@reduxjs/toolkit';
-import undoable, { ActionCreators as UndoActionCreators, ActionTypes, groupByActionTypes } from 'redux-undo';
+import undoable, { ActionCreators as UndoActionCreators, ActionTypes, excludeAction } from 'redux-undo';
 import { markAutosaveDirty } from './features/autosaveScheduler';
-import generatorReducer from './features/generatorSlice';
-import { generatorUndoGroupByTypes, isGeneratorMutationAction } from './features/generatorUndoConfig';
+import generatorReducer, { setCurrentStation } from './features/generatorSlice';
+import { createGeneratorUndoGroupBy, isGeneratorMutationAction } from './features/generatorUndoConfig';
 import { clearSavedExempt } from './features/leaveGuard';
 
 const undoableGeneratorReducer = undoable(generatorReducer, {
   limit: 50,
-  groupBy: groupByActionTypes([...generatorUndoGroupByTypes]),
+  filter: excludeAction(setCurrentStation.type),
+  groupBy: createGeneratorUndoGroupBy(),
+  syncFilter: true,
 });
 
 const autosaveListener = createListenerMiddleware();

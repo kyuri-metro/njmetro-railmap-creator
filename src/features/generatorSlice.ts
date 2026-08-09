@@ -56,6 +56,14 @@ type ReplaceStationsPayload = {
   stations: StationItem[];
 };
 
+export type StationNameField = 'chName' | 'enName';
+
+export type PatchStationNamePayload = {
+  id: string;
+  field: StationNameField;
+  value: string;
+};
+
 const builtinLine3Stations = getBuiltinOpenedStationsByLineId('3');
 
 if (!builtinLine3Stations?.length) {
@@ -183,6 +191,14 @@ const generatorSlice = createSlice({
         state.stnList[index] = action.payload;
       }
     },
+    patchStationName(state, action: PayloadAction<PatchStationNamePayload>) {
+      const { id, field, value } = action.payload;
+      const station = state.stnList.find((item) => item.id === id);
+
+      if (station && station[field] !== value) {
+        station[field] = value;
+      }
+    },
     deleteStation(state, action: PayloadAction<string>) {
       state.stnList = state.stnList.filter((item) => item.id !== action.payload);
       state.currentStnId = fallbackCurrentId(state.stnList, state.currentStnId);
@@ -220,5 +236,6 @@ export const {
   replaceStations,
   restoreGeneratorState,
   updateStation,
+  patchStationName,
 } = generatorSlice.actions;
 export default generatorSlice.reducer;

@@ -5,13 +5,20 @@
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，
 版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
-> 以下部分内容由 LLM 生成，但是经过人工检查，可以信任
+> 以下部分内容由 LLM 自动生成，仅供参考
 
 ## [Unreleased]
+
+### Added
+
+- 表格内改中英文站名：输入经短 debounce（约 160ms）以 `patchStationName` 写入预览；Enter 或失焦定稿（trim），Esc 恢复聚焦时的原名。
+- 输入法 composition：拼音组合期间不写 store / 不进撤销；`compositionend` 后再同步预览；组合中的 Enter / Esc 交给 IME，避免误失焦。
 
 ### Changed
 
 - 站点表单元格与站名输入内左右留白略收紧，使列表更易铺满可用宽度（页面主内容 padding 保持原样）。
+- 撤销 `groupBy`：同键且约 800ms 内连续编辑并成一步（站名按站与字段、弹窗换乘/类型按站；总长 / 线路号 / 标识色 / 字色按字段类型），短时连改撤销一次即可回到改前。
+- 切换当前预览站（`setCurrentStation`）不再记入撤销历史。
 
 ### Fixed
 

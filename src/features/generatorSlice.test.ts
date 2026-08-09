@@ -16,6 +16,7 @@ import generatorReducer, {
   setTotalLength,
   setTrainType,
   updateStation,
+  patchStationName,
   type GeneratorState,
   type StationItem,
 } from './generatorSlice';
@@ -160,5 +161,37 @@ describe('generatorSlice', () => {
     const target = state.stnList[1]?.id ?? state.stnList[0].id;
     state = generatorReducer(state, setCurrentStation(target));
     expect(state.currentStnId).toBe(target);
+  });
+
+  it('patchStationName updates one name field', () => {
+    const target = state.stnList[0];
+    state = generatorReducer(
+      state,
+      patchStationName({ id: target.id, field: 'chName', value: '测试站' }),
+    );
+    state = generatorReducer(
+      state,
+      patchStationName({ id: target.id, field: 'enName', value: 'Test Station' }),
+    );
+
+    const next = state.stnList.find((item) => item.id === target.id);
+    expect(next?.chName).toBe('测试站');
+    expect(next?.enName).toBe('Test Station');
+  });
+
+  it('patchStationName no-ops for missing id or unchanged value', () => {
+    const before = state;
+    state = generatorReducer(
+      state,
+      patchStationName({ id: 'missing-id', field: 'chName', value: 'x' }),
+    );
+    expect(state).toBe(before);
+
+    const target = state.stnList[0];
+    state = generatorReducer(
+      state,
+      patchStationName({ id: target.id, field: 'chName', value: target.chName }),
+    );
+    expect(state.stnList[0].chName).toBe(target.chName);
   });
 });
