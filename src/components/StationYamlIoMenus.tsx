@@ -64,6 +64,8 @@ export function StationYamlImportMenu({
 
 type StationYamlExportMenuProps = Readonly<{
   rmgToolConfigured: boolean;
+  /** 含开口支线时拦截 RMG 导出（协议仍为线性站表） */
+  rmgExportBlockedByBranches?: boolean;
   onDownloadYaml: () => void;
   onOpenRmgExport: () => void;
   triggerVariant?: YamlIoMenuTriggerVariant;
@@ -71,10 +73,18 @@ type StationYamlExportMenuProps = Readonly<{
 
 export function StationYamlExportMenu({
   rmgToolConfigured,
+  rmgExportBlockedByBranches = false,
   onDownloadYaml,
   onOpenRmgExport,
   triggerVariant = 'labeled',
 }: StationYamlExportMenuProps) {
+  const rmgExportDisabled = !rmgToolConfigured || rmgExportBlockedByBranches;
+  const rmgExportTitle = rmgExportBlockedByBranches
+    ? '当前线路含开口支线，暂不支持导出为 RMG JSON；请先删除支线或仅下载 YAML'
+    : !rmgToolConfigured
+      ? 'RMG 转换窗口未配置，无法使用此选项'
+      : undefined;
+
   return (
     <FloatingMenu
       menuAriaLabel="导出线路数据"
@@ -96,8 +106,8 @@ export function StationYamlExportMenu({
           kind: 'item',
           id: 'rmg-export',
           label: '导出 RMG JSON 存档',
-          disabled: !rmgToolConfigured,
-          title: !rmgToolConfigured ? 'RMG 转换窗口未配置，无法使用此选项' : undefined,
+          disabled: rmgExportDisabled,
+          title: rmgExportTitle,
           onSelect: onOpenRmgExport,
         },
       ]}

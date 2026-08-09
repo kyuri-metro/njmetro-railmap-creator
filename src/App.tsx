@@ -27,6 +27,7 @@ import { markAutosaveDirty } from './features/autosaveScheduler';
 import { shouldWarnOnLeave } from './features/leaveGuard';
 import {
   deleteStation,
+  insertBranchStation,
   insertStation,
   reverseStnList,
   setCurrentStation,
@@ -38,7 +39,12 @@ import { FontDetectionHubTiles } from './components/FontDetectionHubTiles';
 import { detectTargetFonts, targetFontSignatures, type FontDetectionResult } from './fontSignature';
 import { normalizeTransferLines } from './normalizeTransfer';
 import { serializeRailmapYaml } from './stationListYaml';
-import { findStationInEntries, flattenStationList } from './stationListTopology';
+import {
+  findStationInEntries,
+  flattenStationList,
+  hasOpeningBranches,
+  resolveBranchInsertTarget,
+} from './stationListTopology';
 import { useAppDispatch, useAppSelector, selectCanRedo, selectCanUndo, selectGeneratorPresent } from './hooks';
 import { store, UndoActionCreators } from './store';
 
@@ -164,11 +170,13 @@ function App() {
   const previewLoading = usePreviewLoadingOverlay(generator, 16);
   const {
     totalLength: totalLengthField,
+    branchHeight: branchHeightField,
     lineId: lineIdField,
     idColor: idColorField,
     idTextColor: idTextColorField,
     syncFromGenerator: syncControlDraftsFromGenerator,
   } = useGeneratorControlDrafts(generator);
+  const rmgExportBlockedByBranches = hasOpeningBranches(generator.stnList);
   const { themeMode, toggleTheme } = useThemeMode();
   const [isAboutOpen, setIsAboutOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -283,6 +291,30 @@ function App() {
     setFocusChNameStationId(nextId);
   };
 
+  const canInsertBranchAt = (stationId: string | undefined, position: 'before' | 'after') =>
+    resolveBranchInsertTarget(generator.stnList, position, stationId).ok;
+
+  const branchInsertTitleAt = (stationId: string | undefined, position: 'before' | 'after') => {
+    const result = resolveBranchInsertTarget(generator.stnList, position, stationId);
+    return result.ok ? '在开口支线上插入站点' : result.reason;
+  };
+
+  const insertBranchStationRow = (position: 'before' | 'after', basisStationId?: string) => {
+    const basisId = basisStationId ?? generator.currentStnId;
+    if (!canInsertBranchAt(basisId, position)) {
+      return;
+    }
+    const nextId = `station-${crypto.randomUUID()}`;
+    dispatch(
+      insertBranchStation({
+        position,
+        basisId,
+        station: createEmptyStation(nextId),
+      }),
+    );
+    setFocusChNameStationId(nextId);
+  };
+
   const closeStationModal = () => {
     setStationModalVisible(false);
   };
@@ -341,9 +373,13 @@ function App() {
           setKyuriMetroStudioOpen(true);
         }}
         onOpenRmgExport={() => {
+          if (rmgExportBlockedByBranches) {
+            return;
+          }
           setKyuriRmgModal({ mode: 'export' });
           setKyuriRmgOpen(true);
         }}
+        rmgExportBlockedByBranches={rmgExportBlockedByBranches}
         onOpenSettings={() => setIsSettingsOpen(true)}
         onOpenAbout={() => setIsAboutOpen(true)}
         onToggleTheme={toggleTheme}
@@ -396,6 +432,7 @@ function App() {
             <GeneratorSettingsPanel
               generator={generator}
               totalLengthField={totalLengthField}
+              branchHeightField={branchHeightField}
               lineIdField={lineIdField}
               idColorField={idColorField}
               idTextColorField={idTextColorField}
@@ -422,6 +459,14 @@ function App() {
                 onInsertRelativeTo={(stationId, position) => {
                   insertStationRow(position, stationId);
                 }}
+                onInsertBranch={(position) => {
+                  insertBranchStationRow(position);
+                }}
+                onInsertBranchRelativeTo={(stationId, position) => {
+                  insertBranchStationRow(position, stationId);
+                }}
+                canInsertBranch={canInsertBranchAt}
+                branchInsertTitle={branchInsertTitleAt}
                 onRequestDelete={(station) => {
                   setPendingDeleteStation(station);
                 }}

@@ -1,5 +1,6 @@
 import { useAppDispatch } from '../hooks';
 import {
+  setBranchHeight,
   setIdColor,
   setIdTextColor,
   setLineId,
@@ -17,6 +18,7 @@ import {
 
 export type GeneratorControlDrafts = {
   totalLength: DebouncedGeneratorField;
+  branchHeight: DebouncedGeneratorField;
   lineId: DebouncedGeneratorField;
   idColor: DebouncedGeneratorField;
   idTextColor: DebouncedGeneratorField;
@@ -32,6 +34,16 @@ export function useGeneratorControlDrafts(generator: GeneratorState): GeneratorC
     parse: parseTotalLengthDraft,
     onCommit: (value) => {
       dispatch(setTotalLength(value));
+    },
+    transformInput: (raw) => raw.replace(/\D/g, ''),
+  });
+
+  const branchHeight = useDebouncedGeneratorField({
+    committedValue: generator.branchHeight,
+    formatCommitted: String,
+    parse: parseTotalLengthDraft,
+    onCommit: (value) => {
+      dispatch(setBranchHeight(value));
     },
     transformInput: (raw) => raw.replace(/\D/g, ''),
   });
@@ -68,10 +80,11 @@ export function useGeneratorControlDrafts(generator: GeneratorState): GeneratorC
 
   const syncFromGenerator = (state: GeneratorState) => {
     totalLength.resetFromCommitted(String(state.totalLength));
+    branchHeight.resetFromCommitted(String(state.branchHeight));
     lineId.resetFromCommitted(state.lineId);
     idColor.resetFromCommitted(state.idColor);
     idTextColor.resetFromCommitted(state.idTextColor);
   };
 
-  return { totalLength, lineId, idColor, idTextColor, syncFromGenerator };
+  return { totalLength, branchHeight, lineId, idColor, idTextColor, syncFromGenerator };
 }

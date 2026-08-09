@@ -1,9 +1,11 @@
 import type { UnknownAction } from '@reduxjs/toolkit';
 import {
   deleteStation,
+  insertBranchStation,
   insertStation,
   restoreGeneratorState,
   reverseStnList,
+  setBranchHeight,
   setDirection,
   setIdColor,
   setIdTextColor,
@@ -18,6 +20,7 @@ import {
 
 const trackedMutationTypes = new Set<string>([
   setTotalLength.type,
+  setBranchHeight.type,
   setDirection.type,
   setCurrentStation.type,
   setLineId.type,
@@ -26,6 +29,7 @@ const trackedMutationTypes = new Set<string>([
   setShowStationTypeIcons.type,
   setUseCapsuleTransferMarkers.type,
   insertStation.type,
+  insertBranchStation.type,
   updateStation.type,
   deleteStation.type,
   replaceStations.type,
@@ -35,6 +39,7 @@ const trackedMutationTypes = new Set<string>([
 
 export const generatorUndoGroupByTypes = [
   setTotalLength.type,
+  setBranchHeight.type,
   setLineId.type,
   setIdColor.type,
   setIdTextColor.type,

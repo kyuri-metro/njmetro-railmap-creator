@@ -6,9 +6,11 @@ import {
   flattenStationList,
   getBranchOpeningSide,
   hasOpeningBranches,
+  insertBranchStationInEntries,
   insertStationInEntries,
   isBranchGroup,
   isStationEntry,
+  resolveBranchInsertTarget,
   reverseEntries,
   validateStationListTopology,
   walkStations,
@@ -144,5 +146,20 @@ describe('stationListTopology', () => {
       'b',
     );
     expect(removedAll.map((entry) => (isStationEntry(entry) ? entry.id : 'group'))).toEqual(['c']);
+  });
+
+  it('creates a left opening spur via insertBranchStationInEntries', () => {
+    const linear: StationListEntry[] = [station('m1'), station('m2')];
+    expect(resolveBranchInsertTarget(linear, 'before', 'm1').ok).toBe(true);
+    expect(resolveBranchInsertTarget(linear, 'before', 'm2').ok).toBe(false);
+
+    const created = insertBranchStationInEntries(linear, 'before', 'm1', station('s1'));
+    expect(created.ok).toBe(true);
+    if (!created.ok) {
+      return;
+    }
+    expect(hasOpeningBranches(created.entries)).toBe(true);
+    expect(getBranchOpeningSide(created.entries, 0)).toBe('left');
+    expect(flattenStationList(created.entries).map((item) => item.id)).toEqual(['s1', 'm1', 'm2']);
   });
 });

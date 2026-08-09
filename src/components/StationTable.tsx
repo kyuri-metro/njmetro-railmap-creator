@@ -31,6 +31,10 @@ type StationTableProps = Readonly<{
   onEdit: (station: StationItem) => void;
   onInsert: (position: 'before' | 'after' | 'start' | 'end') => void;
   onInsertRelativeTo: (stationId: string, position: 'before' | 'after') => void;
+  onInsertBranch: (position: 'before' | 'after') => void;
+  onInsertBranchRelativeTo: (stationId: string, position: 'before' | 'after') => void;
+  canInsertBranch: (stationId: string | undefined, position: 'before' | 'after') => boolean;
+  branchInsertTitle: (stationId: string | undefined, position: 'before' | 'after') => string;
   onRequestDelete: (station: StationItem) => void;
   onReverseList: () => void;
   onSelect: (stationId: string) => void;
@@ -162,6 +166,10 @@ export function StationTable({
   onEdit,
   onInsert,
   onInsertRelativeTo,
+  onInsertBranch,
+  onInsertBranchRelativeTo,
+  canInsertBranch,
+  branchInsertTitle,
   onRequestDelete,
   onReverseList,
   onSelect,
@@ -293,6 +301,36 @@ export function StationTable({
             之后插入
           </button>
         </li>
+        <li role="none">
+          <button
+            type="button"
+            className="dropdown-menu-item"
+            role="menuitem"
+            disabled={!canInsertBranch(contextMenu.station.id, 'before')}
+            title={branchInsertTitle(contextMenu.station.id, 'before')}
+            onClick={() => {
+              onInsertBranchRelativeTo(contextMenu.station.id, 'before');
+              closeContextMenu();
+            }}
+          >
+            之前插入（支线）
+          </button>
+        </li>
+        <li role="none">
+          <button
+            type="button"
+            className="dropdown-menu-item"
+            role="menuitem"
+            disabled={!canInsertBranch(contextMenu.station.id, 'after')}
+            title={branchInsertTitle(contextMenu.station.id, 'after')}
+            onClick={() => {
+              onInsertBranchRelativeTo(contextMenu.station.id, 'after');
+              closeContextMenu();
+            }}
+          >
+            之后插入（支线）
+          </button>
+        </li>
       </ul>
     </div>
   ) : null;
@@ -307,6 +345,24 @@ export function StationTable({
             </button>
             <button type="button" className="outline-button" onClick={() => onInsert('before')}>
               之前插入
+            </button>
+            <button
+              type="button"
+              className="outline-button"
+              disabled={!canInsertBranch(currentStnId || undefined, 'after')}
+              title={branchInsertTitle(currentStnId || undefined, 'after')}
+              onClick={() => onInsertBranch('after')}
+            >
+              之后插入（支线）
+            </button>
+            <button
+              type="button"
+              className="outline-button"
+              disabled={!canInsertBranch(currentStnId || undefined, 'before')}
+              title={branchInsertTitle(currentStnId || undefined, 'before')}
+              onClick={() => onInsertBranch('before')}
+            >
+              之前插入（支线）
             </button>
             <button type="button" className="outline-button" onClick={() => onInsert('start')}>
               最前插入

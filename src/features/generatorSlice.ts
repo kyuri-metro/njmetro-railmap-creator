@@ -8,10 +8,12 @@ import {
   DEFAULT_BRANCH_HEIGHT,
   deleteStationFromEntries,
   flattenStationList,
+  insertBranchStationInEntries,
   insertStationInEntries,
   mapStationsInEntries,
   reverseEntries,
   updateStationInEntries,
+  type BranchInsertPosition,
   type InsertStationPosition,
   type StationListEntry,
 } from '../stationListTopology';
@@ -60,6 +62,12 @@ export type GeneratorState = {
 
 type InsertStationPayload = {
   position: InsertStationPosition;
+  basisId?: string;
+  station: StationItem;
+};
+
+type InsertBranchStationPayload = {
+  position: BranchInsertPosition;
   basisId?: string;
   station: StationItem;
 };
@@ -186,6 +194,15 @@ const generatorSlice = createSlice({
       state.stnList = insertStationInEntries(state.stnList, position, basisId, station);
       state.currentStnId = station.id;
     },
+    insertBranchStation(state, action: PayloadAction<InsertBranchStationPayload>) {
+      const { position, basisId, station } = action.payload;
+      const result = insertBranchStationInEntries(state.stnList, position, basisId, station);
+      if (!result.ok) {
+        return;
+      }
+      state.stnList = result.entries;
+      state.currentStnId = station.id;
+    },
     updateStation(state, action: PayloadAction<StationItem>) {
       state.stnList = updateStationInEntries(state.stnList, action.payload);
     },
@@ -209,6 +226,7 @@ const generatorSlice = createSlice({
 
 export const {
   deleteStation,
+  insertBranchStation,
   insertStation,
   reverseStnList,
   setBranchHeight,

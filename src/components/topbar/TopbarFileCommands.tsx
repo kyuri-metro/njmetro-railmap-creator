@@ -11,6 +11,7 @@ type TopbarFileCommandsProps = Readonly<{
   onOpenRmgImport: () => void;
   onOpenMetroStudioImport: () => void;
   onOpenRmgExport: () => void;
+  rmgExportBlockedByBranches?: boolean;
 }>;
 
 export function TopbarFileCommands({
@@ -22,6 +23,7 @@ export function TopbarFileCommands({
   onOpenRmgImport,
   onOpenMetroStudioImport,
   onOpenRmgExport,
+  rmgExportBlockedByBranches = false,
 }: TopbarFileCommandsProps) {
   return (
     <fieldset className="app-topbar-file-commands app-topbar-action--desktop-only">
@@ -40,6 +42,7 @@ export function TopbarFileCommands({
       <StationYamlExportMenu
         triggerVariant="icon"
         rmgToolConfigured={rmgToolConfigured}
+        rmgExportBlockedByBranches={rmgExportBlockedByBranches}
         onDownloadYaml={onDownloadYaml}
         onOpenRmgExport={onOpenRmgExport}
       />

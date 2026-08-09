@@ -302,3 +302,155 @@ export const deleteStationFromEntries = (
       return { branches, main };
     })
     .filter((entry): entry is StationListEntry => entry !== null);
+
+export type BranchInsertPosition = 'before' | 'after';
+
+export type BranchInsertTarget =
+  | { ok: true; side: OpeningSide }
+  | { ok: false; reason: string };
+
+const rootStationEntries = (entries: readonly StationListEntry[]): StationItem[] =>
+  entries.filter(isStationEntry);
+
+const findOpeningEntryIndex = (entries: readonly StationListEntry[], side: OpeningSide): number =>
+  entries.findIndex((_, index) => getBranchOpeningSide(entries, index) === side);
+
+/** 判断「之前/之后插入（支线）」是否可用（1A：仅两端开口）。 */
+export const resolveBranchInsertTarget = (
+  entries: readonly StationListEntry[],
+  position: BranchInsertPosition,
+  basisId: string | undefined,
+): BranchInsertTarget => {
+  const located = basisId ? findStationInEntries(entries, basisId) : null;
+  const roots = rootStationEntries(entries);
+
+  if (located?.openingSide) {
+    return { ok: true, side: located.openingSide };
+  }
+
+  if (located && located.branchIndex === null) {
+    if (position === 'before' && roots[0]?.id === located.station.id) {
+      return { ok: true, side: 'left' };
+    }
+    if (position === 'after' && roots[roots.length - 1]?.id === located.station.id) {
+      return { ok: true, side: 'right' };
+    }
+    return {
+      ok: false,
+      reason: '仅可在线路左端汇合站之前或右端汇合站之后插入开口支线',
+    };
+  }
+
+  if (!located) {
+    if (roots.length === 0) {
+      return { ok: false, reason: '请先添加主线站点，再插入开口支线' };
+    }
+    return {
+      ok: false,
+      reason: '请先选中汇合站或已有支线上的站点',
+    };
+  }
+
+  return { ok: false, reason: '无法在此位置插入支线' };
+};
+
+/**
+ * 在左/右开口的非 main 支线上插入站点；若该侧尚无开口则创建
+ * `{ branches: [[station], []], main: 1 }`（左）或 `{ branches: [[], [station]], main: 0 }`（右）。
+ */
+export const insertBranchStationInEntries = (
+  entries: readonly StationListEntry[],
+  position: BranchInsertPosition,
+  basisId: string | undefined,
+  station: StationItem,
+): { ok: true; entries: StationListEntry[] } | { ok: false; reason: string } => {
+  const target = resolveBranchInsertTarget(entries, position, basisId);
+  if (!target.ok) {
+    return target;
+  }
+
+  const { side } = target;
+  const openingIndex = findOpeningEntryIndex(entries, side);
+  const located = basisId ? findStationInEntries(entries, basisId) : null;
+
+  if (openingIndex === -1) {
+    if (rootStationEntries(entries).length === 0) {
+      return { ok: false, reason: '请先添加主线站点，再插入开口支线' };
+    }
+    const group: BranchGroup =
+      side === 'left'
+        ? { branches: [[station], []], main: 1 }
+        : { branches: [[], [station]], main: 0 };
+    const next = side === 'left' ? [group, ...entries] : [...entries, group];
+    const topology = validateStationListTopology(next);
+    if (!topology.ok) {
+      return { ok: false, reason: topology.error };
+    }
+    return { ok: true, entries: next };
+  }
+
+  const opening = entries[openingIndex];
+  if (!isBranchGroup(opening)) {
+    return { ok: false, reason: '支线块状态无效' };
+  }
+
+  let branches = opening.branches.map((branch) => [...branch]);
+  while (branches.length < 2) {
+    branches.push([]);
+  }
+
+  const sideIndex = branches.findIndex((_, index) => index !== opening.main);
+  if (sideIndex === -1) {
+    return { ok: false, reason: '找不到非主支线' };
+  }
+
+  if (
+    located &&
+    located.entryIndex === openingIndex &&
+    located.branchIndex !== null &&
+    located.branchIndex !== opening.main
+  ) {
+    const branch = [...branches[located.branchIndex]];
+    const indexInBranch = located.indexInBranch ?? 0;
+    const insertAt = position === 'before' ? indexInBranch : indexInBranch + 1;
+    branch.splice(insertAt, 0, station);
+    branches[located.branchIndex] = branch;
+  } else if (
+    located &&
+    located.entryIndex === openingIndex &&
+    located.branchIndex === opening.main
+  ) {
+    // 基准在 main 腿上：写入侧支线末端/首端
+    const branch = [...branches[sideIndex]];
+    if (side === 'left') {
+      branch.push(station);
+    } else {
+      branch.unshift(station);
+    }
+    branches[sideIndex] = branch;
+  } else {
+    const branch = [...branches[sideIndex]];
+    if (side === 'left') {
+      if (position === 'before') {
+        branch.unshift(station);
+      } else {
+        branch.push(station);
+      }
+    } else if (position === 'before') {
+      branch.unshift(station);
+    } else {
+      branch.push(station);
+    }
+    branches[sideIndex] = branch;
+  }
+
+  const main = Math.min(opening.main, branches.length - 1);
+  const next = entries.map((entry, index) =>
+    index === openingIndex ? { branches, main } : entry,
+  );
+  const topology = validateStationListTopology(next);
+  if (!topology.ok) {
+    return { ok: false, reason: topology.error };
+  }
+  return { ok: true, entries: next };
+};

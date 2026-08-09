@@ -95,6 +95,7 @@ export type AppTopbarProps = {
   onOpenRmgImport: () => void;
   onOpenMetroStudioImport: () => void;
   onOpenRmgExport: () => void;
+  rmgExportBlockedByBranches?: boolean;
   onOpenSettings: () => void;
   onOpenAbout: () => void;
   onToggleTheme: () => void;
@@ -114,6 +115,7 @@ export const AppTopbar = ({
   onOpenRmgImport,
   onOpenMetroStudioImport,
   onOpenRmgExport,
+  rmgExportBlockedByBranches = false,
   onOpenSettings,
   onOpenAbout,
   onToggleTheme,
@@ -156,6 +158,7 @@ export const AppTopbar = ({
             onOpenRmgImport={onOpenRmgImport}
             onOpenMetroStudioImport={onOpenMetroStudioImport}
             onOpenRmgExport={onOpenRmgExport}
+            rmgExportBlockedByBranches={rmgExportBlockedByBranches}
           />
           <hr
             className="app-topbar-divider app-topbar-action--desktop-only"
@@ -287,8 +290,12 @@ export const AppTopbar = ({
                 kind: 'item',
                 id: 'export-rmg',
                 label: '导出 RMG JSON 存档',
-                disabled: !KYURI_RMG_IFRAME_ORIGIN,
-                title: !KYURI_RMG_IFRAME_ORIGIN ? 'RMG 转换窗口未配置，无法使用此选项' : undefined,
+                disabled: !KYURI_RMG_IFRAME_ORIGIN || rmgExportBlockedByBranches,
+                title: rmgExportBlockedByBranches
+                  ? '当前线路含开口支线，暂不支持导出为 RMG JSON；请先删除支线或仅下载 YAML'
+                  : !KYURI_RMG_IFRAME_ORIGIN
+                    ? 'RMG 转换窗口未配置，无法使用此选项'
+                    : undefined,
                 onSelect: onOpenRmgExport,
               },
             ],

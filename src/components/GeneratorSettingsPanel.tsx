@@ -13,6 +13,7 @@ import { TRAIN_TYPE_OPTIONS, type TrainType } from '../trainTypeLayout';
 export type GeneratorSettingsPanelProps = {
   generator: GeneratorState;
   totalLengthField: DebouncedGeneratorField;
+  branchHeightField: DebouncedGeneratorField;
   lineIdField: DebouncedGeneratorField;
   idColorField: DebouncedGeneratorField;
   idTextColorField: DebouncedGeneratorField;
@@ -21,6 +22,7 @@ export type GeneratorSettingsPanelProps = {
 export const GeneratorSettingsPanel = ({
   generator,
   totalLengthField,
+  branchHeightField,
   lineIdField,
   idColorField,
   idTextColorField,
@@ -42,6 +44,19 @@ export const GeneratorSettingsPanel = ({
             value={totalLengthField.draft}
             onChange={(event) => totalLengthField.onDraftChange(event.target.value)}
             onBlur={totalLengthField.onBlur}
+          />
+        </label>
+        <label className="field-label">
+          <span>支线间距 branchHeight（px）</span>
+          <input
+            className="text-input"
+            type="text"
+            inputMode="numeric"
+            autoComplete="off"
+            spellCheck={false}
+            value={branchHeightField.draft}
+            onChange={(event) => branchHeightField.onDraftChange(event.target.value)}
+            onBlur={branchHeightField.onBlur}
           />
         </label>
         <label className="field-label">
