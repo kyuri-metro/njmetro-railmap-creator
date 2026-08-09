@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import generatorReducer, {
   getEmptyGeneratorState,
   patchStationName,
+  resolvePreferredCurrentStationId,
   restoreGeneratorState,
   setCurrentStation,
   setLineId,
@@ -193,6 +194,33 @@ describe('undoable generator history', () => {
 
     expect(state.past).toHaveLength(1);
     expect(state.present.lineId).toBe('2');
+    expect(state.present.currentStnId).toBe('b');
+  });
+
+  it('can restore preferred current station after undo when still in the list', () => {
+    const now = { t: 0 };
+    const reducer = createHistoryReducer(now);
+    let state = reducer(undefined, { type: '@@INIT' });
+    state = reducer(
+      state,
+      restoreGeneratorState({
+        ...getEmptyGeneratorState(),
+        stnList: [station({ id: 'a', chName: '甲' }), station({ id: 'b', chName: '乙' })],
+        currentStnId: 'a',
+        lineId: '3',
+      }),
+    );
+    state = reducer(state, ActionCreators.clearHistory());
+
+    state = reducer(state, setLineId('1'));
+    state = reducer(state, setCurrentStation('b'));
+    const preferredId = state.present.currentStnId;
+
+    state = reducer(state, ActionCreators.undo());
+    const restoredId = resolvePreferredCurrentStationId(state.present.stnList, preferredId);
+    state = reducer(state, setCurrentStation(restoredId));
+
+    expect(state.present.lineId).toBe('3');
     expect(state.present.currentStnId).toBe('b');
   });
 });

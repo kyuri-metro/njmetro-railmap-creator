@@ -29,6 +29,7 @@ import {
   deleteStation,
   insertStation,
   patchStationName,
+  resolvePreferredCurrentStationId,
   reverseStnList,
   setCurrentStation,
   updateStation,
@@ -191,16 +192,28 @@ function App() {
     },
   });
 
-  const applyUndo = () => {
-    dispatch(UndoActionCreators.undo());
+  const applyHistoryNavigation = (navigate: () => void) => {
+    const preferredId = store.getState().generator.present.currentStnId;
+    navigate();
+    const present = store.getState().generator.present;
+    const nextId = resolvePreferredCurrentStationId(present.stnList, preferredId);
+    if (present.currentStnId !== nextId) {
+      dispatch(setCurrentStation(nextId));
+    }
     markAutosaveDirty();
     queueMicrotask(() => syncControlDraftsFromGenerator(store.getState().generator.present));
   };
 
+  const applyUndo = () => {
+    applyHistoryNavigation(() => {
+      dispatch(UndoActionCreators.undo());
+    });
+  };
+
   const applyRedo = () => {
-    dispatch(UndoActionCreators.redo());
-    markAutosaveDirty();
-    queueMicrotask(() => syncControlDraftsFromGenerator(store.getState().generator.present));
+    applyHistoryNavigation(() => {
+      dispatch(UndoActionCreators.redo());
+    });
   };
 
   useEffect(() => {

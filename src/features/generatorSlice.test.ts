@@ -5,6 +5,7 @@ import generatorReducer, {
   getEmptyGeneratorState,
   insertStation,
   replaceStations,
+  resolvePreferredCurrentStationId,
   reverseStnList,
   setCurrentStation,
   setDirection,
@@ -161,6 +162,13 @@ describe('generatorSlice', () => {
     const target = state.stnList[1]?.id ?? state.stnList[0].id;
     state = generatorReducer(state, setCurrentStation(target));
     expect(state.currentStnId).toBe(target);
+  });
+
+  it('resolvePreferredCurrentStationId keeps preferred id or falls back to first', () => {
+    const [first, second] = state.stnList;
+    expect(resolvePreferredCurrentStationId(state.stnList, second.id)).toBe(second.id);
+    expect(resolvePreferredCurrentStationId(state.stnList, 'missing')).toBe(first.id);
+    expect(resolvePreferredCurrentStationId([], 'missing')).toBe('');
   });
 
   it('patchStationName updates one name field', () => {

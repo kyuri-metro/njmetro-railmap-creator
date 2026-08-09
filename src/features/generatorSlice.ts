@@ -119,6 +119,9 @@ const fallbackCurrentId = (stations: StationItem[], currentId: string) => {
   return stations[0]?.id ?? '';
 };
 
+/** Keep a preferred station id when still present; otherwise first station (or ''). */
+export const resolvePreferredCurrentStationId = fallbackCurrentId;
+
 const generatorSlice = createSlice({
   name: 'generator',
   initialState,
