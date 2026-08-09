@@ -6,6 +6,7 @@ import {
   hasBranchGeometry,
   layoutBranchRoute,
 } from '../branchLayout';
+import { computeActiveTrackEdgeKeys, isTrackEdgeActive } from '../branchReachability';
 import type { GeneratorState, StationItem, TransferLine } from '../features/generatorSlice';
 import { flattenStationList } from '../stationListTopology';
 import { njmetroDingsFontStack, sansLatinFontStack, sansZhFontStack } from '../fontStacks';
@@ -504,6 +505,13 @@ export function RouteBadge({ data }: RouteBadgeProps) {
   const terminusIds = collectTerminusStationIds(stnList);
   const trackEdges = collectTrackEdges(stnList);
   const branched = hasBranchGeometry(stnList);
+  const activeEdgeKeys = computeActiveTrackEdgeKeys(
+    stnList,
+    currentStnId,
+    direction,
+    layout.stations,
+    trackEdges,
+  );
 
   const { route: width, height } = getBadgeCanvasSizes(trainType);
   const { anchor } = useSvgPositioner(width, height);
@@ -535,20 +543,8 @@ export function RouteBadge({ data }: RouteBadgeProps) {
     return isAheadStation ? transferIconColor : inactiveColor;
   };
 
-  const edgeColor = (fromId: string, toId: string) => {
-    if (!branched) {
-      const fromIndex = indexById.get(fromId) ?? 0;
-      const toIndex = indexById.get(toId) ?? 0;
-      const lo = Math.min(fromIndex, toIndex);
-      const hi = Math.max(fromIndex, toIndex);
-      if (direction === 'l') {
-        return hi <= safeCurrentIndex ? idColor : inactiveColor;
-      }
-      return lo >= safeCurrentIndex ? idColor : inactiveColor;
-    }
-    // C6 前：含支线时线路暂统一用主题色（可达染色下一步）
-    return idColor;
-  };
+  const edgeColor = (fromId: string, toId: string) =>
+    isTrackEdgeActive(activeEdgeKeys, fromId, toId) ? idColor : inactiveColor;
 
   const toView = (stationId: string) => {
     const point = pointById.get(stationId);
