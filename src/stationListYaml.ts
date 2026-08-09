@@ -1,16 +1,27 @@
 import YAML from 'yaml';
 import type { GeneratorState, StationItem, StationType, TrainDirection, TransferLine } from './features/generatorSlice';
+import {
+  isStationEntry,
+  validateStationListTopology,
+  type BranchGroup,
+  type StationListEntry,
+} from './stationListTopology';
 import { DEFAULT_TRAIN_TYPE, isTrainType, type TrainType } from './trainTypeLayout';
 
 const STATION_TYPES = new Set<StationType>(['none', 'railway', 'airport']);
 
 const V1_MIGRATE_DEFAULT_TEXT_COLOR = '#ffffff';
 
-/** Kyuri naive 3.0 文档 schema（与 kyuri-naive-from-and-to-rmg 一致；导出用 https） */
+/** Kyuri naive 文档 schema（与 kyuri-naive-from-and-to-rmg 一致；导出用 https） */
 const KYURI_NAIVE_SCHEMA = 'https://umamichi.moe/2026/kyuri-naive';
 
 /** 将历史明文协议标识规范为 https，避免源码中保留 http 字面量。 */
 const canonicalizeSchemaUri = (raw: string) => raw.trim().replace(/^http:\/\//i, 'https://');
+
+/** 开口支线竖直间距默认值（px）；45° 边长为 branchHeight√2 */
+export const DEFAULT_BRANCH_HEIGHT = 120;
+
+type DocVersion = 1 | 2 | 3 | 4;
 
 export type NjMetroSettingsYaml = {
   totalLength: number;
@@ -19,6 +30,7 @@ export type NjMetroSettingsYaml = {
   showStationTypeIcons: boolean;
   useCapsuleTransferMarkers: boolean;
   trainType: TrainType;
+  branchHeight: number;
 };
 
 export type RailmapYamlImport = {
@@ -26,7 +38,7 @@ export type RailmapYamlImport = {
   color: string;
   lineIdTextColor: string;
   njMetroSettings: NjMetroSettingsYaml;
-  stations: StationItem[];
+  stations: StationListEntry[];
 };
 
 const normalizeHexColor = (raw: string): string => {
@@ -53,20 +65,14 @@ const toScalarString = (raw: unknown): string | null => {
   return null;
 };
 
-const parseYamlDocumentVersion = (raw: unknown): 1 | 2 | 3 | null => {
+const parseYamlDocumentVersion = (raw: unknown): DocVersion | null => {
   if (raw === undefined || raw === null) {
     return 1;
   }
 
   if (typeof raw === 'number') {
-    if (raw === 1) {
-      return 1;
-    }
-    if (raw === 2) {
-      return 2;
-    }
-    if (raw === 3) {
-      return 3;
+    if (raw === 1 || raw === 2 || raw === 3 || raw === 4) {
+      return raw;
     }
     return null;
   }
@@ -76,16 +82,32 @@ const parseYamlDocumentVersion = (raw: unknown): 1 | 2 | 3 | null => {
   }
 
   const s = raw.trim();
-  if (s === '1') {
-    return 1;
-  }
-  if (s === '2') {
-    return 2;
-  }
-  if (s === '3') {
-    return 3;
+  if (s === '1' || s === '2' || s === '3' || s === '4') {
+    return Number(s) as DocVersion;
   }
   return null;
+};
+
+/**
+ * version 1 文档不包含 `lineIdTextColor`、换乘 `textColor` 的语义；导入后统一按 v2 形状写入白色（`#ffffff`）。
+ * 调用方传入的上述字段（若存在）一律忽略。
+ */
+const mapStationTransferTextColor = (station: StationItem, textColor: string): StationItem => ({
+  ...station,
+  transfer: station.transfer.map((line) => ({
+    ...line,
+    textColor,
+  })),
+});
+
+const mapEntryTransferTextColor = (entry: StationListEntry, textColor: string): StationListEntry => {
+  if (isStationEntry(entry)) {
+    return mapStationTransferTextColor(entry, textColor);
+  }
+  return {
+    ...entry,
+    branches: entry.branches.map((branch) => branch.map((station) => mapStationTransferTextColor(station, textColor))),
+  };
 };
 
 /**
@@ -96,13 +118,7 @@ export function migrateRailmapYamlV1ToV2(data: RailmapYamlImport): RailmapYamlIm
   return {
     ...data,
     lineIdTextColor: V1_MIGRATE_DEFAULT_TEXT_COLOR,
-    stations: data.stations.map((station) => ({
-      ...station,
-      transfer: station.transfer.map((line) => ({
-        ...line,
-        textColor: V1_MIGRATE_DEFAULT_TEXT_COLOR,
-      })),
-    })),
+    stations: data.stations.map((entry) => mapEntryTransferTextColor(entry, V1_MIGRATE_DEFAULT_TEXT_COLOR)),
   };
 }
 
@@ -116,19 +132,38 @@ const slugId = (zh: string, en: string, index: number): string => {
 
 const sanitizeId = (raw: string): string => raw.trim().replace(/\s+/g, '-').replace(/[^a-zA-Z0-9\-_]/g, '').slice(0, 64) || 'station';
 
-const ensureUniqueIds = (stations: StationItem[]): StationItem[] => {
+const uniquifyStationId = (station: StationItem, index: number, seen: Set<string>): StationItem => {
+  let id = station.id?.trim() ? station.id : slugId(station.chName, station.enName, index);
+  id = sanitizeId(id);
+  let n = 0;
+  let candidate = id;
+  while (seen.has(candidate)) {
+    n += 1;
+    candidate = `${id}-${n}`;
+  }
+  seen.add(candidate);
+  return { ...station, id: candidate };
+};
+
+const ensureUniqueIdsInEntries = (entries: StationListEntry[]): StationListEntry[] => {
   const seen = new Set<string>();
-  return stations.map((station, index) => {
-    let id = station.id?.trim() ? station.id : slugId(station.chName, station.enName, index);
-    id = sanitizeId(id);
-    let n = 0;
-    let candidate = id;
-    while (seen.has(candidate)) {
-      n += 1;
-      candidate = `${id}-${n}`;
+  let index = 0;
+  return entries.map((entry) => {
+    if (isStationEntry(entry)) {
+      const next = uniquifyStationId(entry, index, seen);
+      index += 1;
+      return next;
     }
-    seen.add(candidate);
-    return { ...station, id: candidate };
+    return {
+      ...entry,
+      branches: entry.branches.map((branch) =>
+        branch.map((station) => {
+          const next = uniquifyStationId(station, index, seen);
+          index += 1;
+          return next;
+        }),
+      ),
+    };
   });
 };
 
@@ -169,7 +204,7 @@ const parseNameBlock = (raw: unknown): { zh: string; en: string } | null => {
 
 const parseTransferLineItem = (
   o: Record<string, unknown>,
-  docVersion: 1 | 2 | 3,
+  docVersion: DocVersion,
   stationIndex: number,
 ): TransferLine | { ok: false; message: string } | null => {
   const lineRaw = o.lineId ?? o.id;
@@ -188,7 +223,7 @@ const parseTransferLineItem = (
     if (!isValidHex6(textRaw)) {
       return {
         ok: false,
-        message: `第 ${stationIndex + 1} 个站点：version 2 或 3 要求每条换乘包含有效的 textColor（#RRGGBB）。`,
+        message: `第 ${stationIndex + 1} 个站点：version 2 及以上要求每条换乘包含有效的 textColor（#RRGGBB）。`,
       };
     }
     return { id, color, textColor: normalizeHexColor(textRaw) };
@@ -199,7 +234,7 @@ const parseTransferLineItem = (
 
 const parseTransferBlock = (
   raw: unknown,
-  docVersion: 1 | 2 | 3,
+  docVersion: DocVersion,
   stationIndex: number,
 ): TransferLine[] | { ok: false; message: string } => {
   if (!Array.isArray(raw)) {
@@ -234,19 +269,119 @@ const parseType = (raw: unknown): StationType => {
 };
 
 type ParseStationsYamlArrayResult =
-  | { ok: true; stations: StationItem[] }
+  | { ok: true; stations: StationListEntry[] }
   | { ok: false; message: string };
+
+type ParseStationObjectResult = { ok: true; station: StationItem } | { ok: false; message: string };
+
+const parseStationObject = (
+  o: Record<string, unknown>,
+  docVersion: DocVersion,
+  errorLabel: string,
+  indexForSlug: number,
+): ParseStationObjectResult => {
+  const names = parseNameBlock(o.name);
+
+  if (!names) {
+    return { ok: false, message: `${errorLabel}：缺少有效的 name（zh / en）。` };
+  }
+
+  const idScalar = toScalarString(o.id);
+  const idRaw = idScalar !== null ? idScalar.trim() : '';
+  const fromRaw = idRaw ? sanitizeId(idRaw) : '';
+  const id = fromRaw || slugId(names.zh, names.en, indexForSlug);
+
+  const transferResult = parseTransferBlock(o.transfer, docVersion, indexForSlug);
+  if (!Array.isArray(transferResult)) {
+    return transferResult;
+  }
+
+  return {
+    ok: true,
+    station: {
+      id,
+      chName: names.zh,
+      enName: names.en,
+      type: parseType(o.type),
+      transfer: transferResult,
+    },
+  };
+};
+
+const parseStationListArray = (
+  data: unknown[],
+  docVersion: DocVersion,
+  errorPrefix: string,
+): { ok: true; stations: StationItem[] } | { ok: false; message: string } => {
+  const stations: StationItem[] = [];
+
+  for (let i = 0; i < data.length; i += 1) {
+    const row = data[i];
+    if (row === null || typeof row !== 'object' || Array.isArray(row)) {
+      return { ok: false, message: `${errorPrefix}第 ${i + 1} 个站点：必须是对象。` };
+    }
+    if ('branches' in (row as object)) {
+      return { ok: false, message: `${errorPrefix}第 ${i + 1} 项：不允许嵌套 branches。` };
+    }
+    const parsed = parseStationObject(row as Record<string, unknown>, docVersion, `${errorPrefix}第 ${i + 1} 个站点`, i);
+    if (!parsed.ok) {
+      return parsed;
+    }
+    stations.push(parsed.station);
+  }
+
+  return { ok: true, stations };
+};
+
+const parseBranchGroupObject = (
+  o: Record<string, unknown>,
+  docVersion: DocVersion,
+  entryIndex: number,
+): { ok: true; group: BranchGroup } | { ok: false; message: string } => {
+  if (!Array.isArray(o.branches)) {
+    return { ok: false, message: `第 ${entryIndex + 1} 项：branches 必须是数组。` };
+  }
+
+  if (typeof o.main !== 'number' || !Number.isInteger(o.main)) {
+    return { ok: false, message: `第 ${entryIndex + 1} 项：main 必须是整数。` };
+  }
+
+  const branches: StationItem[][] = [];
+  for (let branchIndex = 0; branchIndex < o.branches.length; branchIndex += 1) {
+    const branchRaw = o.branches[branchIndex];
+    if (!Array.isArray(branchRaw)) {
+      return { ok: false, message: `第 ${entryIndex + 1} 项：branches[${branchIndex}] 必须是站点数组。` };
+    }
+    const parsed = parseStationListArray(
+      branchRaw,
+      docVersion,
+      `第 ${entryIndex + 1} 项 branches[${branchIndex}] `,
+    );
+    if (!parsed.ok) {
+      return parsed;
+    }
+    branches.push(parsed.stations);
+  }
+
+  return {
+    ok: true,
+    group: {
+      branches,
+      main: o.main,
+    },
+  };
+};
 
 const parseStationsYamlArray = (
   data: unknown[],
   errorPrefix: string,
-  docVersion: 1 | 2 | 3,
+  docVersion: DocVersion,
 ): ParseStationsYamlArrayResult => {
   if (data.length === 0) {
     return { ok: false, message: `${errorPrefix}站点列表为空。` };
   }
 
-  const stations: StationItem[] = [];
+  const stations: StationListEntry[] = [];
 
   for (let i = 0; i < data.length; i += 1) {
     const row = data[i];
@@ -256,32 +391,46 @@ const parseStationsYamlArray = (
     }
 
     const o = row as Record<string, unknown>;
-    const names = parseNameBlock(o.name);
 
-    if (!names) {
-      return { ok: false, message: `${errorPrefix}第 ${i + 1} 个站点：缺少有效的 name（zh / en）。` };
+    if ('branches' in o) {
+      if (docVersion < 4) {
+        return {
+          ok: false,
+          message: `${errorPrefix}第 ${i + 1} 项：branches 仅在 version 4 中受支持。`,
+        };
+      }
+      const groupResult = parseBranchGroupObject(o, docVersion, i);
+      if (!groupResult.ok) {
+        return groupResult;
+      }
+      stations.push(groupResult.group);
+      continue;
     }
 
-    const idScalar = toScalarString(o.id);
-    const idRaw = idScalar !== null ? idScalar.trim() : '';
-    const fromRaw = idRaw ? sanitizeId(idRaw) : '';
-    const id = fromRaw || slugId(names.zh, names.en, i);
-
-    const transferResult = parseTransferBlock(o.transfer, docVersion, i);
-    if (!Array.isArray(transferResult)) {
-      return transferResult;
+    const parsed = parseStationObject(o, docVersion, `${errorPrefix}第 ${i + 1} 个站点`, i);
+    if (!parsed.ok) {
+      return parsed;
     }
-
-    stations.push({
-      id,
-      chName: names.zh,
-      enName: names.en,
-      type: parseType(o.type),
-      transfer: transferResult,
-    });
+    stations.push(parsed.station);
   }
 
-  return { ok: true, stations: ensureUniqueIds(stations) };
+  const unique = ensureUniqueIdsInEntries(stations);
+
+  if (docVersion >= 4) {
+    const topology = validateStationListTopology(unique);
+    if (!topology.ok) {
+      return { ok: false, message: `${errorPrefix}拓扑无效：${topology.error}` };
+    }
+  }
+
+  return { ok: true, stations: unique };
+};
+
+const parseBranchHeight = (raw: unknown): number => {
+  if (typeof raw === 'number' && Number.isFinite(raw)) {
+    return Math.max(0, Math.trunc(raw));
+  }
+  return DEFAULT_BRANCH_HEIGHT;
 };
 
 const mergeNjMetroSettings = (raw: unknown, fb: GeneratorState): NjMetroSettingsYaml => {
@@ -304,15 +453,27 @@ const mergeNjMetroSettings = (raw: unknown, fb: GeneratorState): NjMetroSettings
   const useCapsuleTransferMarkers =
     typeof o.useCapsuleTransferMarkers === 'boolean' ? o.useCapsuleTransferMarkers : false;
   const trainType = isTrainType(o.trainType) ? o.trainType : DEFAULT_TRAIN_TYPE;
+  const branchHeight = 'branchHeight' in o ? parseBranchHeight(o.branchHeight) : DEFAULT_BRANCH_HEIGHT;
 
-  return { totalLength, direction, currentStnId, showStationTypeIcons, useCapsuleTransferMarkers, trainType };
+  return {
+    totalLength,
+    direction,
+    currentStnId,
+    showStationTypeIcons,
+    useCapsuleTransferMarkers,
+    trainType,
+    branchHeight,
+  };
 };
 
-/** version 3：`njMetroSettings` 仅含南京特有项（不含 direction、currentStnId） */
+/** version 3/4：`njMetroSettings` 仅含南京特有项（不含 direction、currentStnId） */
 const mergeNjMetroSettingsV3Partial = (
   raw: unknown,
   fb: GeneratorState,
-): Pick<NjMetroSettingsYaml, 'totalLength' | 'showStationTypeIcons' | 'useCapsuleTransferMarkers' | 'trainType'> => {
+): Pick<
+  NjMetroSettingsYaml,
+  'totalLength' | 'showStationTypeIcons' | 'useCapsuleTransferMarkers' | 'trainType' | 'branchHeight'
+> => {
   const o = raw !== null && typeof raw === 'object' && !Array.isArray(raw) ? (raw as Record<string, unknown>) : {};
 
   let totalLength = fb.totalLength;
@@ -325,38 +486,50 @@ const mergeNjMetroSettingsV3Partial = (
   const useCapsuleTransferMarkers =
     typeof o.useCapsuleTransferMarkers === 'boolean' ? o.useCapsuleTransferMarkers : false;
   const trainType = isTrainType(o.trainType) ? o.trainType : DEFAULT_TRAIN_TYPE;
+  const branchHeight = 'branchHeight' in o ? parseBranchHeight(o.branchHeight) : DEFAULT_BRANCH_HEIGHT;
 
-  return { totalLength, showStationTypeIcons, useCapsuleTransferMarkers, trainType };
+  return { totalLength, showStationTypeIcons, useCapsuleTransferMarkers, trainType, branchHeight };
 };
 
-const resolveCurrentStnId = (requested: string, stations: StationItem[], fallback: string): string => {
-  if (stations.length === 0) {
+const resolveCurrentStnId = (requested: string, stations: StationListEntry[], fallback: string): string => {
+  const flat = stations.flatMap((entry) => (isStationEntry(entry) ? [entry] : entry.branches.flat()));
+  if (flat.length === 0) {
     return '';
   }
-  if (requested && stations.some((s) => s.id === requested)) {
+  if (requested && flat.some((s) => s.id === requested)) {
     return requested;
   }
-  if (fallback && stations.some((s) => s.id === fallback)) {
+  if (fallback && flat.some((s) => s.id === fallback)) {
     return fallback;
   }
-  return stations[0].id;
+  return flat[0].id;
 };
 
-const stationsToYamlBodies = (stations: StationItem[]) =>
-  stations.map((station) => ({
-    id: station.id,
-    name: [{ zh: station.chName }, { en: station.enName }],
-    type: station.type,
-    transfer: station.transfer.map((line) => ({
-      lineId: line.id,
-      color: normalizeHexColor(line.color),
-      textColor: normalizeHexColor(line.textColor),
-    })),
-  }));
+const stationToYamlBody = (station: StationItem) => ({
+  id: station.id,
+  name: [{ zh: station.chName }, { en: station.enName }],
+  type: station.type,
+  transfer: station.transfer.map((line) => ({
+    lineId: line.id,
+    color: normalizeHexColor(line.color),
+    textColor: normalizeHexColor(line.textColor),
+  })),
+});
+
+const entriesToYamlBodies = (entries: StationListEntry[]) =>
+  entries.map((entry) => {
+    if (isStationEntry(entry)) {
+      return stationToYamlBody(entry);
+    }
+    return {
+      branches: entry.branches.map((branch) => branch.map(stationToYamlBody)),
+      main: entry.main,
+    };
+  });
 
 export const serializeRailmapYaml = (state: GeneratorState): string => {
   const doc = {
-    version: 3,
+    version: 4,
     schema: KYURI_NAIVE_SCHEMA,
     direction: state.direction,
     currentStnId: state.currentStnId,
@@ -368,8 +541,9 @@ export const serializeRailmapYaml = (state: GeneratorState): string => {
       showStationTypeIcons: state.showStationTypeIcons,
       useCapsuleTransferMarkers: state.useCapsuleTransferMarkers,
       trainType: state.trainType,
+      branchHeight: DEFAULT_BRANCH_HEIGHT,
     },
-    stations: stationsToYamlBodies(state.stnList),
+    stations: entriesToYamlBodies(state.stnList),
   };
 
   return YAML.stringify(doc, { indent: 2, lineWidth: 0 }).trimEnd() + '\n';
@@ -409,16 +583,16 @@ const resolveRootColor = (root: Record<string, unknown>, fallbacks: GeneratorSta
 
 const resolveLineIdTextColor = (
   root: Record<string, unknown>,
-  docVersion: 1 | 2 | 3,
+  docVersion: DocVersion,
 ): string | ParseRailmapYamlResult => {
   if (docVersion === 1) {
     return '';
   }
-  if (docVersion === 3) {
+  if (docVersion >= 3) {
     if (!isValidHex6(root.textColor)) {
       return {
         ok: false,
-        message: 'version 3 要求根字段 textColor（#RRGGBB）。',
+        message: `version ${docVersion} 要求根字段 textColor（#RRGGBB）。`,
       };
     }
     return normalizeHexColor(root.textColor);
@@ -429,13 +603,13 @@ const resolveLineIdTextColor = (
   return normalizeHexColor(root.lineIdTextColor);
 };
 
-const parseRailmapYamlV3 = (
+const parseRailmapYamlV3OrV4 = (
   root: Record<string, unknown>,
   fallbacks: GeneratorState,
   lineId: string,
   color: string,
   lineIdTextColor: string,
-  stations: StationItem[],
+  stations: StationListEntry[],
 ): ParseRailmapYamlResult => {
   const schemaStr = typeof root.schema === 'string' ? root.schema.trim() : '';
   if (schemaStr && canonicalizeSchemaUri(schemaStr) !== KYURI_NAIVE_SCHEMA) {
@@ -501,7 +675,7 @@ export const parseRailmapYaml = (text: string, fallbacks: GeneratorState): Parse
     return {
       ok: false,
       message:
-        '根节点必须是对象（含 version、lineId、color、njMetroSettings、stations；version 2 另含 lineIdTextColor；version 3 另含 schema、根级 textColor（与换乘 textColor 对称）、direction 与 currentStnId）或旧版站点数组。',
+        '根节点必须是对象（含 version、lineId、color、njMetroSettings、stations；version 2 另含 lineIdTextColor；version 3/4 另含 schema、根级 textColor（与换乘 textColor 对称）、direction 与 currentStnId；version 4 的 stations 可含 branches 块，njMetroSettings 可含 branchHeight）或旧版站点数组。',
     };
   }
 
@@ -513,7 +687,7 @@ export const parseRailmapYaml = (text: string, fallbacks: GeneratorState): Parse
 
   const docVersion = parseYamlDocumentVersion(root.version);
   if (docVersion === null) {
-    return { ok: false, message: '不支持的 version：仅支持 1、2 或 3。' };
+    return { ok: false, message: '不支持的 version：仅支持 1、2、3 或 4。' };
   }
 
   const rawStations = root.stations;
@@ -539,8 +713,8 @@ export const parseRailmapYaml = (text: string, fallbacks: GeneratorState): Parse
   }
   const lineIdTextColor = lineIdTextColorResult;
 
-  if (docVersion === 3) {
-    return parseRailmapYamlV3(root, fallbacks, lineId, color, lineIdTextColor, stations);
+  if (docVersion >= 3) {
+    return parseRailmapYamlV3OrV4(root, fallbacks, lineId, color, lineIdTextColor, stations);
   }
 
   const njMerged = mergeNjMetroSettings(root.njMetroSettings, fallbacks);

@@ -3,15 +3,17 @@ import { resolveJianbanLineBackgroundColor, resolveJianbanLineForegroundColor } 
 import { lookupLineTrainType } from '../njmetroLineTrainTypes';
 import { normalizeTransferLines } from '../normalizeTransfer';
 import type { RailmapYamlImport } from '../stationListYaml';
+import { flattenStationList } from '../stationListTopology';
 import { adjustTotalLengthForTrainTypeChange } from '../trainTypeLayout';
 import type { GeneratorState } from './generatorSlice';
 
+/** C3 前：导入异构站点列表时先 flatten，支线拓扑暂不进入 generator state。 */
 export const railmapImportToGeneratorState = (
   data: RailmapYamlImport,
   previous: GeneratorState,
 ): GeneratorState => ({
   ...previous,
-  stnList: data.stations.map((station) => ({
+  stnList: flattenStationList(data.stations).map((station) => ({
     ...station,
     transfer: normalizeTransferLines(station.transfer),
   })),

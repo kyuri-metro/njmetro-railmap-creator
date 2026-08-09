@@ -5,11 +5,13 @@ import {
   type GeneratorState,
 } from './features/generatorSlice';
 import {
+  DEFAULT_BRANCH_HEIGHT,
   migrateRailmapYamlV1ToV2,
   parseRailmapYaml,
   serializeRailmapYaml,
   type RailmapYamlImport,
 } from './stationListYaml';
+import { isBranchGroup } from './stationListTopology';
 
 const fallback = (): GeneratorState => getEmptyGeneratorState();
 
@@ -26,6 +28,7 @@ describe('migrateRailmapYamlV1ToV2', () => {
         showStationTypeIcons: false,
         useCapsuleTransferMarkers: false,
         trainType: 'a',
+        branchHeight: DEFAULT_BRANCH_HEIGHT,
       },
       stations: [
         {
@@ -45,7 +48,7 @@ describe('migrateRailmapYamlV1ToV2', () => {
 });
 
 describe('parseRailmapYaml / serializeRailmapYaml', () => {
-  it('round-trips a minimal version 3 document', () => {
+  it('round-trips a minimal version 4 document', () => {
     const state = getDefaultGeneratorState();
     state.stnList = state.stnList.slice(0, 2);
     state.currentStnId = state.stnList[0].id;
@@ -53,8 +56,9 @@ describe('parseRailmapYaml / serializeRailmapYaml', () => {
 
     const yaml = serializeRailmapYaml(state);
     expect(yaml).toContain('schema: https://umamichi.moe/2026/kyuri-naive');
-    expect(yaml).toContain('version: 3');
+    expect(yaml).toContain('version: 4');
     expect(yaml).toContain('trainType: b-long');
+    expect(yaml).toContain(`branchHeight: ${DEFAULT_BRANCH_HEIGHT}`);
 
     const parsed = parseRailmapYaml(yaml, fallback());
     expect(parsed.ok).toBe(true);
@@ -69,6 +73,105 @@ describe('parseRailmapYaml / serializeRailmapYaml', () => {
     expect(parsed.data.njMetroSettings.currentStnId).toBe(state.currentStnId);
     expect(parsed.data.njMetroSettings.trainType).toBe('b-long');
     expect(parsed.data.njMetroSettings.useCapsuleTransferMarkers).toBe(false);
+    expect(parsed.data.njMetroSettings.branchHeight).toBe(DEFAULT_BRANCH_HEIGHT);
+  });
+
+  it('parses version 4 opening branches and rejects illegal topology', () => {
+    const yaml = `
+version: 4
+schema: https://umamichi.moe/2026/kyuri-naive
+direction: r
+currentStnId: b
+lineId: "3"
+color: "#009a44"
+textColor: "#ffffff"
+njMetroSettings:
+  totalLength: 1000
+  branchHeight: 80
+stations:
+  - branches:
+      - - id: a
+          name: { zh: 甲, en: A }
+          type: none
+          transfer: []
+      - - id: b
+          name: { zh: 乙, en: B }
+          type: none
+          transfer: []
+    main: 1
+  - id: c
+    name: { zh: 丙, en: C }
+    type: none
+    transfer: []
+`;
+
+    const parsed = parseRailmapYaml(yaml, fallback());
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) {
+      return;
+    }
+    expect(parsed.data.njMetroSettings.branchHeight).toBe(80);
+    expect(isBranchGroup(parsed.data.stations[0])).toBe(true);
+    if (isBranchGroup(parsed.data.stations[0])) {
+      expect(parsed.data.stations[0].main).toBe(1);
+      expect(parsed.data.stations[0].branches[0][0].id).toBe('a');
+    }
+
+    const illegal = `
+version: 4
+schema: https://umamichi.moe/2026/kyuri-naive
+direction: l
+currentStnId: a
+lineId: "3"
+color: "#009a44"
+textColor: "#ffffff"
+njMetroSettings:
+  totalLength: 100
+stations:
+  - id: a
+    name: { zh: 甲, en: A }
+    type: none
+    transfer: []
+  - branches:
+      - - id: b
+          name: { zh: 乙, en: B }
+          type: none
+          transfer: []
+    main: 0
+  - id: c
+    name: { zh: 丙, en: C }
+    type: none
+    transfer: []
+`;
+    expect(parseRailmapYaml(illegal, fallback()).ok).toBe(false);
+  });
+
+  it('still imports legacy version 3 documents', () => {
+    const yaml = `
+version: 3
+schema: https://umamichi.moe/2026/kyuri-naive
+direction: l
+currentStnId: foo
+lineId: "3"
+color: "#009a44"
+textColor: "#ffffff"
+njMetroSettings:
+  totalLength: 100
+stations:
+  - id: foo
+    name:
+      - zh: 甲
+      - en: Foo
+    type: none
+    transfer: []
+`;
+    const parsed = parseRailmapYaml(yaml, fallback());
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) {
+      return;
+    }
+    expect(parsed.data.njMetroSettings.branchHeight).toBe(DEFAULT_BRANCH_HEIGHT);
+    expect(parsed.data.stations[0]).toMatchObject({ id: 'foo' });
   });
 
   it('round-trips useCapsuleTransferMarkers when enabled', () => {
