@@ -35,6 +35,7 @@ vi.mock('../autosaveStorage', async () => {
 });
 
 import { readAutosaveSettings } from '../autosaveStorage';
+import { getBadgeCanvasSizes } from '../trainTypeLayout';
 
 const station = (partial: Partial<StationItem> & Pick<StationItem, 'id' | 'chName'>): StationItem => ({
   enName: partial.enName ?? partial.chName,
@@ -83,11 +84,15 @@ describe('generatorSlice', () => {
     state = generatorReducer(state, setTotalLength(6550));
     state = generatorReducer(state, setTrainType('b'));
     expect(state.trainType).toBe('b');
-    expect(state.totalLength).toBe(6550 + (4602 - 7412));
+    expect(state.totalLength).toBe(
+      6550 + (getBadgeCanvasSizes('b').route - getBadgeCanvasSizes('a').route),
+    );
 
     state = generatorReducer(state, setTrainType('b-long'));
     expect(state.trainType).toBe('b-long');
-    expect(state.totalLength).toBe(3740 + 3322);
+    expect(state.totalLength).toBe(
+      3740 + (getBadgeCanvasSizes('b-long').route - getBadgeCanvasSizes('b').route),
+    );
   });
 
   it('auto-fills palette colors when setLineId and autoFill is on', () => {

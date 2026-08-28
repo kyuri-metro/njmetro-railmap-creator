@@ -1,10 +1,13 @@
 import { getLineIdBadgeWidth } from './lineIdBadgeMetrics';
+import { getBadgeCanvasSizes } from './trainTypeLayout';
 
-/** 方向吊板 SVG 几何规格（主稿 viewBox `0 0 3972 800`）。 */
+/** 方向吊板 A 型几何规格（版式常量以该 viewBox 为基准；运行时宽见 `getBadgeCanvasSizes().direction`）。 */
+
+const aTypeBadgeCanvas = getBadgeCanvasSizes('a');
 
 export const directionBadgeCanvas = {
-  width: 3972,
-  height: 800,
+  width: aTypeBadgeCanvas.direction,
+  height: aTypeBadgeCanvas.height,
 } as const;
 
 export const directionBadgeChrome = {

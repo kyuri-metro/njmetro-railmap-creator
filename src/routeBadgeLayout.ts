@@ -1,8 +1,12 @@
-/** 线路图吊板几何规格（viewBox `0 0 7412 800`）。 */
+import { getBadgeCanvasSizes } from './trainTypeLayout';
+
+/** 线路图 A 型几何规格（版式常量以该 viewBox 为基准；运行时宽见 `getBadgeCanvasSizes().route`）。 */
+
+const aTypeBadgeCanvas = getBadgeCanvasSizes('a');
 
 export const routeBadgeCanvas = {
-  width: 7412,
-  height: 800,
+  width: aTypeBadgeCanvas.route,
+  height: aTypeBadgeCanvas.height,
 } as const;
 
 export const routeBadgeLine = {

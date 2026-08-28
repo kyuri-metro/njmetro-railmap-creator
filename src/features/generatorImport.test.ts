@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { getEmptyGeneratorState } from './generatorSlice';
 import { builtinLineToGeneratorState } from './generatorImport';
+import { getBadgeCanvasSizes } from '../trainTypeLayout';
 
 describe('builtinLineToGeneratorState train type', () => {
   it('applies known train type and adjusts totalLength', () => {
@@ -16,7 +17,9 @@ describe('builtinLineToGeneratorState train type', () => {
     );
 
     expect(next.trainType).toBe('b-long');
-    expect(next.totalLength).toBe(6550 + (7924 - 7412));
+    expect(next.totalLength).toBe(
+      6550 + (getBadgeCanvasSizes('b-long').route - getBadgeCanvasSizes('a').route),
+    );
     expect(next.lineId).toBe('7');
     expect(next.currentStnId).toBe('7-1');
   });
