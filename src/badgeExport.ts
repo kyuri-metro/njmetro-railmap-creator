@@ -2,14 +2,9 @@ export const GENERATOR_PUBLIC_URL = 'https://njmetro-railmap-creator.umamichi.mo
 
 export const PUBLISH_ATTRIBUTION_SNIPPET = `本图片由南京地铁屏蔽门吊板生成器（${GENERATOR_PUBLIC_URL}）生成`;
 
-export const DOWNLOAD_WATERMARK_TEXT = `由南京地铁屏蔽门吊板生成器（${GENERATOR_PUBLIC_URL}）生成`;
-
 const svgExportComment =
   '<!-- created by njmetro-railmap-creator, (https://github.com/kyuri-metro/njmetro-railmap-creator) -->';
 
-const WATERMARK_OPACITY = 0.14;
-const WATERMARK_FILL = `rgba(0, 0, 0, ${WATERMARK_OPACITY})`;
-const WATERMARK_FONT_FAMILY = 'sans-serif';
 export const getBadgeDownloadBaseName = (fileName: string) => fileName.replace(/\.svg$/i, '') || 'badge';
 
 export const webpRasterExportSupported =
@@ -121,77 +116,6 @@ const prepareSvgExportClone = (svgElement: SVGSVGElement, width: number, height:
   clone.setAttribute('height', String(height));
 
   return clone;
-};
-
-const getWatermarkFontSize = (height: number) => Math.max(28, Math.round(height * 0.08));
-
-const getWatermarkLayout = (width: number, height: number, textWidth: number, fontSize: number) => {
-  const stepX = Math.max(textWidth + fontSize * 2, fontSize * 12);
-  const stepY = Math.max(fontSize * 3.2, 48);
-
-  return { stepX, stepY };
-};
-
-const drawRepeatingWatermark = (context: CanvasRenderingContext2D, width: number, height: number) => {
-  const fontSize = getWatermarkFontSize(height);
-  const font = `${fontSize}px ${WATERMARK_FONT_FAMILY}`;
-
-  context.save();
-  context.font = font;
-  context.fillStyle = WATERMARK_FILL;
-  context.textAlign = 'center';
-  context.textBaseline = 'middle';
-
-  const textWidth = context.measureText(DOWNLOAD_WATERMARK_TEXT).width;
-  const { stepX, stepY } = getWatermarkLayout(width, height, textWidth, fontSize);
-
-  for (let row = 0, y = stepY / 2; y < height + stepY; row += 1, y += stepY) {
-    const rowOffset = row % 2 === 0 ? 0 : stepX / 2;
-
-    for (let x = stepX / 2 + rowOffset; x < width + stepX; x += stepX) {
-      context.fillText(DOWNLOAD_WATERMARK_TEXT, x, y);
-    }
-  }
-
-  context.restore();
-};
-
-const appendSvgWatermarkLayer = (clone: SVGSVGElement) => {
-  const viewBoxOrigin = getSvgViewBoxOrigin(clone);
-  const logical = getSvgExportPixelSize(clone);
-  const fontSize = getWatermarkFontSize(logical.height);
-  // Approximate CJK + ASCII width without canvas measure (SVG export path).
-  const estimatedTextWidth = DOWNLOAD_WATERMARK_TEXT.length * fontSize * 0.62;
-  const { stepX, stepY } = getWatermarkLayout(logical.width, logical.height, estimatedTextWidth, fontSize);
-  const ns = 'http://www.w3.org/2000/svg';
-  const group = document.createElementNS(ns, 'g');
-
-  group.setAttribute('pointer-events', 'none');
-  group.setAttribute('opacity', String(WATERMARK_OPACITY));
-
-  for (let row = 0, y = viewBoxOrigin.y + stepY / 2; y < viewBoxOrigin.y + logical.height + stepY; row += 1, y += stepY) {
-    const rowOffset = row % 2 === 0 ? 0 : stepX / 2;
-
-    for (
-      let x = viewBoxOrigin.x + stepX / 2 + rowOffset;
-      x < viewBoxOrigin.x + logical.width + stepX;
-      x += stepX
-    ) {
-      const text = document.createElementNS(ns, 'text');
-
-      text.setAttribute('x', String(x));
-      text.setAttribute('y', String(y));
-      text.setAttribute('text-anchor', 'middle');
-      text.setAttribute('dominant-baseline', 'middle');
-      text.setAttribute('fill', '#000000');
-      text.setAttribute('font-family', WATERMARK_FONT_FAMILY);
-      text.setAttribute('font-size', String(fontSize));
-      text.textContent = DOWNLOAD_WATERMARK_TEXT;
-      group.append(text);
-    }
-  }
-
-  clone.append(group);
 };
 
 const loadSvgMarkupAsImage = async (svgMarkup: string): Promise<HTMLImageElement | null> => {
@@ -310,7 +234,6 @@ const exportSingleTileRasterBlob = async (
   format: 'png' | 'jpeg' | 'webp',
   width: number,
   height: number,
-  withWatermark: boolean,
 ): Promise<Blob | null> => {
   const clone = prepareSvgExportClone(svgElement, width, height);
   const svgMarkup = new XMLSerializer().serializeToString(clone);
@@ -318,16 +241,6 @@ const exportSingleTileRasterBlob = async (
 
   if (!canvas) {
     return null;
-  }
-
-  if (withWatermark) {
-    const context = canvas.getContext('2d');
-
-    if (!context) {
-      return null;
-    }
-
-    drawRepeatingWatermark(context, width, height);
   }
 
   return canvasToRasterBlob(canvas, format);
@@ -339,7 +252,6 @@ const exportTiledRasterBlob = async (
   width: number,
   height: number,
   pixelScale: number,
-  withWatermark: boolean,
 ): Promise<Blob | null> => {
   const viewBoxOrigin = getSvgViewBoxOrigin(svgElement);
   const baseClone = prepareSvgExportClone(svgElement, width, height);
@@ -375,10 +287,6 @@ const exportTiledRasterBlob = async (
     }
   }
 
-  if (withWatermark) {
-    drawRepeatingWatermark(finalContext, width, height);
-  }
-
   return canvasToRasterBlob(finalCanvas, format);
 };
 
@@ -386,30 +294,24 @@ export const exportSvgToRasterBlob = async (
   svgElement: SVGSVGElement,
   format: 'png' | 'jpeg' | 'webp',
   exportHeight: number,
-  withWatermark = false,
 ): Promise<Blob | null> => {
   const { width, height, pixelScale } = getExportDimensions(svgElement, exportHeight);
   const needsTiling = width > RASTER_EXPORT_TILE_MAX || height > RASTER_EXPORT_TILE_MAX;
 
   if (!needsTiling) {
-    return exportSingleTileRasterBlob(svgElement, format, width, height, withWatermark);
+    return exportSingleTileRasterBlob(svgElement, format, width, height);
   }
 
-  return exportTiledRasterBlob(svgElement, format, width, height, pixelScale, withWatermark);
+  return exportTiledRasterBlob(svgElement, format, width, height, pixelScale);
 };
 
 export const downloadBadgeSvg = (
   svgElement: SVGSVGElement,
   fileName: string,
   exportHeight: number,
-  withWatermark = false,
 ) => {
   const { width, height } = getExportDimensions(svgElement, exportHeight);
   const clone = prepareSvgExportClone(svgElement, width, height);
-
-  if (withWatermark) {
-    appendSvgWatermarkLayer(clone);
-  }
 
   const serializer = new XMLSerializer();
   const svgMarkup = `${svgExportComment}\n${serializer.serializeToString(clone)}`;
@@ -425,9 +327,8 @@ export const downloadBadgeRaster = async (
   fileName: string,
   format: BadgeRasterFormat,
   exportHeight: number,
-  withWatermark = false,
 ) => {
-  const blob = await exportSvgToRasterBlob(svgElement, format, exportHeight, withWatermark);
+  const blob = await exportSvgToRasterBlob(svgElement, format, exportHeight);
 
   if (!blob) {
     return false;

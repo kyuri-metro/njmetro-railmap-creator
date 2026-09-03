@@ -11,7 +11,6 @@ import {
 } from '../badgeExport';
 import { OVERLAY_IDS } from '../overlay/overlayIds';
 import { ConfirmDialogOverlay } from '@umamichi-ui/common-components/dialog';
-import { InfoCircleIcon } from '@umamichi-ui/common-components/icons';
 
 export type BadgeDownloadFormat = 'svg' | BadgeRasterFormat;
 
@@ -31,7 +30,6 @@ const formatOptions: { value: BadgeDownloadFormat; label: string; disabled?: boo
 
 export function BadgeDownloadDialog({ open, fileName, getSvgElement, onClose }: BadgeDownloadDialogProps) {
   const titleId = useId();
-  const watermarkHintId = useId();
   const [exportHeightDraft, setExportHeightDraft] = useState(String(DEFAULT_EXPORT_HEIGHT));
   const [format, setFormat] = useState<BadgeDownloadFormat>('png');
   const [publishAttributionAccepted, setPublishAttributionAccepted] = useState(false);
@@ -49,7 +47,7 @@ export function BadgeDownloadDialog({ open, fileName, getSvgElement, onClose }: 
   }, [open, fileName]);
 
   const handleDownload = async () => {
-    if (isExporting) {
+    if (isExporting || !publishAttributionAccepted) {
       return;
     }
 
@@ -60,18 +58,17 @@ export function BadgeDownloadDialog({ open, fileName, getSvgElement, onClose }: 
     }
 
     const exportHeight = parseExportHeight(exportHeightDraft);
-    const withWatermark = !publishAttributionAccepted;
 
     setIsExporting(true);
 
     try {
       if (format === 'svg') {
-        downloadBadgeSvg(svgElement, fileName, exportHeight, withWatermark);
+        downloadBadgeSvg(svgElement, fileName, exportHeight);
         onClose();
         return;
       }
 
-      const ok = await downloadBadgeRaster(svgElement, fileName, format, exportHeight, withWatermark);
+      const ok = await downloadBadgeRaster(svgElement, fileName, format, exportHeight);
 
       if (!ok) {
         window.alert('导出失败，请重试。');
@@ -132,7 +129,6 @@ export function BadgeDownloadDialog({ open, fileName, getSvgElement, onClose }: 
             type="checkbox"
             checked={publishAttributionAccepted}
             onChange={(event) => setPublishAttributionAccepted(event.target.checked)}
-            aria-describedby={watermarkHintId}
           />
           <span>
             下载后，我发布本图片时将会附上{' '}
@@ -143,10 +139,6 @@ export function BadgeDownloadDialog({ open, fileName, getSvgElement, onClose }: 
             </a>
           </span>
         </label>
-        <p id={watermarkHintId} className="dialog-note badge-download-watermark-hint" role="note">
-          <InfoCircleIcon className="dialog-note-icon" />
-          <span>未勾选时，下载的图片将带生成器水印。</span>
-        </p>
       </div>
 
       <div className="confirm-dialog-actions">
@@ -155,8 +147,8 @@ export function BadgeDownloadDialog({ open, fileName, getSvgElement, onClose }: 
         </button>
         <button
           type="button"
-          className={publishAttributionAccepted ? 'primary-button' : 'secondary-button'}
-          disabled={isExporting}
+          className="primary-button"
+          disabled={isExporting || !publishAttributionAccepted}
           onClick={() => void handleDownload()}
         >
           下载
