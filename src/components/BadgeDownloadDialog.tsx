@@ -5,7 +5,6 @@ import {
   GENERATOR_PUBLIC_URL,
   DEFAULT_EXPORT_HEIGHT,
   parseExportHeight,
-  PUBLISH_ATTRIBUTION_SNIPPET,
   webpRasterExportSupported,
   type BadgeRasterFormat,
 } from '../badgeExport';
@@ -131,9 +130,7 @@ export function BadgeDownloadDialog({ open, fileName, getSvgElement, onClose }: 
             onChange={(event) => setPublishAttributionAccepted(event.target.checked)}
           />
           <span>
-            下载后，我发布本图片时将会附上{' '}
-            <code>{PUBLISH_ATTRIBUTION_SNIPPET}</code>
-            ，并附上{' '}
+            下载后，我发布本图片时附上{' '}
             <a href={GENERATOR_PUBLIC_URL} target="_blank" rel="noreferrer">
               本生成器链接
             </a>

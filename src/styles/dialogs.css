@@ -211,16 +211,6 @@
   line-height: 1.55;
 }
 
-.badge-download-attribution code {
-  display: inline;
-  margin: 0 0.15em;
-  padding: 0.1em 0.35em;
-  border-radius: 4px;
-  background: var(--site-surface-muted);
-  font-size: 0.88em;
-  word-break: break-word;
-}
-
 @media (max-width: 420px) {
   .badge-download-export-fields {
     grid-template-columns: 1fr;

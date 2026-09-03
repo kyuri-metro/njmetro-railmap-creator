@@ -1,7 +1,5 @@
 export const GENERATOR_PUBLIC_URL = 'https://njmetro-railmap-creator.umamichi.moe/';
 
-export const PUBLISH_ATTRIBUTION_SNIPPET = `本图片由南京地铁屏蔽门吊板生成器（${GENERATOR_PUBLIC_URL}）生成`;
-
 const svgExportComment =
   '<!-- created by njmetro-railmap-creator, (https://github.com/kyuri-metro/njmetro-railmap-creator) -->';
 
