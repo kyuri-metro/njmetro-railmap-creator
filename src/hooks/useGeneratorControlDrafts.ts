@@ -1,14 +1,10 @@
 import { useAppDispatch } from '../hooks';
 import {
-  setIdColor,
-  setIdTextColor,
   setLineId,
   setTotalLength,
   type GeneratorState,
 } from '../features/generatorSlice';
 import {
-  hexColorsEqual,
-  normalizeIdColorDraft,
   normalizeLineIdDraft,
   parseTotalLengthDraft,
   useDebouncedGeneratorField,
@@ -18,8 +14,6 @@ import {
 export type GeneratorControlDrafts = {
   totalLength: DebouncedGeneratorField;
   lineId: DebouncedGeneratorField;
-  idColor: DebouncedGeneratorField;
-  idTextColor: DebouncedGeneratorField;
   syncFromGenerator: (state: GeneratorState) => void;
 };
 
@@ -43,35 +37,13 @@ export function useGeneratorControlDrafts(generator: GeneratorState): GeneratorC
     onCommit: (value) => {
       dispatch(setLineId(value));
     },
-    transformInput: (raw) => raw.trim().toUpperCase(),
-  });
-
-  const idColor = useDebouncedGeneratorField({
-    committedValue: generator.idColor,
-    formatCommitted: (value) => value,
-    parse: normalizeIdColorDraft,
-    shouldCommit: (next, committed) => !hexColorsEqual(next, committed),
-    onCommit: (value) => {
-      dispatch(setIdColor(value));
-    },
-  });
-
-  const idTextColor = useDebouncedGeneratorField({
-    committedValue: generator.idTextColor,
-    formatCommitted: (value) => value,
-    parse: normalizeIdColorDraft,
-    shouldCommit: (next, committed) => !hexColorsEqual(next, committed),
-    onCommit: (value) => {
-      dispatch(setIdTextColor(value));
-    },
+    transformInput: normalizeLineIdDraft,
   });
 
   const syncFromGenerator = (state: GeneratorState) => {
     totalLength.resetFromCommitted(String(state.totalLength));
     lineId.resetFromCommitted(state.lineId);
-    idColor.resetFromCommitted(state.idColor);
-    idTextColor.resetFromCommitted(state.idTextColor);
   };
 
-  return { totalLength, lineId, idColor, idTextColor, syncFromGenerator };
+  return { totalLength, lineId, syncFromGenerator };
 }

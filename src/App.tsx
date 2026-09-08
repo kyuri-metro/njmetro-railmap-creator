@@ -167,8 +167,6 @@ function App() {
   const {
     totalLength: totalLengthField,
     lineId: lineIdField,
-    idColor: idColorField,
-    idTextColor: idTextColorField,
     syncFromGenerator: syncControlDraftsFromGenerator,
   } = useGeneratorControlDrafts(generator);
   const { themeMode, toggleTheme } = useThemeMode();
@@ -412,8 +410,6 @@ function App() {
               generator={generator}
               totalLengthField={totalLengthField}
               lineIdField={lineIdField}
-              idColorField={idColorField}
-              idTextColorField={idTextColorField}
             />
 
             <section className="panel">
