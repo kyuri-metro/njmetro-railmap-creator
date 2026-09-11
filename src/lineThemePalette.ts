@@ -8,6 +8,9 @@ import {
 
 const HEX6 = /^#[0-9a-fA-F]{6}$/;
 
+/** Match @umamichi-ui/common-css 0.20.0 theme chroma scale. */
+const THEME_CHROMA_SCALE = 0.75;
+
 type ApcachColor = ReturnType<typeof apcach>;
 
 const paletteCache = new Map<number, ApcachColor[]>();
@@ -32,7 +35,7 @@ export function extractThemeHueFromIdColor(idColor: string): number {
 }
 
 const composeThemeLevel = (hue: number, spec: HarmonizerThemeLevelSpec): ApcachColor => {
-  const chroma = maxChroma(spec.chromaCap);
+  const chroma = maxChroma(spec.chromaCap * THEME_CHROMA_SCALE);
 
   if (spec.refBackground === 'black') {
     return apcach(crToBgBlack(spec.apca), chroma, hue, 100, 'p3');
