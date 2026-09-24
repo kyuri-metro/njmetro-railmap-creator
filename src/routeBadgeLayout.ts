@@ -61,6 +61,6 @@ export const routeBadgeTransferIcon = {
 } as const;
 
 export const routeBadgeTransferLineId = {
-  gap: 12.5,
-  badgeHeight: 68.5,
+  gap: 18.75,
+  badgeHeight: 75,
 } as const;

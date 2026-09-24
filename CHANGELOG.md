@@ -23,6 +23,7 @@
 - 贴纸下载：须勾选「下载后，我发布本图片时附上本生成器链接」后才允许下载；导出为干净图片（SVG / PNG / JPEG / WebP）。不再要求附上固定署名句子。
 - 线路标识色与线路编号字体色改为非受控颜色输入：拖动取色时由浏览器自绘色块，仅在取色结束（原生 `change`）提交一次，一次取色对应一条撤销记录；外部改色（撤销 / 导入 / 按线路号自动填色）仍即时同步到色块。
 - `useDebouncedGeneratorField` 收窄为文本字段专用：`parse` 不再返回 `null`，移除 `shouldCommit` 选项、冗余的 `draftRef`，以及仅供颜色使用的 `normalizeIdColorDraft` / `hexColorsEqual`（颜色已在调色板与导入边界统一为小写）。
+- 将换乘方块的高度基准调整至 75px 以匹配 6-S1 直通线路图
 
 ### Removed
 
