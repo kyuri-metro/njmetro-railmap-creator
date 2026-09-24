@@ -9,6 +9,10 @@
 
 ## [Unreleased]
 
+## [0.4.2] - 2026-09-25
+
+对应 `package.json` 中的 `0.4.2`。相对 [0.4.1]：站名表格内联编辑与撤销体验、贴纸署名下载、主题饱和度与换乘方块尺寸，以及窄屏 / 颜色拖动等修复。
+
 ### Added
 
 - 表格内改中英文站名：输入经短 debounce（约 160ms）以 `patchStationName` 写入预览；Enter 或失焦定稿（trim），Esc 恢复聚焦时的原名。
@@ -24,6 +28,7 @@
 - 线路标识色与线路编号字体色改为非受控颜色输入：拖动取色时由浏览器自绘色块，仅在取色结束（原生 `change`）提交一次，一次取色对应一条撤销记录；外部改色（撤销 / 导入 / 按线路号自动填色）仍即时同步到色块。
 - `useDebouncedGeneratorField` 收窄为文本字段专用：`parse` 不再返回 `null`，移除 `shouldCommit` 选项、冗余的 `draftRef`，以及仅供颜色使用的 `normalizeIdColorDraft` / `hexColorsEqual`（颜色已在调色板与导入边界统一为小写）。
 - 将换乘方块的高度基准调整至 75px 以匹配 6-S1 直通线路图
+- 「关于」等界面展示的版本号为 `0.4.2`。
 
 ### Removed
 
@@ -251,7 +256,8 @@
 - 部署至 Cloudflare Pages（[njmetro-railmap-creator.umamichi.moe](https://njmetro-railmap-creator.umamichi.moe/)）。
 - 基于 [@umamichi-ui/common-css](https://www.npmjs.com/package/@umamichi-ui/common-css) 的界面样式与弹层交互。
 
-[Unreleased]: https://github.com/kyuri-metro/njmetro-railmap-creator/compare/v0.4.1...HEAD
+[Unreleased]: https://github.com/kyuri-metro/njmetro-railmap-creator/compare/v0.4.2...HEAD
+[0.4.2]: https://github.com/kyuri-metro/njmetro-railmap-creator/compare/v0.4.1...v0.4.2
 [0.4.1]: https://github.com/kyuri-metro/njmetro-railmap-creator/compare/v0.4.0...v0.4.1
 [0.4.0]: https://github.com/kyuri-metro/njmetro-railmap-creator/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/kyuri-metro/njmetro-railmap-creator/compare/v0.2.1...v0.3.0
