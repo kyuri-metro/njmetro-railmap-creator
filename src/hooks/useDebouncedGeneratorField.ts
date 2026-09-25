@@ -5,6 +5,29 @@ export const CONTROL_DEBOUNCE_MS = 160;
 /** 草稿已由 transformInput 过滤为纯数字串；空串按 0。 */
 export const parseTotalLengthDraft = (raw: string) => Number(raw);
 
+/** 允许小数；非法或空串按 0。 */
+export const parseThroughIconHeightDraft = (raw: string) => {
+  const n = Number(raw);
+  return Number.isFinite(n) ? Math.max(0, n) : 0;
+};
+
+/** 仅保留数字与至多一个小数点。 */
+export const transformThroughIconHeightInput = (raw: string) => {
+  let seenDot = false;
+  let out = '';
+  for (const ch of raw) {
+    if (ch >= '0' && ch <= '9') {
+      out += ch;
+      continue;
+    }
+    if (ch === '.' && !seenDot) {
+      seenDot = true;
+      out += ch;
+    }
+  }
+  return out;
+};
+
 export const normalizeLineIdDraft = (raw: string) => raw.trim().toUpperCase();
 
 export type UseDebouncedGeneratorFieldOptions<T> = {

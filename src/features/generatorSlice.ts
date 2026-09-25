@@ -3,6 +3,7 @@ import { getBuiltinOpenedStationsByLineId } from '../builtinOpenedLineStations';
 import { readAutosaveSettings } from '../autosaveStorage';
 import { normalizeTransferLines } from '../normalizeTransfer';
 import { getNjmetroLineBackgroundColor, getNjmetroLineForegroundColor } from '../njmetroLinePalette';
+import { DEFAULT_THROUGH_ICON_HEIGHT } from '../routeBadgeLayout';
 import {
   adjustTotalLengthForTrainTypeChange,
   DEFAULT_TRAIN_TYPE,
@@ -48,6 +49,10 @@ export type GeneratorState = {
   showStationTypeIcons: boolean;
   /** 非当前换乘中间站使用水平胶囊标记（当前站与终点站样式不变） */
   useCapsuleTransferMarkers: boolean;
+  /** 翻转站名锯齿 parity（首站改在运行线下，其后交替） */
+  flipFirstStationVertical: boolean;
+  /** 运行线到贯通段端方块中心的竖直距离（正值 = 在线上方） */
+  throughIconHeight: number;
   trainType: TrainType;
   throughRunning: ThroughRunningConfig | null;
 };
@@ -94,6 +99,8 @@ const initialState: GeneratorState = {
   idTextColor: getNjmetroLineForegroundColor(initialLineId) ?? '#ffffff',
   showStationTypeIcons: false,
   useCapsuleTransferMarkers: false,
+  flipFirstStationVertical: false,
+  throughIconHeight: DEFAULT_THROUGH_ICON_HEIGHT,
   trainType: DEFAULT_TRAIN_TYPE,
   throughRunning: null,
 };
@@ -118,6 +125,8 @@ export const getEmptyGeneratorState = (): GeneratorState => ({
   idTextColor: initialState.idTextColor,
   showStationTypeIcons: initialState.showStationTypeIcons,
   useCapsuleTransferMarkers: initialState.useCapsuleTransferMarkers,
+  flipFirstStationVertical: initialState.flipFirstStationVertical,
+  throughIconHeight: initialState.throughIconHeight,
   trainType: initialState.trainType,
   throughRunning: null,
 });
@@ -173,6 +182,12 @@ const generatorSlice = createSlice({
     },
     setUseCapsuleTransferMarkers(state, action: PayloadAction<boolean>) {
       state.useCapsuleTransferMarkers = action.payload;
+    },
+    setFlipFirstStationVertical(state, action: PayloadAction<boolean>) {
+      state.flipFirstStationVertical = action.payload;
+    },
+    setThroughIconHeight(state, action: PayloadAction<number>) {
+      state.throughIconHeight = action.payload;
     },
     setTrainType(state, action: PayloadAction<TrainType>) {
       const nextType = action.payload;
@@ -266,6 +281,8 @@ export const {
   setLineId,
   setShowStationTypeIcons,
   setUseCapsuleTransferMarkers,
+  setFlipFirstStationVertical,
+  setThroughIconHeight,
   setTotalLength,
   setTrainType,
   setThroughRunning,

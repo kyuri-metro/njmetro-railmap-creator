@@ -1,5 +1,6 @@
 import YAML from 'yaml';
 import type { GeneratorState, StationItem, StationType, TrainDirection, TransferLine } from './features/generatorSlice';
+import { DEFAULT_THROUGH_ICON_HEIGHT } from './routeBadgeLayout';
 import { DEFAULT_TRAIN_TYPE, isTrainType, type TrainType } from './trainTypeLayout';
 import { normalizeThroughRunning, type ThroughRunningConfig } from './throughRunning';
 
@@ -19,6 +20,8 @@ export type NjMetroSettingsYaml = {
   currentStnId: string;
   showStationTypeIcons: boolean;
   useCapsuleTransferMarkers: boolean;
+  flipFirstStationVertical: boolean;
+  throughIconHeight: number;
   trainType: TrainType;
 };
 
@@ -305,16 +308,39 @@ const mergeNjMetroSettings = (raw: unknown, fb: GeneratorState): NjMetroSettings
   const showStationTypeIcons = typeof o.showStationTypeIcons === 'boolean' ? o.showStationTypeIcons : false;
   const useCapsuleTransferMarkers =
     typeof o.useCapsuleTransferMarkers === 'boolean' ? o.useCapsuleTransferMarkers : false;
+  const flipFirstStationVertical =
+    typeof o.flipFirstStationVertical === 'boolean' ? o.flipFirstStationVertical : false;
+  let throughIconHeight = DEFAULT_THROUGH_ICON_HEIGHT;
+  if (typeof o.throughIconHeight === 'number' && Number.isFinite(o.throughIconHeight)) {
+    throughIconHeight = Math.max(0, o.throughIconHeight);
+  }
   const trainType = isTrainType(o.trainType) ? o.trainType : DEFAULT_TRAIN_TYPE;
 
-  return { totalLength, direction, currentStnId, showStationTypeIcons, useCapsuleTransferMarkers, trainType };
+  return {
+    totalLength,
+    direction,
+    currentStnId,
+    showStationTypeIcons,
+    useCapsuleTransferMarkers,
+    flipFirstStationVertical,
+    throughIconHeight,
+    trainType,
+  };
 };
 
 /** version 3：`njMetroSettings` 仅含南京特有项（不含 direction、currentStnId） */
 const mergeNjMetroSettingsV3Partial = (
   raw: unknown,
   fb: GeneratorState,
-): Pick<NjMetroSettingsYaml, 'totalLength' | 'showStationTypeIcons' | 'useCapsuleTransferMarkers' | 'trainType'> => {
+): Pick<
+  NjMetroSettingsYaml,
+  | 'totalLength'
+  | 'showStationTypeIcons'
+  | 'useCapsuleTransferMarkers'
+  | 'flipFirstStationVertical'
+  | 'throughIconHeight'
+  | 'trainType'
+> => {
   const o = raw !== null && typeof raw === 'object' && !Array.isArray(raw) ? (raw as Record<string, unknown>) : {};
 
   let totalLength = fb.totalLength;
@@ -326,9 +352,22 @@ const mergeNjMetroSettingsV3Partial = (
   const showStationTypeIcons = typeof o.showStationTypeIcons === 'boolean' ? o.showStationTypeIcons : false;
   const useCapsuleTransferMarkers =
     typeof o.useCapsuleTransferMarkers === 'boolean' ? o.useCapsuleTransferMarkers : false;
+  const flipFirstStationVertical =
+    typeof o.flipFirstStationVertical === 'boolean' ? o.flipFirstStationVertical : false;
+  let throughIconHeight = DEFAULT_THROUGH_ICON_HEIGHT;
+  if (typeof o.throughIconHeight === 'number' && Number.isFinite(o.throughIconHeight)) {
+    throughIconHeight = Math.max(0, o.throughIconHeight);
+  }
   const trainType = isTrainType(o.trainType) ? o.trainType : DEFAULT_TRAIN_TYPE;
 
-  return { totalLength, showStationTypeIcons, useCapsuleTransferMarkers, trainType };
+  return {
+    totalLength,
+    showStationTypeIcons,
+    useCapsuleTransferMarkers,
+    flipFirstStationVertical,
+    throughIconHeight,
+    trainType,
+  };
 };
 
 const resolveCurrentStnId = (requested: string, stations: StationItem[], fallback: string): string => {
@@ -404,6 +443,8 @@ export const serializeRailmapYaml = (state: GeneratorState): string => {
       totalLength: state.totalLength,
       showStationTypeIcons: state.showStationTypeIcons,
       useCapsuleTransferMarkers: state.useCapsuleTransferMarkers,
+      flipFirstStationVertical: state.flipFirstStationVertical,
+      throughIconHeight: state.throughIconHeight,
       trainType: state.trainType,
     },
     stations: stationsToYamlBodies(state.stnList),

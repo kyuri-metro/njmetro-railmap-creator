@@ -90,3 +90,6 @@ export const routeBadgeThroughRunning = {
   noticeBaselineY: 746.39014,
 } as const;
 
+/** 运行线到段端方块中心的默认竖直距离（正值 = 在线上方）。 */
+export const DEFAULT_THROUGH_ICON_HEIGHT = Math.abs(routeBadgeThroughRunning.markerCenterYOffset);
+

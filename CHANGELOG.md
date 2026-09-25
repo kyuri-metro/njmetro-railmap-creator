@@ -9,7 +9,7 @@
 
 ## [Unreleased]
 
-相对 [0.4.2]：贯通运营（through-running）数据、线路图 / 方向标绘制与编辑入口。
+相对 [0.4.2]：贯通运营（through-running）数据、线路图 / 方向标绘制与编辑入口；站名上下翻转与直通图标竖直高度可调。
 
 ### Added
 
@@ -19,6 +19,8 @@
 - 设置面板弹窗编辑贯通分段与接续站。
 - 参考素材：`docs/6-s1 express/`（`6-s1.yml`、linemap 模板 SVG）。
 - 「按线路填充站点」现有线网增加 **6-S1直通**：以内置 `docs/6-s1 express/6-s1.yml` 整份导入（含贯通配置），不拼接 6 / S1 站表种子。
+- 生成设置「反转首站上下」（`njMetroSettings.flipFirstStationVertical`）：翻转站名锯齿 parity，使首站改在运行线下、其后交替。
+- 生成设置「直通图标高度」（`njMetroSettings.throughIconHeight`，默认 `194.25`）：运行线到贯通段端方块中心的竖直距离；旧 YAML 缺省时不继承当前编辑器状态。
 
 ### Changed
 

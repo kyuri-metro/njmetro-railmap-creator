@@ -12,6 +12,8 @@ import {
   setCurrentStation,
   setShowStationTypeIcons,
   setUseCapsuleTransferMarkers,
+  setFlipFirstStationVertical,
+  setThroughIconHeight,
   setTotalLength,
   replaceStations,
   updateStation,
@@ -32,6 +34,8 @@ const trackedMutationTypes = new Set<string>([
   setIdTextColor.type,
   setShowStationTypeIcons.type,
   setUseCapsuleTransferMarkers.type,
+  setFlipFirstStationVertical.type,
+  setThroughIconHeight.type,
   insertStation.type,
   updateStation.type,
   patchStationName.type,
@@ -45,6 +49,7 @@ const trackedMutationTypes = new Set<string>([
 /** Scalar generator fields that group by action type (with time window). */
 export const generatorUndoGroupByTypes = [
   setTotalLength.type,
+  setThroughIconHeight.type,
   setLineId.type,
   setIdColor.type,
   setIdTextColor.type,

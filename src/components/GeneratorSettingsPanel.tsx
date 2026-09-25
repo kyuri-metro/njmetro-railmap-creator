@@ -3,6 +3,7 @@ import type { DebouncedGeneratorField } from '../hooks/useDebouncedGeneratorFiel
 import { useAppDispatch } from '../hooks';
 import {
   setDirection,
+  setFlipFirstStationVertical,
   setIdColor,
   setIdTextColor,
   setShowStationTypeIcons,
@@ -56,12 +57,14 @@ const LineColorField = ({ label, value, onCommit }: LineColorFieldProps) => {
 export type GeneratorSettingsPanelProps = {
   generator: GeneratorState;
   totalLengthField: DebouncedGeneratorField;
+  throughIconHeightField: DebouncedGeneratorField;
   lineIdField: DebouncedGeneratorField;
 };
 
 export const GeneratorSettingsPanel = ({
   generator,
   totalLengthField,
+  throughIconHeightField,
   lineIdField,
 }: GeneratorSettingsPanelProps) => {
   const dispatch = useAppDispatch();
@@ -161,12 +164,37 @@ export const GeneratorSettingsPanel = ({
           />
           <span>非当前换乘中间站使用胶囊标记</span>
         </label>
+        <label className="field-label field-label-checkbox">
+          <input
+            type="checkbox"
+            checked={generator.flipFirstStationVertical}
+            onChange={(event) => {
+              startTransition(() => {
+                dispatch(setFlipFirstStationVertical(event.target.checked));
+              });
+            }}
+          />
+          <span>反转首站上下</span>
+        </label>
         <div className="field-label">
           <span>贯通运营</span>
           <button type="button" className="outline-button" onClick={() => setThroughModalOpen(true)}>
             {generator.throughRunning ? '编辑贯通运营…' : '贯通运营…'}
           </button>
         </div>
+        <label className="field-label">
+          <span>直通图标高度</span>
+          <input
+            className="text-input"
+            type="text"
+            inputMode="decimal"
+            autoComplete="off"
+            spellCheck={false}
+            value={throughIconHeightField.draft}
+            onChange={(event) => throughIconHeightField.onDraftChange(event.target.value)}
+            onBlur={throughIconHeightField.onBlur}
+          />
+        </label>
       </div>
 
       <ThroughRunningModal

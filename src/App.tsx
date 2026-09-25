@@ -166,6 +166,7 @@ function App() {
   const previewLoading = usePreviewLoadingOverlay(generator, 16);
   const {
     totalLength: totalLengthField,
+    throughIconHeight: throughIconHeightField,
     lineId: lineIdField,
     syncFromGenerator: syncControlDraftsFromGenerator,
   } = useGeneratorControlDrafts(generator);
@@ -409,6 +410,7 @@ function App() {
             <GeneratorSettingsPanel
               generator={generator}
               totalLengthField={totalLengthField}
+              throughIconHeightField={throughIconHeightField}
               lineIdField={lineIdField}
             />
 

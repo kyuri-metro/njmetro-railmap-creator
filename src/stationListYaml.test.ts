@@ -25,6 +25,8 @@ describe('migrateRailmapYamlV1ToV2', () => {
         currentStnId: 'a',
         showStationTypeIcons: false,
         useCapsuleTransferMarkers: false,
+        flipFirstStationVertical: false,
+        throughIconHeight: 194.25,
         trainType: 'a',
       },
       stations: [
@@ -111,6 +113,8 @@ stations:
     const previous = fallback();
     previous.showStationTypeIcons = true;
     previous.useCapsuleTransferMarkers = true;
+    previous.flipFirstStationVertical = true;
+    previous.throughIconHeight = 50;
     previous.trainType = 'suburban-d';
     const parsed = parseRailmapYaml(yaml, previous);
     expect(parsed.ok).toBe(true);
@@ -119,6 +123,8 @@ stations:
     }
     expect(parsed.data.njMetroSettings.showStationTypeIcons).toBe(false);
     expect(parsed.data.njMetroSettings.useCapsuleTransferMarkers).toBe(false);
+    expect(parsed.data.njMetroSettings.flipFirstStationVertical).toBe(false);
+    expect(parsed.data.njMetroSettings.throughIconHeight).toBe(194.25);
     expect(parsed.data.njMetroSettings.trainType).toBe('a');
   });
 

@@ -448,6 +448,7 @@ type RouteStationRowProps = Readonly<{
   safeCurrentIndex: number;
   showStationTypeIcons: boolean;
   useCapsuleTransferMarkers: boolean;
+  flipFirstStationVertical: boolean;
   transferIconSymbolId: string;
   getTransferStationIconColor: (index: number) => string;
   anchor: ReturnType<typeof useSvgPositioner>['anchor'];
@@ -465,13 +466,14 @@ const RouteStationRow = ({
   safeCurrentIndex,
   showStationTypeIcons,
   useCapsuleTransferMarkers,
+  flipFirstStationVertical,
   transferIconSymbolId,
   getTransferStationIconColor,
   anchor,
 }: RouteStationRowProps) => {
   const isCurrent = index === safeCurrentIndex;
   const isEndpoint = index === 0 || index === stnListLength - 1;
-  const placeAbove = index % 2 === 0;
+  const placeAbove = (index % 2 === 0) !== flipFirstStationVertical;
   const stationPointId = `station-point-${index}`;
   const stationMarkerId = getStationMarkerId(isCurrent, isEndpoint, index);
   const transferIconAnchorId = `station-transfer-icon-${index}`;
@@ -554,6 +556,8 @@ export function RouteBadge({ data }: RouteBadgeProps) {
     idTextColor,
     showStationTypeIcons,
     useCapsuleTransferMarkers,
+    flipFirstStationVertical,
+    throughIconHeight,
     totalLength,
     stnList,
     trainType,
@@ -592,7 +596,7 @@ export function RouteBadge({ data }: RouteBadgeProps) {
       ? formatThroughRunningNotice(throughRunning, stnList, currentStnId, direction)
       : null;
   const noticeAnchorEnd = direction === 'r';
-  const markerCenterY = routeBadgeThroughRunning.markerCenterYOffset;
+  const markerCenterY = -throughIconHeight;
   const badgeHeight = routeBadgeThroughRunning.badgeHeight;
   const pairGap = routeBadgeThroughRunning.pairGap;
   const getTransferStationIconColor = (index: number) => {
@@ -685,6 +689,7 @@ export function RouteBadge({ data }: RouteBadgeProps) {
           safeCurrentIndex={safeCurrentIndex}
           showStationTypeIcons={showStationTypeIcons}
           useCapsuleTransferMarkers={useCapsuleTransferMarkers}
+          flipFirstStationVertical={flipFirstStationVertical}
           transferIconSymbolId={transferIconSymbolId}
           getTransferStationIconColor={getTransferStationIconColor}
           anchor={anchor}
