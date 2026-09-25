@@ -2,6 +2,7 @@ import { startTransition, useState, type ChangeEvent } from 'react';
 import type { AutosaveEntry } from '../autosaveStorage';
 import { getBuiltinJianbanStationsByLineId } from '../builtinJianbanLineStations';
 import { getBuiltinOpenedStationsByLineId } from '../builtinOpenedLineStations';
+import { getBuiltinOpenedYamlPreset } from '../builtinOpenedYamlPresets';
 import type { BuiltinStationNetwork } from '../components/FillStationsByLineMenu';
 import { markSavedExempt } from '../features/leaveGuard';
 import { builtinLineToGeneratorState, railmapImportToGeneratorState } from '../features/generatorImport';
@@ -126,6 +127,19 @@ export function useGeneratorWorkspaceActions({
 
     const { network, lineId } = pendingBuiltinFill;
     setPendingBuiltinFill(null);
+
+    if (network === 'opened') {
+      const yamlPreset = getBuiltinOpenedYamlPreset(lineId);
+      if (yamlPreset) {
+        const result = parseRailmapYaml(yamlPreset.yaml, generator);
+        if (!result.ok) {
+          setYamlImportError(result.message);
+          return;
+        }
+        applyRestoredState(railmapImportToGeneratorState(result.data, generator));
+        return;
+      }
+    }
 
     const builtinStations =
       network === 'opened'

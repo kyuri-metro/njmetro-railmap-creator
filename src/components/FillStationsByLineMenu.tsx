@@ -1,6 +1,11 @@
 import { FloatingMenu, type FloatingMenuEntry } from '@umamichi-ui/common-components/menu';
 import { builtinOpenedLineIds } from '../builtinOpenedLineStations';
 import { builtinJianbanLineIds } from '../builtinJianbanLineStations';
+import {
+  builtinOpenedYamlPresets,
+  resolveOpenedYamlPresetSwatch,
+  type BuiltinOpenedYamlPreset,
+} from '../builtinOpenedYamlPresets';
 import { resolveJianbanLineBackgroundColor } from '../jianbanLineColors';
 import { getNjmetroLineBackgroundColor } from '../njmetroLinePalette';
 
@@ -22,14 +27,10 @@ const resolveLineSwatch = (network: BuiltinStationNetwork, lineId: string) => {
 
 const sectionHeading = (label: string) => <span className="dropdown-menu-section-heading">{label}</span>;
 
-const lineMenuLabel = (network: BuiltinStationNetwork, lineId: string) => (
+const lineMenuLabel = (swatch: string, text: string) => (
   <span className="fill-line-menu-item">
-    <span
-      className="fill-line-menu-item__swatch"
-      style={{ background: resolveLineSwatch(network, lineId) }}
-      aria-hidden="true"
-    />
-    <span>{lineId}</span>
+    <span className="fill-line-menu-item__swatch" style={{ background: swatch }} aria-hidden="true" />
+    <span>{text}</span>
   </span>
 );
 
@@ -41,8 +42,19 @@ const buildLineItems = (
   lineIds.map((lineId) => ({
     kind: 'item' as const,
     id: `${network}-${lineId}`,
-    label: lineMenuLabel(network, lineId),
+    label: lineMenuLabel(resolveLineSwatch(network, lineId), lineId),
     onSelect: () => onSelectLine(network, lineId),
+  }));
+
+const buildOpenedYamlPresetItems = (
+  presets: readonly BuiltinOpenedYamlPreset[],
+  onSelectLine: FillStationsByLineMenuProps['onSelectLine'],
+): FloatingMenuEntry[] =>
+  presets.map((preset) => ({
+    kind: 'item' as const,
+    id: `opened-yaml-${preset.id}`,
+    label: lineMenuLabel(resolveOpenedYamlPresetSwatch(preset), preset.label),
+    onSelect: () => onSelectLine('opened', preset.id),
   }));
 
 export function FillStationsByLineMenu({ onSelectLine }: FillStationsByLineMenuProps) {
@@ -50,11 +62,12 @@ export function FillStationsByLineMenu({ onSelectLine }: FillStationsByLineMenuP
     {
       kind: 'item',
       id: 'hdr-opened',
-      label: sectionHeading('南京地铁现有线网（截止 2026.6）'),
+      label: sectionHeading('南京地铁现有线网（截止 2026.10）'),
       disabled: true,
       onSelect: () => {},
     },
     ...buildLineItems('opened', builtinOpenedLineIds, onSelectLine),
+    ...buildOpenedYamlPresetItems(builtinOpenedYamlPresets, onSelectLine),
     { kind: 'separator', id: 'sep-networks' },
     {
       kind: 'item',
