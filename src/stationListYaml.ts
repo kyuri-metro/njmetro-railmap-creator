@@ -1,6 +1,7 @@
 import YAML from 'yaml';
 import type { GeneratorState, StationItem, StationType, TrainDirection, TransferLine } from './features/generatorSlice';
 import { DEFAULT_TRAIN_TYPE, isTrainType, type TrainType } from './trainTypeLayout';
+import { normalizeThroughRunning, type ThroughRunningConfig } from './throughRunning';
 
 const STATION_TYPES = new Set<StationType>(['none', 'railway', 'airport']);
 
@@ -27,6 +28,7 @@ export type RailmapYamlImport = {
   lineIdTextColor: string;
   njMetroSettings: NjMetroSettingsYaml;
   stations: StationItem[];
+  throughRunning: ThroughRunningConfig | null;
 };
 
 const normalizeHexColor = (raw: string): string => {
@@ -354,8 +356,43 @@ const stationsToYamlBodies = (stations: StationItem[]) =>
     })),
   }));
 
+const parseThroughRunningYaml = (
+  raw: unknown,
+  stations: StationItem[],
+): ThroughRunningConfig | null => {
+  if (raw === undefined || raw === null) {
+    return null;
+  }
+  if (typeof raw !== 'object' || Array.isArray(raw)) {
+    return null;
+  }
+  const obj = raw as Record<string, unknown>;
+  const segmentsRaw = obj.segments;
+  const joinsRaw = obj.joinStationIds;
+  if (!Array.isArray(segmentsRaw) || !Array.isArray(joinsRaw)) {
+    return null;
+  }
+
+  const segments = segmentsRaw
+    .map((entry) => {
+      if (entry === null || typeof entry !== 'object' || Array.isArray(entry)) {
+        return null;
+      }
+      const lineRaw = (entry as Record<string, unknown>).lineId;
+      const lineId = toScalarString(lineRaw)?.trim() ?? '';
+      return lineId ? { lineId } : null;
+    })
+    .filter((entry): entry is { lineId: string } => entry !== null);
+
+  const joinStationIds = joinsRaw
+    .map((entry) => toScalarString(entry)?.trim() ?? '')
+    .filter((id) => id !== '');
+
+  return normalizeThroughRunning({ segments, joinStationIds }, stations);
+};
+
 export const serializeRailmapYaml = (state: GeneratorState): string => {
-  const doc = {
+  const doc: Record<string, unknown> = {
     version: 3,
     schema: KYURI_NAIVE_SCHEMA,
     direction: state.direction,
@@ -371,6 +408,13 @@ export const serializeRailmapYaml = (state: GeneratorState): string => {
     },
     stations: stationsToYamlBodies(state.stnList),
   };
+
+  if (state.throughRunning) {
+    doc.throughRunning = {
+      segments: state.throughRunning.segments.map((segment) => ({ lineId: segment.lineId })),
+      joinStationIds: [...state.throughRunning.joinStationIds],
+    };
+  }
 
   return YAML.stringify(doc, { indent: 2, lineWidth: 0 }).trimEnd() + '\n';
 };
@@ -396,6 +440,7 @@ const parseRailmapYamlArrayRoot = (
       currentStnId: resolveCurrentStnId(nj.currentStnId, stations, fallbacks.currentStnId),
     },
     stations,
+    throughRunning: null,
   };
   return { ok: true, data: migrateRailmapYamlV1ToV2(base) };
 };
@@ -479,6 +524,7 @@ const parseRailmapYamlV3 = (
         currentStnId,
       },
       stations,
+      throughRunning: parseThroughRunningYaml(root.throughRunning, stations),
     },
   };
 };
@@ -552,6 +598,7 @@ export const parseRailmapYaml = (text: string, fallbacks: GeneratorState): Parse
     lineIdTextColor,
     njMetroSettings: { ...njMerged, currentStnId },
     stations,
+    throughRunning: null,
   };
 
   if (docVersion === 1) {

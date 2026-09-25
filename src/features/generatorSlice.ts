@@ -8,6 +8,12 @@ import {
   DEFAULT_TRAIN_TYPE,
   type TrainType,
 } from '../trainTypeLayout';
+import {
+  normalizeThroughRunning,
+  remapThroughRunningAfterStationDelete,
+  reverseThroughRunning,
+  type ThroughRunningConfig,
+} from '../throughRunning';
 
 export type TransferLine = {
   id: string;
@@ -28,6 +34,7 @@ export type StationItem = {
 export type TrainDirection = 'l' | 'r';
 
 export type { TrainType };
+export type { ThroughRunningConfig, ThroughRunningSegment } from '../throughRunning';
 
 export type GeneratorState = {
   stnList: StationItem[];
@@ -42,6 +49,7 @@ export type GeneratorState = {
   /** 非当前换乘中间站使用水平胶囊标记（当前站与终点站样式不变） */
   useCapsuleTransferMarkers: boolean;
   trainType: TrainType;
+  throughRunning: ThroughRunningConfig | null;
 };
 
 type InsertPosition = 'before' | 'after' | 'start' | 'end';
@@ -87,6 +95,7 @@ const initialState: GeneratorState = {
   showStationTypeIcons: false,
   useCapsuleTransferMarkers: false,
   trainType: DEFAULT_TRAIN_TYPE,
+  throughRunning: null,
 };
 
 export const getDefaultGeneratorState = (): GeneratorState => ({
@@ -95,6 +104,7 @@ export const getDefaultGeneratorState = (): GeneratorState => ({
     ...station,
     transfer: station.transfer.map((line) => ({ ...line })),
   })),
+  throughRunning: null,
 });
 
 /** 空白线路图：默认生成参数，站点列表为空。 */
@@ -109,6 +119,7 @@ export const getEmptyGeneratorState = (): GeneratorState => ({
   showStationTypeIcons: initialState.showStationTypeIcons,
   useCapsuleTransferMarkers: initialState.useCapsuleTransferMarkers,
   trainType: initialState.trainType,
+  throughRunning: null,
 });
 
 const fallbackCurrentId = (stations: StationItem[], currentId: string) => {
@@ -203,8 +214,18 @@ const generatorSlice = createSlice({
       }
     },
     deleteStation(state, action: PayloadAction<string>) {
-      state.stnList = state.stnList.filter((item) => item.id !== action.payload);
+      const deletedId = action.payload;
+      const before = state.stnList;
+      state.stnList = state.stnList.filter((item) => item.id !== deletedId);
       state.currentStnId = fallbackCurrentId(state.stnList, state.currentStnId);
+      if (state.throughRunning) {
+        state.throughRunning = remapThroughRunningAfterStationDelete(
+          state.throughRunning,
+          before,
+          deletedId,
+          state.stnList,
+        );
+      }
     },
     replaceStations(state, action: PayloadAction<ReplaceStationsPayload>) {
       const { stations } = action.payload;
@@ -213,12 +234,23 @@ const generatorSlice = createSlice({
         transfer: normalizeTransferLines(station.transfer),
       }));
       state.currentStnId = stations[0]?.id ?? '';
+      state.throughRunning = normalizeThroughRunning(state.throughRunning, state.stnList);
     },
     reverseStnList(state) {
       state.stnList.reverse();
+      if (state.throughRunning) {
+        state.throughRunning = reverseThroughRunning(state.throughRunning);
+      }
+    },
+    setThroughRunning(state, action: PayloadAction<ThroughRunningConfig | null>) {
+      state.throughRunning = normalizeThroughRunning(action.payload, state.stnList);
     },
     restoreGeneratorState(_state, action: PayloadAction<GeneratorState>) {
-      return action.payload;
+      const next = action.payload;
+      return {
+        ...next,
+        throughRunning: normalizeThroughRunning(next.throughRunning ?? null, next.stnList),
+      };
     },
   },
 });
@@ -236,6 +268,7 @@ export const {
   setUseCapsuleTransferMarkers,
   setTotalLength,
   setTrainType,
+  setThroughRunning,
   replaceStations,
   restoreGeneratorState,
   updateStation,

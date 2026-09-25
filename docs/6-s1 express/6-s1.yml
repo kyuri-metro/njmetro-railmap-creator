@@ -1,0 +1,220 @@
+version: 3
+schema: https://umamichi.moe/2026/kyuri-naive
+direction: l
+currentStnId: 6-builtin-01
+lineId: "6"
+color: "#4bbbb4"
+textColor: "#ffffff"
+throughRunning:
+  segments:
+    - lineId: S1
+    - lineId: "6"
+  joinStationIds:
+    - 6-builtin-01
+njMetroSettings:
+  totalLength: 7062
+  showStationTypeIcons: false
+  useCapsuleTransferMarkers: false
+  trainType: b-long
+stations:
+  - id: s1-builtin-09
+    name:
+      - zh: 空港新城江宁
+      - en: Konggangxinchengjiangning
+    type: none
+    transfer:
+      - lineId: S7
+        color: "#b46b7a"
+        textColor: "#ffffff"
+  - id: s1-builtin-08
+    name:
+      - zh: 禄口机场
+      - en: Lukou International Airport
+    type: airport
+    transfer: []
+  - id: s1-builtin-07
+    name:
+      - zh: 翔宇路南
+      - en: Xiangyulunan
+    type: none
+    transfer:
+      - lineId: S9
+        color: "#ffc600"
+        textColor: "#ffffff"
+  - id: s1-builtin-06
+    name:
+      - zh: 翔宇路北
+      - en: Xiangyulubei
+    type: none
+    transfer: []
+  - id: s1-builtin-05
+    name:
+      - zh: 正方中路
+      - en: Zhengfangzhonglu
+    type: none
+    transfer: []
+  - id: s1-builtin-04
+    name:
+      - zh: 吉印大道
+      - en: Jiyindadao
+    type: none
+    transfer:
+      - lineId: "5"
+        color: "#f2da51"
+        textColor: "#373c57"
+  - id: s1-builtin-03
+    name:
+      - zh: 河海大学·佛城西路
+      - en: HHU/Fochengxilu
+    type: none
+    transfer: []
+  - id: s1-builtin-02
+    name:
+      - zh: 翠屏山
+      - en: Cuipingshan
+    type: none
+    transfer: []
+  - id: 6-builtin-01
+    name:
+      - zh: 南京南站
+      - en: Nanjingnan Railway Station
+    type: railway
+    transfer:
+      - lineId: "1"
+        color: "#009ace"
+        textColor: "#ffffff"
+      - lineId: "3"
+        color: "#009a44"
+        textColor: "#ffffff"
+      - lineId: S3
+        color: "#ba84ac"
+        textColor: "#ffffff"
+  - id: 6-builtin-02
+    name:
+      - zh: 夹岗
+      - en: Jiagang
+    type: none
+    transfer: []
+  - id: 6-builtin-03
+    name:
+      - zh: 机场跑道旧址
+      - en: Jichangpaodaojiuzhi
+    type: none
+    transfer:
+      - lineId: "10"
+        color: "#b9975b"
+        textColor: "#ffffff"
+  - id: 6-builtin-04
+    name:
+      - zh: 市中医院
+      - en: Nanjing Hospital of C.M.
+    type: none
+    transfer: []
+  - id: 6-builtin-05
+    name:
+      - zh: 应天东街
+      - en: Yingtiandongjie
+    type: none
+    transfer: []
+  - id: 6-builtin-06
+    name:
+      - zh: 中和桥
+      - en: Zhongheqiao
+    type: none
+    transfer: []
+  - id: 6-builtin-07
+    name:
+      - zh: 光华门
+      - en: Guanghuamen
+    type: none
+    transfer:
+      - lineId: "5"
+        color: "#f2da51"
+        textColor: "#373c57"
+  - id: 6-builtin-08
+    name:
+      - zh: 明故宫
+      - en: Minggugong
+    type: none
+    transfer:
+      - lineId: "2"
+        color: "#a6093d"
+        textColor: "#ffffff"
+  - id: 6-builtin-09
+    name:
+      - zh: 富贵山
+      - en: Fuguishan
+    type: none
+    transfer: []
+  - id: 6-builtin-10
+    name:
+      - zh: 岗子村
+      - en: Gangzicun
+    type: none
+    transfer:
+      - lineId: "4"
+        color: "#7d55c7"
+        textColor: "#ffffff"
+  - id: 6-builtin-11
+    name:
+      - zh: 花园路
+      - en: Huayuanlu
+    type: none
+    transfer: []
+  - id: 6-builtin-12
+    name:
+      - zh: 红山新城
+      - en: Hongshanxincheng
+    type: none
+    transfer: []
+  - id: 6-builtin-13
+    name:
+      - zh: 营苑南路
+      - en: Yingyuannanlu
+    type: none
+    transfer: []
+  - id: 6-builtin-14
+    name:
+      - zh: 万寿
+      - en: Wanshou
+    type: none
+    transfer:
+      - lineId: "7"
+        color: "#4a7729"
+        textColor: "#ffffff"
+  - id: 6-builtin-15
+    name:
+      - zh: 燕江新城
+      - en: Yanjiangxincheng
+    type: none
+    transfer: []
+  - id: 6-builtin-16
+    name:
+      - zh: 兴学路
+      - en: Xingxuelu
+    type: none
+    transfer: []
+  - id: 6-builtin-17
+    name:
+      - zh: 兴智街
+      - en: Xingzhijie
+    type: none
+    transfer: []
+  - id: 6-builtin-18
+    name:
+      - zh: 十月广场
+      - en: Shiyueguangchang
+    type: none
+    transfer: []
+  - id: 6-builtin-19
+    name:
+      - zh: 金陵石化
+      - en: Jinlingshihua
+    type: none
+    transfer: []
+  - id: 6-builtin-20
+    name:
+      - zh: 栖霞山
+      - en: Qixiashan
+    type: none
+    transfer: []

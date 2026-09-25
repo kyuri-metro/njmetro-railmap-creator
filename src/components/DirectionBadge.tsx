@@ -18,6 +18,12 @@ import type { GeneratorState } from '../features/generatorSlice';
 import { sansLatinFontStack, sansZhFontStack } from '../fontStacks';
 import { getLineIdBadgeWidth } from '../lineIdBadgeMetrics';
 import { getBadgeCanvasSizes } from '../trainTypeLayout';
+import {
+  formatThroughRunningNotice,
+  resolveSegmentIndexForNextStation,
+  resolveSegmentTerminusStation,
+} from '../throughRunning';
+import { routeBadgeThroughRunning } from '../routeBadgeLayout';
 import { LineIdBadge } from './LineIdBadge';
 import { LineIdBlockAttributionOverlay } from './LineIdBlockAttributionOverlay';
 import { useSvgPositioner } from './svgPositioning';
@@ -204,14 +210,39 @@ const resolveNextIndex = (currentIndex: number, direction: 'l' | 'r'): number =>
 };
 
 export function DirectionBadge({ data }: DirectionBadgeProps) {
-  const { stnList, currentStnId, direction, idColor, idTextColor, lineId, trainType } = data;
+  const { stnList, currentStnId, direction, idColor, idTextColor, lineId, trainType, throughRunning } = data;
   const { direction: canvasWidth, height: canvasHeight } = getBadgeCanvasSizes(trainType);
   const { anchor, resolvedBoxes } = useSvgPositioner(canvasWidth, canvasHeight);
 
+  const isRightward = direction === 'r';
+
+  const currentIndex = stnList.findIndex((station) => station.id === currentStnId);
+  const nextIndex = resolveNextIndex(currentIndex, direction);
+  const nextStation = stnList[nextIndex] ?? stnList[currentIndex] ?? null;
+  const isTerminus =
+    currentIndex !== -1 && ((direction === 'r' && currentIndex === stnList.length - 1) || (direction === 'l' && currentIndex === 0));
+
+  let displayLineId = lineId;
+  let toStation = direction === 'r' ? stnList.at(-1) : stnList[0];
+
+  if (throughRunning && nextIndex !== -1 && !isTerminus) {
+    const segmentIndex = resolveSegmentIndexForNextStation(nextIndex, direction, throughRunning, stnList);
+    displayLineId = throughRunning.segments[segmentIndex]?.lineId ?? lineId;
+    toStation = resolveSegmentTerminusStation(segmentIndex, direction, throughRunning, stnList) ?? toStation;
+  }
+
   const lineBadgeBox = resolvedBoxes['line-badge'];
-  const lineIdBadgeSupported = getLineIdBadgeWidth(lineId, directionBadgeLineBadge.height) !== null;
+  const lineIdBadgeSupported = getLineIdBadgeWidth(displayLineId, directionBadgeLineBadge.height) !== null;
   const showLineIdAttribution =
     lineIdBadgeSupported && lineBadgeBox !== undefined && lineBadgeBox.width > 0.5;
+
+  const throughNotice =
+    throughRunning !== null
+      ? formatThroughRunningNotice(throughRunning, stnList, currentStnId, direction, {
+          includeRideSuffix: !isTerminus,
+        })
+      : null;
+  const noticeAnchorEnd = direction === 'r';
 
   const wrapPreview = (svg: ReactElement) => (
     <div className="direction-badge-preview-wrap">
@@ -226,16 +257,33 @@ export function DirectionBadge({ data }: DirectionBadgeProps) {
     </div>
   );
 
-  const isRightward = direction === 'r';
-
-  const currentIndex = stnList.findIndex((station) => station.id === currentStnId);
-  const nextIndex = resolveNextIndex(currentIndex, direction);
-  const nextStation = stnList[nextIndex] ?? stnList[currentIndex] ?? null;
-  const toStation = direction === 'r' ? stnList.at(-1) : stnList[0];
-  const isTerminus =
-    currentIndex !== -1 && ((direction === 'r' && currentIndex === stnList.length - 1) || (direction === 'l' && currentIndex === 0));
   const safeToStation = toStation ?? { chName: '不存在或未定义', enName: 'Bucunzai Huo Weidingyi' };
   const safeNextStation = nextStation ?? { chName: '不存在或未定义', enName: 'Bucunzai Huo Weidingyi' };
+
+  const noticeAnchor =
+    throughNotice !== null
+      ? anchor(
+          'through-running-notice',
+          <text
+            x="0"
+            y={routeBadgeThroughRunning.noticeFontSize}
+            textAnchor={noticeAnchorEnd ? 'end' : 'start'}
+            fontSize={`${routeBadgeThroughRunning.noticeFontSize}px`}
+            style={{ ...zhTextStyle(), fill: '#000000' }}
+          >
+            {throughNotice}
+          </text>,
+          noticeAnchorEnd
+            ? {
+                right: routeBadgeThroughRunning.noticeInsetX,
+                top: routeBadgeThroughRunning.noticeBaselineY - routeBadgeThroughRunning.noticeFontSize,
+              }
+            : {
+                left: routeBadgeThroughRunning.noticeInsetX,
+                top: routeBadgeThroughRunning.noticeBaselineY - routeBadgeThroughRunning.noticeFontSize,
+              },
+        )
+      : null;
 
   if (isTerminus) {
     return wrapPreview(
@@ -269,13 +317,15 @@ export function DirectionBadge({ data }: DirectionBadgeProps) {
           right: { edge: 'right', gap: directionBadgeTerminusLayout.terminusLabelRightGap },
           top: directionBadgeTerminusLayout.terminusLabelTop,
         })}
+
+        {noticeAnchor}
       </svg>,
     );
   }
 
   const condenseTiers = resolveDirectionCondense({
     direction,
-    lineId,
+    lineId: displayLineId,
     canvasWidth,
     toStation: safeToStation,
     nextStation: safeNextStation,
@@ -322,13 +372,13 @@ export function DirectionBadge({ data }: DirectionBadgeProps) {
               top: directionBadgeAnchors.nextStationTop,
             },
           )
-        : anchor('line-badge', <LineIdBadge lineId={lineId} color={idColor} textColor={idTextColor} height={directionBadgeLineBadge.height} />, {
+        : anchor('line-badge', <LineIdBadge lineId={displayLineId} color={idColor} textColor={idTextColor} height={directionBadgeLineBadge.height} />, {
             left: { to: 'arrow', edge: 'right', gap: directionBadgeGaps.arrow },
             top: directionBadgeLineBadge.top,
           })}
 
       {isRightward
-        ? anchor('line-badge', <LineIdBadge lineId={lineId} color={idColor} textColor={idTextColor} height={directionBadgeLineBadge.height} />, {
+        ? anchor('line-badge', <LineIdBadge lineId={displayLineId} color={idColor} textColor={idTextColor} height={directionBadgeLineBadge.height} />, {
             right: { to: 'to-label', edge: 'left', gap: directionBadgeGaps.lineBadge },
             top: directionBadgeLineBadge.top,
           })
@@ -384,6 +434,8 @@ export function DirectionBadge({ data }: DirectionBadgeProps) {
               top: directionBadgeAnchors.nextStationTop,
             },
           )}
+
+      {noticeAnchor}
     </svg>,
   );
 }

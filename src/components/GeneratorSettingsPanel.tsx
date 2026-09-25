@@ -1,4 +1,4 @@
-import { startTransition, useEffect, useRef } from 'react';
+import { startTransition, useEffect, useRef, useState } from 'react';
 import type { DebouncedGeneratorField } from '../hooks/useDebouncedGeneratorField';
 import { useAppDispatch } from '../hooks';
 import {
@@ -6,11 +6,13 @@ import {
   setIdColor,
   setIdTextColor,
   setShowStationTypeIcons,
+  setThroughRunning,
   setTrainType,
   setUseCapsuleTransferMarkers,
   type GeneratorState,
 } from '../features/generatorSlice';
 import { TRAIN_TYPE_OPTIONS, type TrainType } from '../trainTypeLayout';
+import { ThroughRunningModal } from './ThroughRunningModal';
 
 type LineColorFieldProps = Readonly<{
   label: string;
@@ -63,6 +65,7 @@ export const GeneratorSettingsPanel = ({
   lineIdField,
 }: GeneratorSettingsPanelProps) => {
   const dispatch = useAppDispatch();
+  const [throughModalOpen, setThroughModalOpen] = useState(false);
 
   return (
     <section className="panel">
@@ -158,7 +161,25 @@ export const GeneratorSettingsPanel = ({
           />
           <span>非当前换乘中间站使用胶囊标记</span>
         </label>
+        <div className="field-label">
+          <span>贯通运营</span>
+          <button type="button" className="outline-button" onClick={() => setThroughModalOpen(true)}>
+            {generator.throughRunning ? '编辑贯通运营…' : '贯通运营…'}
+          </button>
+        </div>
       </div>
+
+      <ThroughRunningModal
+        open={throughModalOpen}
+        stations={generator.stnList}
+        value={generator.throughRunning}
+        onClose={() => setThroughModalOpen(false)}
+        onSave={(next) => {
+          startTransition(() => {
+            dispatch(setThroughRunning(next));
+          });
+        }}
+      />
     </section>
   );
 };

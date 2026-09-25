@@ -64,3 +64,29 @@ export const routeBadgeTransferLineId = {
   gap: 18.75,
   badgeHeight: 75,
 } as const;
+
+/** 贯通运营段端标记与角标（对照 docs/6-s1 express 模板）。 */
+export const routeBadgeThroughRunning = {
+  badgeHeight: routeBadgeTransferLineId.badgeHeight,
+  /** 双块之间 gap = 0.4 × badgeHeight */
+  pairGap: routeBadgeTransferLineId.badgeHeight * 0.4,
+  /** badge ↔ chevron：单数宽线号 */
+  gap1digit: 31,
+  /** badge ↔ chevron：双数宽线号（含 S*） */
+  gap2digits: 19.5,
+  chevronPath: 'M 30,0 H 40 V 40 H 0 V 30 H 30 Z',
+  chevronLocalSize: 40,
+  chevronScale: 0.45661385,
+  chevronRotateLeft: 135,
+  chevronRotateRight: -45,
+  chevronStep: 19.5,
+  chevronOpacities: [1, 0.5, 0.25] as const,
+  /** 有贯通分段时，运行线与方向箭头相对默认 centerY 下移（模板站心 351.75 − 默认 315.75） */
+  lineOffsetY: 36,
+  /** 段端线号块竖直中心相对站心（模板块中心 157.5 − 站心 351.75） */
+  markerCenterYOffset: -194.25,
+  noticeInsetX: 66.488281,
+  noticeFontSize: 52.7335,
+  noticeBaselineY: 746.39014,
+} as const;
+

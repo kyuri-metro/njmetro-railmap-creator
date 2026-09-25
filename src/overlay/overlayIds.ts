@@ -15,6 +15,7 @@ export const OVERLAY_IDS = {
   undeterminedTrainTypeNotice: 'undetermined-train-type-notice',
   yamlImportConfirm: 'yaml-import-confirm',
   yamlImportError: 'yaml-import-error',
+  throughRunning: 'through-running',
 } as const;
 
 export type OverlayId = (typeof OVERLAY_IDS)[keyof typeof OVERLAY_IDS];

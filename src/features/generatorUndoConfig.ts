@@ -17,6 +17,7 @@ import {
   updateStation,
   type PatchStationNamePayload,
   type StationItem,
+  setThroughRunning,
 } from './generatorSlice';
 
 /** Consecutive same-base-key edits within this window share one undo step. */
@@ -38,6 +39,7 @@ const trackedMutationTypes = new Set<string>([
   replaceStations.type,
   reverseStnList.type,
   restoreGeneratorState.type,
+  setThroughRunning.type,
 ]);
 
 /** Scalar generator fields that group by action type (with time window). */

@@ -24,6 +24,7 @@ export const railmapImportToGeneratorState = (
   showStationTypeIcons: data.njMetroSettings.showStationTypeIcons,
   useCapsuleTransferMarkers: data.njMetroSettings.useCapsuleTransferMarkers,
   trainType: data.njMetroSettings.trainType,
+  throughRunning: data.throughRunning,
 });
 
 export type BuiltinLineFillNetwork = 'opened' | 'jianban';
@@ -59,5 +60,6 @@ export const builtinLineToGeneratorState = (
     currentStnId: stations[0]?.id ?? '',
     trainType,
     totalLength,
+    throughRunning: null,
   };
 };

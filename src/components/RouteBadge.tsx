@@ -14,8 +14,15 @@ import {
   routeBadgeStationRadii,
   routeBadgeTransferIcon,
   routeBadgeTransferLineId,
+  routeBadgeThroughRunning,
 } from '../routeBadgeLayout';
 import { getBadgeCanvasSizes } from '../trainTypeLayout';
+import {
+  buildSegmentEndBlocks,
+  formatThroughRunningNotice,
+  isTwoDigitLineId,
+  type SegmentEndBlock,
+} from '../throughRunning';
 import { LineIdBadge } from './LineIdBadge';
 import { useSvgPositioner } from './svgPositioning';
 
@@ -258,6 +265,67 @@ const TransferBadgeGroup = ({ lines }: { lines: TransferLine[] }) => {
   );
 };
 
+const ThroughChevronStack = ({
+  color,
+  pointingLeft,
+}: {
+  color: string;
+  pointingLeft: boolean;
+}) => {
+  const {
+    chevronPath,
+    chevronScale,
+    chevronRotateLeft,
+    chevronRotateRight,
+    chevronStep,
+    chevronOpacities,
+  } = routeBadgeThroughRunning;
+  const theta = pointingLeft ? chevronRotateLeft : chevronRotateRight;
+
+  return (
+    <g>
+      {chevronOpacities.map((opacity, index) => {
+        const x = pointingLeft ? -index * chevronStep : index * chevronStep;
+        return (
+          <g key={opacity} transform={`translate(${x} 0) rotate(${theta}) scale(${chevronScale})`}>
+            <path d={chevronPath} fill={color} fillOpacity={opacity} />
+          </g>
+        );
+      })}
+    </g>
+  );
+};
+
+const SegmentEndBadge = ({
+  lineId,
+  color,
+  textColor,
+}: {
+  lineId: string;
+  color: string;
+  textColor: string;
+}) => {
+  const height = routeBadgeThroughRunning.badgeHeight;
+
+  return (
+    <g transform={`translate(0 ${-height / 2})`}>
+      <LineIdBadge lineId={lineId} color={color} textColor={textColor} height={height} />
+    </g>
+  );
+};
+
+const ThroughRunningNoticeText = ({ text, anchorEnd }: { text: string; anchorEnd: boolean }) => (
+  <text
+    x="0"
+    y={routeBadgeThroughRunning.noticeFontSize}
+    textAnchor={anchorEnd ? 'end' : 'start'}
+    fontSize={`${routeBadgeThroughRunning.noticeFontSize}px`}
+    style={zhTextStyle(undefined, '#000000')}
+  >
+    {text}
+  </text>
+);
+
 const StationTextBlock = ({ showStationTypeIcons, station }: { showStationTypeIcons: boolean; station: StationItem }) => {
   const zhNameCondenseConfig = getRouteZhNameCondense(station.chName);
   const stationTypeIcon = showStationTypeIcons ? getStationTypeIcon(station.type) : null;
@@ -479,8 +547,18 @@ const RouteStationRow = ({
 };
 
 export function RouteBadge({ data }: RouteBadgeProps) {
-  const { currentStnId, direction, idColor, showStationTypeIcons, useCapsuleTransferMarkers, totalLength, stnList, trainType } =
-    data;
+  const {
+    currentStnId,
+    direction,
+    idColor,
+    idTextColor,
+    showStationTypeIcons,
+    useCapsuleTransferMarkers,
+    totalLength,
+    stnList,
+    trainType,
+    throughRunning,
+  } = data;
   const { route: width, height } = getBadgeCanvasSizes(trainType);
   const { anchor } = useSvgPositioner(width, height);
   const transferIconSymbolId = useId().replaceAll(':', '');
@@ -495,10 +573,28 @@ export function RouteBadge({ data }: RouteBadgeProps) {
   const inactiveColor = '#d9d9d9';
   const activeSegmentWidth = direction === 'l' ? safeCurrentIndex * stnDis : (stnList.length - 1 - safeCurrentIndex) * stnDis;
   const inactiveSegmentWidth = Math.max(0, lineLength - activeSegmentWidth);
-  const lineCenterYOffset = lineCenterY - height / 2;
+  const hasThroughRunning = throughRunning !== null;
+  const effectiveLineCenterY =
+    lineCenterY + (hasThroughRunning ? routeBadgeThroughRunning.lineOffsetY : 0);
+  const lineCenterYOffset = effectiveLineCenterY - height / 2;
   const routeContentOffsetX = direction === 'l' ? routeLayoutOffsetX : -routeLayoutOffsetX;
   const terminusMarkerRadius = currentIndex !== -1 && safeCurrentIndex === terminusIndex ? currentOuterRadius : endStationRadius;
   const arrowToTerminusGap = terminusMarkerRadius + directionArrowGap - 0.5;
+  const segmentEndBlocks = throughRunning ? buildSegmentEndBlocks(throughRunning, stnList) : [];
+  const segmentEndByStation = new Map<number, SegmentEndBlock[]>();
+  for (const block of segmentEndBlocks) {
+    const list = segmentEndByStation.get(block.stationIndex) ?? [];
+    list.push(block);
+    segmentEndByStation.set(block.stationIndex, list);
+  }
+  const throughNotice =
+    throughRunning !== null
+      ? formatThroughRunningNotice(throughRunning, stnList, currentStnId, direction)
+      : null;
+  const noticeAnchorEnd = direction === 'r';
+  const markerCenterY = routeBadgeThroughRunning.markerCenterYOffset;
+  const badgeHeight = routeBadgeThroughRunning.badgeHeight;
+  const pairGap = routeBadgeThroughRunning.pairGap;
   const getTransferStationIconColor = (index: number) => {
     if (index === safeCurrentIndex) {
       return currentStationAccent;
@@ -594,6 +690,107 @@ export function RouteBadge({ data }: RouteBadgeProps) {
           anchor={anchor}
         />
       ))}
+
+      {[...segmentEndByStation.entries()].flatMap(([stationIndex, blocks]) => {
+        const stationPointId = `station-point-${stationIndex}`;
+        const markerY = {
+          centerY: { to: stationPointId, offset: markerCenterY },
+        } as const;
+
+        if (blocks.length === 1) {
+          const block = blocks[0]!;
+          if (getLineIdBadgeWidth(block.lineId, badgeHeight) === null) {
+            return [];
+          }
+          const pointingLeft = block.side === 'towardStart';
+          const chevronGap = isTwoDigitLineId(block.lineId)
+            ? routeBadgeThroughRunning.gap2digits
+            : routeBadgeThroughRunning.gap1digit;
+          const badgeId = `segment-end-badge-${stationIndex}`;
+          const chevronColor = idColor;
+
+          return [
+            anchor(badgeId, <SegmentEndBadge lineId={block.lineId} color={idColor} textColor={idTextColor} />, {
+              centerX: { to: stationPointId, offset: 0 },
+              ...markerY,
+            }),
+            anchor(
+              `segment-end-chevron-${stationIndex}`,
+              <ThroughChevronStack color={chevronColor} pointingLeft={pointingLeft} />,
+              {
+                ...(pointingLeft
+                  ? { right: { to: badgeId, edge: 'left', gap: chevronGap } }
+                  : { left: { to: badgeId, edge: 'right', gap: chevronGap } }),
+                ...markerY,
+              },
+            ),
+          ];
+        }
+
+        const startBlock = blocks.find((block) => block.side === 'towardStart');
+        const endBlock = blocks.find((block) => block.side === 'towardEnd');
+        if (!startBlock || !endBlock) {
+          return [];
+        }
+        if (
+          getLineIdBadgeWidth(startBlock.lineId, badgeHeight) === null ||
+          getLineIdBadgeWidth(endBlock.lineId, badgeHeight) === null
+        ) {
+          return [];
+        }
+
+        const startBadgeId = `segment-end-badge-${stationIndex}-start`;
+        const endBadgeId = `segment-end-badge-${stationIndex}-end`;
+        const startChevronGap = isTwoDigitLineId(startBlock.lineId)
+          ? routeBadgeThroughRunning.gap2digits
+          : routeBadgeThroughRunning.gap1digit;
+        const endChevronGap = isTwoDigitLineId(endBlock.lineId)
+          ? routeBadgeThroughRunning.gap2digits
+          : routeBadgeThroughRunning.gap1digit;
+
+        return [
+          anchor(startBadgeId, <SegmentEndBadge lineId={startBlock.lineId} color={idColor} textColor={idTextColor} />, {
+            right: { to: stationPointId, edge: 'left', gap: pairGap / 2 },
+            ...markerY,
+          }),
+          anchor(endBadgeId, <SegmentEndBadge lineId={endBlock.lineId} color={idColor} textColor={idTextColor} />, {
+            left: { to: stationPointId, edge: 'left', gap: pairGap / 2 },
+            ...markerY,
+          }),
+          anchor(
+            `segment-end-chevron-${stationIndex}-start`,
+            <ThroughChevronStack color={idColor} pointingLeft />,
+            {
+              right: { to: startBadgeId, edge: 'left', gap: startChevronGap },
+              ...markerY,
+            },
+          ),
+          anchor(
+            `segment-end-chevron-${stationIndex}-end`,
+            <ThroughChevronStack color={idColor} pointingLeft={false} />,
+            {
+              left: { to: endBadgeId, edge: 'right', gap: endChevronGap },
+              ...markerY,
+            },
+          ),
+        ];
+      })}
+
+      {throughNotice
+        ? anchor(
+            'through-running-notice',
+            <ThroughRunningNoticeText text={throughNotice} anchorEnd={noticeAnchorEnd} />,
+            noticeAnchorEnd
+              ? {
+                  right: routeBadgeThroughRunning.noticeInsetX,
+                  top: routeBadgeThroughRunning.noticeBaselineY - routeBadgeThroughRunning.noticeFontSize,
+                }
+              : {
+                  left: routeBadgeThroughRunning.noticeInsetX,
+                  top: routeBadgeThroughRunning.noticeBaselineY - routeBadgeThroughRunning.noticeFontSize,
+                },
+          )
+        : null}
     </svg>
   );
 }

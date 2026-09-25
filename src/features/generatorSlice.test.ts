@@ -16,6 +16,7 @@ import generatorReducer, {
   setUseCapsuleTransferMarkers,
   setTotalLength,
   setTrainType,
+  setThroughRunning,
   updateStation,
   patchStationName,
   type GeneratorState,
@@ -142,6 +143,23 @@ describe('generatorSlice', () => {
     state = generatorReducer(state, deleteStation('new-stop'));
     expect(state.stnList.some((s) => s.id === 'new-stop')).toBe(false);
     expect(state.stnList.some((s) => s.id === state.currentStnId)).toBe(true);
+  });
+
+  it('reverses throughRunning segments with the station list', () => {
+    const ids = state.stnList.map((station) => station.id);
+    const joinId = ids[Math.floor(ids.length / 2)]!;
+    state = generatorReducer(
+      state,
+      setThroughRunning({
+        segments: [{ lineId: '6' }, { lineId: 'S1' }],
+        joinStationIds: [joinId],
+      }),
+    );
+    expect(state.throughRunning?.segments.map((segment) => segment.lineId)).toEqual(['6', 'S1']);
+
+    state = generatorReducer(state, reverseStnList());
+    expect(state.throughRunning?.segments.map((segment) => segment.lineId)).toEqual(['S1', '6']);
+    expect(state.throughRunning?.joinStationIds).toEqual([joinId]);
   });
 
   it('replaceStations resets current station and fills missing transfer textColor', () => {
