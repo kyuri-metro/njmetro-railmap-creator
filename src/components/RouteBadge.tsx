@@ -1,4 +1,4 @@
-import { useId, useLayoutEffect, useRef, useState, type CSSProperties } from 'react';
+import { useId, useLayoutEffect, useRef, useState, type CSSProperties, type ReactElement } from 'react';
 import { getRouteZhNameCondense, type BadgeTextCondenseConfig } from '../badgeTextCondense';
 import type { GeneratorState, StationItem, TransferLine } from '../features/generatorSlice';
 import { njmetroDingsFontStack, sansLatinFontStack, sansZhFontStack } from '../fontStacks';
@@ -16,6 +16,7 @@ import {
   routeBadgeTransferLineId,
   routeBadgeThroughRunning,
 } from '../routeBadgeLayout';
+import { resolveSegmentTransferFlipHint } from '../segmentTransferFlipHint';
 import { getBadgeCanvasSizes } from '../trainTypeLayout';
 import {
   buildSegmentEndBlocks,
@@ -23,6 +24,7 @@ import {
   isTwoDigitLineId,
   type SegmentEndBlock,
 } from '../throughRunning';
+import { FlipFirstStationHintOverlay } from './FlipFirstStationHintOverlay';
 import { LineIdBadge } from './LineIdBadge';
 import { useSvgPositioner } from './svgPositioning';
 
@@ -564,7 +566,7 @@ export function RouteBadge({ data }: RouteBadgeProps) {
     throughRunning,
   } = data;
   const { route: width, height } = getBadgeCanvasSizes(trainType);
-  const { anchor } = useSvgPositioner(width, height);
+  const { anchor, resolvedBoxes } = useSvgPositioner(width, height);
   const transferIconSymbolId = useId().replaceAll(':', '');
   const currentIndex = stnList.findIndex((station) => station.id === currentStnId);
   const safeCurrentIndex = currentIndex === -1 ? 0 : currentIndex;
@@ -591,6 +593,18 @@ export function RouteBadge({ data }: RouteBadgeProps) {
     list.push(block);
     segmentEndByStation.set(block.stationIndex, list);
   }
+  const flipHint = resolveSegmentTransferFlipHint(
+    stnList,
+    flipFirstStationVertical,
+    new Set(segmentEndByStation.keys()),
+  );
+  const flipHintTransferBox = flipHint.showHint
+    ? resolvedBoxes[`station-transfer-${flipHint.stationIndex}`]
+    : undefined;
+  const showFlipHint =
+    flipHint.showHint &&
+    flipHintTransferBox !== undefined &&
+    flipHintTransferBox.width > 0.5;
   const throughNotice =
     throughRunning !== null
       ? formatThroughRunningNotice(throughRunning, stnList, currentStnId, direction)
@@ -609,7 +623,21 @@ export function RouteBadge({ data }: RouteBadgeProps) {
     return isAheadStation ? transferIconColor : inactiveColor;
   };
 
-  return (
+  const wrapPreview = (svg: ReactElement) => (
+    <div className="direction-badge-preview-wrap">
+      {svg}
+      {showFlipHint && flipHint.showHint && flipHintTransferBox ? (
+        <FlipFirstStationHintOverlay
+          viewWidth={width}
+          viewHeight={height}
+          box={flipHintTransferBox}
+          suggestFlipTo={flipHint.suggestFlipTo}
+        />
+      ) : null}
+    </div>
+  );
+
+  return wrapPreview(
     <svg viewBox={`0 0 ${width} ${height}`} className="badge-svg" role="img" aria-label="线路牌">
       <defs>
         <symbol id={transferIconSymbolId} viewBox={`${transferIconViewBoxX} 0 ${transferIconViewBoxWidth} ${transferIconViewBoxHeight}`}>
@@ -796,6 +824,6 @@ export function RouteBadge({ data }: RouteBadgeProps) {
                 },
           )
         : null}
-    </svg>
+    </svg>,
   );
 }
